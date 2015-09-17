@@ -1,0 +1,1 @@
+# bluecircle-json-interface-generator
