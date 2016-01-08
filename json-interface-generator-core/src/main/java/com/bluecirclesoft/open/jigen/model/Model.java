@@ -16,6 +16,10 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,20 +30,18 @@ import java.util.Map;
  */
 public class Model {
 
+	private static final Logger log = LoggerFactory.getLogger(Model.class);
+
 	private final Map<Type, JType> interfaces = new HashMap<>();
 
 	private final Map<String, Endpoint> endpoints = new HashMap<>();
 
-	public boolean hasId(String id) {
-		return interfaces.containsKey(id);
+	public Model() {
+		log.info("New model: " + this);
 	}
 
 	public Collection<JType> getInterfaces() {
 		return interfaces.values();
-	}
-
-	public JType getInterface(JType id) {
-		return interfaces.get(id);
 	}
 
 	public void addType(Type type, JType jType) {
@@ -49,6 +51,7 @@ public class Model {
 		interfaces.put(type, jType);
 	}
 
+
 	public Endpoint createEndpoint(String name) {
 		Endpoint endpoint = new Endpoint(name);
 		endpoints.put(name, endpoint);
@@ -57,8 +60,16 @@ public class Model {
 
 	@Override
 	public String toString() {
-		return "Model{" +
-				"interfaces=" + interfaces +
-				'}';
+		return new ToStringBuilder(this).append("interfaces", interfaces)
+				.append("endpoints", endpoints)
+				.toString();
+	}
+
+	public boolean hasType(Type type) {
+		return interfaces.containsKey(type);
+	}
+
+	public JType getType(Type key) {
+		return interfaces.get(key);
 	}
 }

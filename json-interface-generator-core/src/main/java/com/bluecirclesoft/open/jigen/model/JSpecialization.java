@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * TODO document me
  */
@@ -44,5 +46,12 @@ public class JSpecialization extends JType {
 
 	public void setParameters(JType[] parameters) {
 		this.parameters = parameters;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("base", base)
+				.append("parameters", parameters)
+				.toString();
 	}
 }

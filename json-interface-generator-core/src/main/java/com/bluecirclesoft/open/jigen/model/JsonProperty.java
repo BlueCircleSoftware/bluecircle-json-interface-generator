@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class JsonProperty {
 
 	private final String name;
@@ -40,9 +42,6 @@ public class JsonProperty {
 
 	@Override
 	public String toString() {
-		return "JsonProperty{" +
-				"name='" + name + '\'' +
-				", type='" + type + '\'' +
-				'}';
+		return new ToStringBuilder(this).append("name", name).append("type", type).toString();
 	}
 }

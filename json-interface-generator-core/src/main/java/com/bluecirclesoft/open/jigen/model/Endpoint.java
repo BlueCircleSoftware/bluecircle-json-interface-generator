@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,5 +101,17 @@ public class Endpoint {
 
 	public Map<String, JType> getRequestParameters() {
 		return requestParameters;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("id", id)
+				.append("method", method)
+				.append("requestBody", requestBody)
+				.append("responseBody", responseBody)
+				.append("pathTemplate", pathTemplate)
+				.append("pathParameters", pathParameters)
+				.append("requestParameters", requestParameters)
+				.toString();
 	}
 }

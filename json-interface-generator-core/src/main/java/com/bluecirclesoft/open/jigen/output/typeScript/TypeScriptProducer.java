@@ -51,9 +51,11 @@ public class TypeScriptProducer implements OutputProducer {
 		try {
 			outputNamespace(ns);
 		} finally {
-			writer.flush();
-			if (writer != null && outputFile != null) {
-				writer.close();
+			if (writer != null) {
+				writer.flush();
+				if (writer != null && outputFile != null) {
+					writer.close();
+				}
 			}
 		}
 	}

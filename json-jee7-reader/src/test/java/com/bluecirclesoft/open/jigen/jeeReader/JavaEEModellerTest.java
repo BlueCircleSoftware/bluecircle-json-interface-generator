@@ -16,9 +16,10 @@
 
 package com.bluecirclesoft.open.jigen.jeeReader;
 
-import org.junit.Test;
-
 import com.bluecirclesoft.open.jigen.model.Model;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import org.junit.Test;
 
 /**
  * TODO document me
@@ -27,6 +28,9 @@ public class JavaEEModellerTest {
 
 	@Test
 	public void testModeller() {
+
+		ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
+
 		JavaEEModeller modeller = new JavaEEModeller();
 
 		Model model = modeller.createModel("/", "com.bluecirclesoft");

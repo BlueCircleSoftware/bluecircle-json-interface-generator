@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,4 +55,8 @@ public class JEnum extends JToplevelType {
 		return visitor.visit(this);
 	}
 
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("name", name).append("values", values).toString();
+	}
 }

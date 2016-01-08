@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,5 +56,12 @@ public class JTypeVariable extends JType {
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("name", name)
+				.append("intersectionBounds", intersectionBounds)
+				.toString();
 	}
 }

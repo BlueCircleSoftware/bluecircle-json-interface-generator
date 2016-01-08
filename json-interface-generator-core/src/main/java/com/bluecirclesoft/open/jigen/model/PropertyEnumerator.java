@@ -17,9 +17,11 @@
 package com.bluecirclesoft.open.jigen.model;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
-@FunctionalInterface
 public interface PropertyEnumerator {
 
-	void enumerateProperties(Model model, Type... types);
+	List<JType> enumerateProperties(Model model, Type... types);
+
+	JType analyze(Model mode, Type type);
 }

@@ -16,10 +16,17 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * TODO document me
  */
 abstract public class JType {
+
+	// TODO debugging only
+
+	public static List<JType> createdTypes = new ArrayList<>();
 
 	abstract public <T> T accept(JTypeVisitor<T> visitor);
 

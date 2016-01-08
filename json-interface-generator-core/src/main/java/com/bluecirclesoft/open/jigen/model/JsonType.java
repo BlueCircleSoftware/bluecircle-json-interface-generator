@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * TODO document me
  */
@@ -72,12 +74,11 @@ public class JsonType {
 
 	@Override
 	public String toString() {
-		return "JsonType{" +
-				"type=" + type +
-				", classId='" + classId + '\'' +
-				", array=" + array +
-				", optional=" + optional +
-				'}';
+		return new ToStringBuilder(this).append("type", type)
+				.append("classId", classId)
+				.append("array", array)
+				.append("optional", optional)
+				.toString();
 	}
 
 	public static JsonType makeClass(String id) {

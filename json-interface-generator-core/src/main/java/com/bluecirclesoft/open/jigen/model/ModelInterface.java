@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,10 +50,9 @@ public class ModelInterface {
 
 	@Override
 	public String toString() {
-		return "ModelInterface{" +
-				"name='" + name + '\'' +
-				", properties=" + properties +
-				'}';
+		return new ToStringBuilder(this).append("name", name)
+				.append("properties", properties)
+				.toString();
 	}
 
 	public Map<String, JsonProperty> getProperties() {

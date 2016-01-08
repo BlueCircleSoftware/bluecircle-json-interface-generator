@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * TODO document me
  */
@@ -24,5 +26,10 @@ public class JNumber extends JType {
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).toString();
 	}
 }

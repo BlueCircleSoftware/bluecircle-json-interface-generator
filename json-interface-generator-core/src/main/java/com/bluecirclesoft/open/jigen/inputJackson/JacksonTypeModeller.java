@@ -102,11 +102,13 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		FUNDAMENTAL_TYPES.put(Character.TYPE, JString::new);
 	}
 
-	private final Map<Type, JType> processedTypes = new HashMap<>();
-
 	private final ArrayDeque<Type> typesToProcess = new ArrayDeque<>();
 
 	private final Map<Type, List<Consumer<JType>>> typeFixups = new HashMap<>();
+
+	public JacksonTypeModeller() {
+		JType.createdTypes.clear();
+	}
 
 	void addFixup(Type type, Consumer<JType> fixup) {
 		List<Consumer<JType>> list = typeFixups.get(type);
@@ -122,30 +124,45 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	}
 
 	@Override
-	public void enumerateProperties(Model model, Type... types) {
+	public List<JType> enumerateProperties(Model model, Type... types) {
 
 		Collections.addAll(typesToProcess, types);
 
-		Set<Type> addedThisSession = new HashSet<>();
-
 		while (!typesToProcess.isEmpty()) {
 			Type type = typesToProcess.pollFirst();
-			if (processedTypes.containsKey(type)) {
+			if (model.hasType(type)) {
+				logger.info("Type {} already seen", type);
 				continue;
 			}
-			processedTypes.put(type, handleType(type));
-			addedThisSession.add(type);
+			logger.info("Type {} being added", type);
+			model.addType(type, handleType(type));
 		}
 		for (Map.Entry<Type, List<Consumer<JType>>> fixup : typeFixups.entrySet()) {
-			JType jTYpe = processedTypes.get(fixup.getKey());
+			JType jTYpe = model.getType(fixup.getKey());
 			for (Consumer<JType> processor : fixup.getValue()) {
 				processor.accept(jTYpe);
 			}
 		}
-		for (Type type : addedThisSession) {
-			model.addType(type, processedTypes.get(type));
-		}
 		logger.info("Done");
+
+		Collection<JType> interfaces = model.getInterfaces();
+		for (JType createdType : JType.createdTypes) {
+			if (!interfaces.contains(createdType)) {
+				throw new RuntimeException("Type " + createdType + " was created, but not in " +
+						"interfaces");
+			}
+		}
+
+		List<JType> result = new ArrayList<>(types.length);
+		for (Type type : types) {
+			result.add(model.getType(type));
+		}
+		return result;
+	}
+
+	@Override
+	public JType analyze(Model model, Type type) {
+		return enumerateProperties(model, type).get(0);
 	}
 
 	private JType handleType(Type type) {
