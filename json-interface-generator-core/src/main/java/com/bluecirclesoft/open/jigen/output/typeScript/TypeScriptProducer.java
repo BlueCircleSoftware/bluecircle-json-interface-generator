@@ -16,15 +16,17 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
-import com.bluecirclesoft.open.jigen.model.JToplevelType;
-import com.bluecirclesoft.open.jigen.model.JType;
-import com.bluecirclesoft.open.jigen.model.Model;
-import com.bluecirclesoft.open.jigen.output.OutputProducer;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
+
+import com.bluecirclesoft.open.jigen.model.Endpoint;
+import com.bluecirclesoft.open.jigen.model.JToplevelType;
+import com.bluecirclesoft.open.jigen.model.JType;
+import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.output.OutputProducer;
 
 /**
  * TODO document me
@@ -50,6 +52,7 @@ public class TypeScriptProducer implements OutputProducer {
 		start();
 		try {
 			outputNamespace(ns);
+			outputEndpoints(model);
 		} finally {
 			if (writer != null) {
 				writer.flush();
@@ -58,6 +61,40 @@ public class TypeScriptProducer implements OutputProducer {
 				}
 			}
 		}
+	}
+
+	private void outputEndpoints(Model model) {
+		for (Map.Entry<String, Endpoint> endpointEntry : model.getEndpoints()) {
+			String name = endpointEntry.getKey();
+			Endpoint endpoint = endpointEntry.getValue();
+//			writer.line("// Processing " + endpoint);
+			StringBuilder parameterList = new StringBuilder();
+			boolean needsComma = false;
+			for (Map.Entry<String, JType> parameter : endpoint.getPathParameters().entrySet()) {
+				needsComma = addParameter(parameterList, needsComma, parameter.getKey(), parameter.getValue());
+			}
+			for (Map.Entry<String, JType> parameter : endpoint.getRequestParameters().entrySet()) {
+				needsComma = addParameter(parameterList, needsComma, parameter.getKey(), parameter.getValue());
+			}
+			if (endpoint.getRequestBody() != null) {
+				needsComma = addParameter(parameterList, needsComma, "body", endpoint.getRequestBody());
+			}
+			writer.line("function call_" + name + "(" + parameterList.toString() + ") : " +
+					endpoint.getResponseBody().accept(new TypeUsageProducer()));
+
+		}
+	}
+
+	private boolean addParameter(StringBuilder parameterList, boolean needsComma, String name, JType type) {
+		if (needsComma) {
+			parameterList.append(", ");
+		} else {
+			needsComma = true;
+		}
+		parameterList.append(name);
+		parameterList.append(" : ");
+		parameterList.append(type.accept(new TypeUsageProducer()));
+		return needsComma;
 	}
 
 	private void outputNamespace(Namespace namespace) {
@@ -84,8 +121,7 @@ public class TypeScriptProducer implements OutputProducer {
 			File outputDir = outputFile.getParentFile();
 			if (!outputDir.exists()) {
 				if (!outputDir.mkdirs()) {
-					throw new RuntimeException(
-							"Could not create folder " + outputDir.getAbsolutePath());
+					throw new RuntimeException("Could not create folder " + outputDir.getAbsolutePath());
 				}
 			}
 			writer = new OutputHandler(new PrintWriter(new FileWriter(outputFile)));

@@ -16,14 +16,15 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO document me
@@ -34,7 +35,7 @@ public class Model {
 
 	private final Map<Type, JType> interfaces = new HashMap<>();
 
-	private final Map<String, Endpoint> endpoints = new HashMap<>();
+	private final Map<String, Endpoint> endpoints = new TreeMap<>();
 
 	public Model() {
 		log.info("New model: " + this);
@@ -60,9 +61,7 @@ public class Model {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("interfaces", interfaces)
-				.append("endpoints", endpoints)
-				.toString();
+		return new ToStringBuilder(this).append("interfaces", interfaces).append("endpoints", endpoints).toString();
 	}
 
 	public boolean hasType(Type type) {
@@ -71,5 +70,9 @@ public class Model {
 
 	public JType getType(Type key) {
 		return interfaces.get(key);
+	}
+
+	public Iterable<Map.Entry<String, Endpoint>> getEndpoints() {
+		return endpoints.entrySet();
 	}
 }

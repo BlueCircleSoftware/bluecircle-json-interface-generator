@@ -16,14 +16,13 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
-import com.bluecirclesoft.open.jigen.model.JType;
-import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluecirclesoft.open.jigen.model.JType;
+
 /**
- * TODO document me
+ * This class represents a TypeScript namespace. It may contain other namespaces, or declarations of other types
  */
 public class Namespace {
 

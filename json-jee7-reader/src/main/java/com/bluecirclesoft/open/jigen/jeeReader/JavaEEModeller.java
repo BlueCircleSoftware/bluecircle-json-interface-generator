@@ -18,8 +18,10 @@ package com.bluecirclesoft.open.jigen.jeeReader;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +32,7 @@ import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -164,18 +167,37 @@ public class JavaEEModeller {
 
 		Set<HttpMethod> httpMethods = identifyHttpMethods(method);
 
+		Map<String, MethodParameter> pathParameters = new LinkedHashMap<>();
+		Map<String, MethodParameter> nonPathParameters = new LinkedHashMap<>();
+
+		for (Parameter p : method.getParameters()) {
+			MethodParameter mp = new MethodParameter();
+			mp.setName(p.getName());
+			mp.setType(p.getParameterizedType());
+			if (p.isAnnotationPresent(PathParam.class)) {
+				PathParam pathParam = p.getAnnotation(PathParam.class);
+				mp.setName(pathParam.value());
+				mp.setPathParam(true);
+				pathParameters.put(mp.getName(), mp);
+			} else {
+				nonPathParameters.put(mp.getName(), mp);
+			}
+		}
+
 		JType inType;
 		JType outType;
 		if (methodInfo.consumer) {
-			if (method.getParameterCount() > 1) {
+			if (nonPathParameters.size() > 1) {
 				logger.warn("Cannot consume multiple JSON objects - not supported");
 				return;
 			}
+			if (nonPathParameters.isEmpty()) {
+				logger.warn("No parameter for request body - not supported");
+			}
 			JacksonTypeModeller modeller = new JacksonTypeModeller();
-			inType = modeller.analyze(model, method.getGenericParameterTypes()[0]);
+			inType = modeller.analyze(model, nonPathParameters.entrySet().iterator().next().getValue().getType());
 		} else {
-			JacksonTypeModeller modeller = new JacksonTypeModeller();
-			inType = modeller.analyze(model, String.class);
+			inType = null;
 		}
 
 		if (methodInfo.producer) {
@@ -200,6 +222,10 @@ public class JavaEEModeller {
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(
 					joinPaths(urlPrefix, classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
+			for (MethodParameter pathParam : pathParameters.values()) {
+				JacksonTypeModeller modeller = new JacksonTypeModeller();
+				endpoint.getPathParameters().put(pathParam.getName(), modeller.analyze(model, pathParam.getType()));
+			}
 			endpoint.setMethod(httpMethod);
 		}
 	}

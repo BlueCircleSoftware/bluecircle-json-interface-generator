@@ -16,10 +16,10 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * TODO document me
@@ -36,9 +36,9 @@ public class Endpoint {
 
 	private String pathTemplate;
 
-	private final Map<String, JType> pathParameters = new HashMap<>();
+	private final Map<String, JType> pathParameters = new LinkedHashMap<>();
 
-	private final Map<String, JType> requestParameters = new HashMap<>();
+	private final Map<String, JType> requestParameters = new LinkedHashMap<>();
 
 	public Endpoint(String id) {
 		this.id = id;
