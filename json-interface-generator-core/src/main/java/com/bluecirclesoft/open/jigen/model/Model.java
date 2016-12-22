@@ -61,7 +61,7 @@ public class Model {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("interfaces", interfaces).append("endpoints", endpoints).toString();
+		return new ToStringBuilder(this).append("interfaces", interfaces).toString();
 	}
 
 	public boolean hasType(Type type) {
@@ -72,7 +72,7 @@ public class Model {
 		return interfaces.get(key);
 	}
 
-	public Iterable<Map.Entry<String, Endpoint>> getEndpoints() {
-		return endpoints.entrySet();
+	public Iterable<Endpoint> getEndpoints() {
+		return endpoints.values();
 	}
 }

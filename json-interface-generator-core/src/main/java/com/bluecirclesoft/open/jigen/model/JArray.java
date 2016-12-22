@@ -50,8 +50,6 @@ public class JArray extends JType {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("indexType", indexType)
-				.append("elementType", elementType)
-				.toString();
+		return new ToStringBuilder(this).append("indexType", indexType).append("elementType", elementType).toString();
 	}
 }

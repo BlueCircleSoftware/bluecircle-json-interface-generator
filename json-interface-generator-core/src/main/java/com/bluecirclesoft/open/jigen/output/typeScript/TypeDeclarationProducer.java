@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
+import java.util.Map;
+
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
@@ -25,11 +27,10 @@ import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
+import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JVoid;
-
-import java.util.Map;
 
 /**
  * TODO document me
@@ -38,8 +39,11 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final OutputHandler writer;
 
-	public TypeDeclarationProducer(OutputHandler writer) {
+	private final TypeScriptProducer producer;
+
+	public TypeDeclarationProducer(TypeScriptProducer typeScriptProducer, OutputHandler writer) {
 		this.writer = writer;
+		this.producer = typeScriptProducer;
 	}
 
 	@Override
@@ -115,21 +119,43 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 	}
 
 	private void makeInterfaceDeclaration(JObject intf) {
-		String declLine = "export interface " +
-				intf.accept(new TypeVariableProducer()) +
-				" {";
+		CreateConstructorVisitor createConstructorVisitor = new CreateConstructorVisitor();
+		String interfaceLabel = intf.getName();
+		String interfaceType = intf.accept(new TypeVariableProducer());
 		writer.line();
+		String declLine = "export interface " + interfaceType + " {";
 		writer.line(declLine);
 		writer.indentIn();
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer();
 		for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
-			String typeString = prop.getValue().getType().accept(new TypeUsageProducer());
-			writer.line(
-					prop.getKey() + (prop.getValue().isRequired() ? "" : "?") + ": " + typeString +
-							";");
+			String typeString = prop.getValue().getType().accept(typeUsageProducer);
+			writer.line(prop.getKey() + (prop.getValue().isRequired() ? "" : "?") + ": " + typeString + ";");
 		}
 		writer.indentOut();
 		writer.line("}");
-	}
 
+		if (producer.isProduceAccessorFunctionals()) {
+			for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
+				String propertyName = prop.getKey();
+				JType propertyType = prop.getValue().getType();
+				String typeString = propertyType.accept(typeUsageProducer) + (prop.getValue().isRequired() ? "" : " | undefined");
+				String ctor = propertyType.accept(createConstructorVisitor);
+				if (intf.getTypeVariables().size() == 0 && ctor != null) {
+					// TODO handle interfaces with type variables properly. The straightforward thing to do would be to give the function
+					// a type parameter, and pass in the appropriate constructor as a parameter. But I'm not really sure how useful this
+					// would be.
+
+					// Note if the ctor is null here, that means I don't actually know how to produce a construtcor. For now, we'll just
+					// skip this function.
+					String retType = "jsonInterfaceGenerator" + ".MemberAccessorImpl<" + interfaceLabel + "," + typeString + ">";
+					writer.line("export function " + interfaceLabel + "$" + propertyName + "() : " + retType + " { ");
+					writer.indentIn();
+					writer.line("return new " + retType + "('" + propertyName + "', " + ctor + ");");
+					writer.indentOut();
+					writer.line("}");
+				}
+			}
+		}
+	}
 
 }

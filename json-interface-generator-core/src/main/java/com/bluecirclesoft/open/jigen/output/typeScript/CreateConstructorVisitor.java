@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2016 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,81 +25,68 @@ import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
-import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 
 /**
- * TODO document me
+ * In the case of accessor functionals, a "constructor" needs to be provided to creeaye new objects when walking down the chain.
  */
-class TypeUsageProducer implements JTypeVisitor<String> {
+class CreateConstructorVisitor implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JObject jObject) {
-		return jObject.getReference();
+		return "() => { return {}; }";
 	}
 
 	@Override
 	public String visit(JAny jAny) {
-		return "any";
+		return null;
 	}
 
 	@Override
 	public String visit(JArray jArray) {
-		return jArray.getElementType().accept(this) + "[]";
+		return "() => []";
 	}
 
 	@Override
 	public String visit(JBoolean jBoolean) {
-		return "boolean";
+		return "() => false";
 	}
 
 	@Override
 	public String visit(JEnum jEnum) {
-		return jEnum.getReference();
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer();
+		return "() => " + jEnum.accept(typeUsageProducer) + "." + jEnum.getValues().iterator().next();
 	}
 
 	@Override
 	public String visit(JNumber jNumber) {
-		return "number";
+		return "() => 0";
 	}
 
 	@Override
 	public String visit(JString jString) {
-		return "string";
+		return "() => ''";
 	}
 
 	@Override
 	public String visit(JVoid jVoid) {
-		return "void";
+		return null;
 	}
 
 	@Override
 	public String visit(JSpecialization jSpecialization) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(this));
-		sb.append("<");
-		boolean needsComma = false;
-		for (JType param : jSpecialization.getParameters()) {
-			if (needsComma) {
-				sb.append(", ");
-			} else {
-				needsComma = true;
-			}
-			sb.append(param.accept(this));
-		}
-		sb.append(">");
-		return sb.toString();
+		return null;
 	}
 
 	@Override
 	public String visit(JTypeVariable jTypeVariable) {
-		return jTypeVariable.getName();
+		return null;
 	}
 
 	@Override
 	public String visit(JMap jMap) {
-		return "{[name: string]:" + jMap.getValueType().accept(this) + "}";
+		return null;
 	}
 }

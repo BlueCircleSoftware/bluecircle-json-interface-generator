@@ -33,6 +33,10 @@ public class Options {
 			"necessary")
 	private String outputFile;
 
+	@ByArgument(longOpt = "typings-index-path", mnemonic = "<file>", documentation = "The path (relative to the output file) for the " +
+			"Typings index.d.ts")
+	private String typingsIndexPath;
+
 	public String getPackageName() {
 		return packageName;
 	}
@@ -55,5 +59,13 @@ public class Options {
 
 	public void setOutputFile(String outputFile) {
 		this.outputFile = outputFile;
+	}
+
+	public String getTypingsIndexPath() {
+		return typingsIndexPath;
+	}
+
+	public void setTypingsIndexPath(String typingsIndexPath) {
+		this.typingsIndexPath = typingsIndexPath;
 	}
 }

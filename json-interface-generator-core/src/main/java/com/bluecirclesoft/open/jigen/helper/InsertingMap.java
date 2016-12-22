@@ -25,7 +25,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * TODO document me
+ * InsertingMap is a wrapper around a map. It adds a new method, elem(), which is like get(), but ensures a new value is created if it's
+ * missing in the map.
  */
 public class InsertingMap<K, V> implements Map<K, V> {
 

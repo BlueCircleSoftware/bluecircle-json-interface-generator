@@ -55,7 +55,7 @@ public class Main {
 		Model model = modeller.createModel(options.getUrlPrefix(), options.getPackageName());
 
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()));
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()), options.getTypingsIndexPath());
 		outputTypeScript.output(model);
 
 	}

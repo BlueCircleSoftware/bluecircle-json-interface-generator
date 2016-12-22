@@ -18,31 +18,35 @@ package com.bluecirclesoft.open.jigen.jeeReader;
 
 import java.lang.reflect.Type;
 
+import com.bluecirclesoft.open.jigen.model.EndpointParameter;
+
 /**
  * Holds relevant information about a web service method parameter.
  */
 public class MethodParameter {
 
-	private String name;
+	private String codeName;
 
-	private boolean pathParam;
+	private String networkName;
 
 	private Type type;
 
-	public void setName(String name) {
-		this.name = name;
+	private EndpointParameter.NetworkType networkType;
+
+	public String getCodeName() {
+		return codeName;
 	}
 
-	public String getName() {
-		return name;
+	public void setCodeName(String codeName) {
+		this.codeName = codeName;
 	}
 
-	public void setPathParam(boolean pathParam) {
-		this.pathParam = pathParam;
+	public String getNetworkName() {
+		return networkName;
 	}
 
-	public boolean isPathParam() {
-		return pathParam;
+	public void setNetworkName(String networkName) {
+		this.networkName = networkName;
 	}
 
 	public void setType(Type type) {
@@ -51,5 +55,13 @@ public class MethodParameter {
 
 	public Type getType() {
 		return type;
+	}
+
+	public EndpointParameter.NetworkType getNetworkType() {
+		return networkType;
+	}
+
+	public void setNetworkType(EndpointParameter.NetworkType networkType) {
+		this.networkType = networkType;
 	}
 }

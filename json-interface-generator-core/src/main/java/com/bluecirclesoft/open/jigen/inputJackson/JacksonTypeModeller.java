@@ -16,6 +16,25 @@
 
 package com.bluecirclesoft.open.jigen.inputJackson;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
@@ -46,25 +65,6 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonNumberFormatVisitor
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonStringFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Imports the information about a given type into the Model using Jackson.
@@ -148,8 +148,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		Collection<JType> interfaces = model.getInterfaces();
 		for (JType createdType : JType.createdTypes) {
 			if (!interfaces.contains(createdType)) {
-				throw new RuntimeException("Type " + createdType + " was created, but not in " +
-						"interfaces");
+				throw new RuntimeException("Type " + createdType + " was created, but not in " + "interfaces");
 			}
 		}
 
@@ -202,8 +201,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				queueType(pt.getRawType());
 				for (int i = 0; i < pt.getActualTypeArguments().length; i++) {
 					final int finalI = i;
-					addFixup(pt.getActualTypeArguments()[i],
-							jType -> jSpecialization.getParameters()[finalI] = jType);
+					addFixup(pt.getActualTypeArguments()[i], jType -> jSpecialization.getParameters()[finalI] = jType);
 					queueType(pt.getActualTypeArguments()[i]);
 				}
 				return jSpecialization;
@@ -230,124 +228,120 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private JType handleUserDefinedClass(Class type) {
 
-		final TypeReadingVisitor<?>[] reader = {null};
+		TypeReadingVisitor<?> reader;
 		try {
-			JsonFormatVisitorWrapper wrapper = new JsonFormatVisitorWrapper.Base() {
-
-				@Override
-				public JsonArrayFormatVisitor expectArrayFormat(JavaType type)
-						throws JsonMappingException {
-					return new JsonArrayFormatVisitor.Base() {
-						@Override
-						public void itemsFormat(JsonFormatVisitable handler, JavaType elementType)
-								throws JsonMappingException {
-							super.itemsFormat(handler, elementType);
-						}
-
-						@Override
-						public void itemsFormat(JsonFormatTypes format)
-								throws JsonMappingException {
-							super.itemsFormat(format);
-						}
-					};
-				}
-
-				@Override
-				public JsonStringFormatVisitor expectStringFormat(JavaType type)
-						throws JsonMappingException {
-					reader[0] = JString::new;
-					return new JsonStringFormatVisitor.Base() {
-						@Override
-						public void enumTypes(Set<String> enums) {
-							reader[0] = () -> new JEnum(type.getRawClass().getName(), enums);
-						}
-					};
-				}
-
-				@Override
-				public JsonNumberFormatVisitor expectNumberFormat(JavaType type)
-						throws JsonMappingException {
-					reader[0] = JNumber::new;
-					return new JsonNumberFormatVisitor() {
-						@Override
-						public void numberType(JsonParser.NumberType type) {
-							throw new RuntimeException("not implemented");
-						}
-
-						@Override
-						public void format(JsonValueFormat format) {
-							throw new RuntimeException("not implemented");
-						}
-
-						@Override
-						public void enumTypes(Set<String> enums) {
-							throw new RuntimeException("not implemented");
-						}
-					};
-				}
-
-				@Override
-				public JsonIntegerFormatVisitor expectIntegerFormat(JavaType type)
-						throws JsonMappingException {
-					reader[0] = JNumber::new;
-					return new JsonIntegerFormatVisitor.Base() {
-					};
-				}
-
-				@Override
-				public JsonBooleanFormatVisitor expectBooleanFormat(JavaType type)
-						throws JsonMappingException {
-					reader[0] = JNumber::new;
-					return new JsonBooleanFormatVisitor.Base() {
-					};
-				}
-
-				@Override
-				public JsonNullFormatVisitor expectNullFormat(JavaType type)
-						throws JsonMappingException {
-					reader[0] = JNumber::new;
-					return new JsonNullFormatVisitor.Base() {
-					};
-				}
-
-				@Override
-				public JsonAnyFormatVisitor expectAnyFormat(JavaType type)
-						throws JsonMappingException {
-					reader[0] = JAny::new;
-					return new JsonAnyFormatVisitor.Base() {
-					};
-				}
-
-				@Override
-				public JsonMapFormatVisitor expectMapFormat(JavaType type)
-						throws JsonMappingException {
-					// We would only have gotten here for a raw map; it's element type is any
-					JMap map = new JMap(new JAny());
-					reader[0] = () -> map;
-					return new JsonMapFormatVisitor.Base() {
-					};
-				}
-
-				@Override
-				public JsonObjectFormatVisitor expectObjectFormat(JavaType type)
-						throws JsonMappingException {
-					JsonObjectReader myReader =
-							new JsonObjectReader(JacksonTypeModeller.this, type.getRawClass());
-					reader[0] = myReader;
-					return myReader;
-				}
-			};
+			MyBase wrapper = new MyBase();
 			ObjectMapper objectMapper = new ObjectMapper();
 			objectMapper.acceptJsonFormatVisitor(type, wrapper);
+			reader = wrapper.getReader();
 		} catch (JsonMappingException e) {
-			throw new RuntimeException(e);  // TODO generated stub
+			throw new RuntimeException(e);
 		}
-		if (reader[0] == null) {
+		if (reader == null) {
 			return null;
 		} else {
-			return reader[0].getResult();
+			return reader.getResult();
 		}
 	}
 
 
+	private class MyBase extends JsonFormatVisitorWrapper.Base {
+
+		private TypeReadingVisitor<?> reader;
+
+		public TypeReadingVisitor<?> getReader() {
+			return reader;
+		}
+
+		@Override
+		public JsonArrayFormatVisitor expectArrayFormat(JavaType type) throws JsonMappingException {
+			return new JsonArrayFormatVisitor.Base() {
+				@Override
+				public void itemsFormat(JsonFormatVisitable handler, JavaType elementType) throws JsonMappingException {
+					super.itemsFormat(handler, elementType);
+				}
+
+				@Override
+				public void itemsFormat(JsonFormatTypes format) throws JsonMappingException {
+					super.itemsFormat(format);
+				}
+			};
+		}
+
+		@Override
+		public JsonStringFormatVisitor expectStringFormat(JavaType type) throws JsonMappingException {
+			reader = JString::new;
+			return new JsonStringFormatVisitor.Base() {
+				@Override
+				public void enumTypes(Set<String> enums) {
+					reader = () -> new JEnum(type.getRawClass().getName(), enums);
+				}
+			};
+		}
+
+		@Override
+		public JsonNumberFormatVisitor expectNumberFormat(JavaType type) throws JsonMappingException {
+			reader = JNumber::new;
+			return new JsonNumberFormatVisitor() {
+				@Override
+				public void numberType(JsonParser.NumberType type) {
+					throw new RuntimeException("not implemented");
+				}
+
+				@Override
+				public void format(JsonValueFormat format) {
+					throw new RuntimeException("not implemented");
+				}
+
+				@Override
+				public void enumTypes(Set<String> enums) {
+					throw new RuntimeException("not implemented");
+				}
+			};
+		}
+
+		@Override
+		public JsonIntegerFormatVisitor expectIntegerFormat(JavaType type) throws JsonMappingException {
+			reader = JNumber::new;
+			return new JsonIntegerFormatVisitor.Base() {
+			};
+		}
+
+		@Override
+		public JsonBooleanFormatVisitor expectBooleanFormat(JavaType type) throws JsonMappingException {
+			reader = JNumber::new;
+			return new JsonBooleanFormatVisitor.Base() {
+			};
+		}
+
+		@Override
+		public JsonNullFormatVisitor expectNullFormat(JavaType type) throws JsonMappingException {
+			reader = JNumber::new;
+			return new JsonNullFormatVisitor.Base() {
+			};
+		}
+
+		@Override
+		public JsonAnyFormatVisitor expectAnyFormat(JavaType type) throws JsonMappingException {
+			reader = JAny::new;
+			return new JsonAnyFormatVisitor.Base() {
+			};
+		}
+
+		@Override
+		public JsonMapFormatVisitor expectMapFormat(JavaType type) throws JsonMappingException {
+			// We would only have gotten here for a raw map; it's element type is any
+			JMap map = new JMap(new JAny());
+			reader = () -> map;
+			return new JsonMapFormatVisitor.Base() {
+			};
+		}
+
+		@Override
+		public JsonObjectFormatVisitor expectObjectFormat(JavaType type) throws JsonMappingException {
+			JsonObjectReader myReader = new JsonObjectReader(JacksonTypeModeller.this, type.getRawClass());
+			reader = myReader;
+			return myReader;
+		}
+	}
 }

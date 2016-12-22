@@ -16,12 +16,12 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * TODO document me
@@ -56,10 +56,7 @@ public class JObject extends JToplevelType {
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append("name", name)
-					.append("type", type)
-					.append("required", required)
-					.toString();
+			return new ToStringBuilder(this).append("name", name).append("type", type).append("required", required).toString();
 		}
 	}
 
@@ -115,9 +112,6 @@ public class JObject extends JToplevelType {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("name", name)
-				.append("typeVariables", typeVariables)
-				.append("fields", fields)
-				.toString();
+		return new ToStringBuilder(this).append("name", name).append("typeVariables", typeVariables).append("fields", fields).toString();
 	}
 }

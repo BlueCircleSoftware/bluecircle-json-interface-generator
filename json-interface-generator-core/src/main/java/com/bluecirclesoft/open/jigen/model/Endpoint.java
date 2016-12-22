@@ -16,38 +16,33 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * TODO document me
+ * Holds information about a REST endpoint (one Java method may generate multiple endpoints, if it is annotated with multiple HTTP methods).
  */
 public class Endpoint {
 
-	private final String id;
+	private String id;
 
 	private HttpMethod method;
-
-	private JType requestBody;
 
 	private JType responseBody;
 
 	private String pathTemplate;
 
-	private final Map<String, JType> pathParameters = new LinkedHashMap<>();
-
-	private final Map<String, JType> requestParameters = new LinkedHashMap<>();
+	private final List<EndpointParameter> parameters = new ArrayList<>();
 
 	public Endpoint(String id) {
 		this.id = id;
 	}
 
-	public Endpoint(String id, HttpMethod method, JObject requestBody, JObject responseBody) {
+	public Endpoint(String id, HttpMethod method, JObject responseBody) {
 		this.id = id;
 		this.method = method;
-		this.requestBody = requestBody;
 		this.responseBody = responseBody;
 	}
 
@@ -59,12 +54,8 @@ public class Endpoint {
 		this.method = method;
 	}
 
-	public JType getRequestBody() {
-		return requestBody;
-	}
-
-	public void setRequestBody(JObject requestBody) {
-		this.requestBody = requestBody;
+	public List<EndpointParameter> getParameters() {
+		return parameters;
 	}
 
 	public JType getResponseBody() {
@@ -79,16 +70,12 @@ public class Endpoint {
 		return id;
 	}
 
-	public void setRequestBody(JType requestBody) {
-		this.requestBody = requestBody;
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public void setResponseBody(JType responseBody) {
 		this.responseBody = responseBody;
-	}
-
-	public Map<String, JType> getPathParameters() {
-		return pathParameters;
 	}
 
 	public String getPathTemplate() {
@@ -99,19 +86,13 @@ public class Endpoint {
 		this.pathTemplate = pathTemplate;
 	}
 
-	public Map<String, JType> getRequestParameters() {
-		return requestParameters;
-	}
-
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this).append("id", id)
 				.append("method", method)
-				.append("requestBody", requestBody)
+				.append("parameters", parameters)
 				.append("responseBody", responseBody)
 				.append("pathTemplate", pathTemplate)
-				.append("pathParameters", pathParameters)
-				.append("requestParameters", requestParameters)
 				.toString();
 	}
 }

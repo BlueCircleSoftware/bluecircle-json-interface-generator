@@ -36,7 +36,7 @@ public class TypeScriptProducerTest {
 		Model model = new Model();
 		jacksonTypeModeller.enumerateProperties(model, ClassC.class);
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out));
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out),"abc");
 		outputTypeScript.output(model);
 	}
 

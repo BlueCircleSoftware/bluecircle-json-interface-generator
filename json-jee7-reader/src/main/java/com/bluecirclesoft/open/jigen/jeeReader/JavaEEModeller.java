@@ -19,21 +19,29 @@ package com.bluecirclesoft.open.jigen.jeeReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.MatrixParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.reflections.Reflections;
@@ -46,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import com.bluecirclesoft.open.jigen.helper.InsertingMap;
 import com.bluecirclesoft.open.jigen.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
+import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
@@ -53,7 +62,7 @@ import com.bluecirclesoft.open.jigen.model.Model;
 /**
  * TODO document me
  */
-public class JavaEEModeller {
+class JavaEEModeller {
 
 	private static final Logger logger = LoggerFactory.getLogger(JavaEEModeller.class);
 
@@ -65,12 +74,12 @@ public class JavaEEModeller {
 
 		Method method;
 
-		public MethodInfo(Method method) {
+		MethodInfo(Method method) {
 			this.method = method;
 		}
 	}
 
-	private static Map<Class<? extends Annotation>, HttpMethod> annotationHttpMethodMap = new HashMap<>();
+	private static final Map<Class<? extends Annotation>, HttpMethod> annotationHttpMethodMap = new HashMap<>();
 
 	static {
 		annotationHttpMethodMap.put(DELETE.class, HttpMethod.DELETE);
@@ -84,20 +93,18 @@ public class JavaEEModeller {
 
 	private String urlPrefix;
 
-	public Model createModel(String urlPrefix, String... packageNames) {
+	Model createModel(String urlPrefix, String... packageNames) {
 		InsertingMap<Method, MethodInfo> annotatedMethods = new InsertingMap<>(new HashMap<>(), MethodInfo::new);
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
 					.setScanners(new MethodAnnotationsScanner()));
 
-			for (Method method : reflections.getMethodsAnnotatedWith(Produces.class)) {
+			for (Method method : findJaxRsMethods(reflections)) {
+				logger.info("Handling method {}", method);
 				boolean producer = isProducer(method);
 				if (producer) {
 					annotatedMethods.elem(method).producer = true;
 				}
-			}
-
-			for (Method method : reflections.getMethodsAnnotatedWith(Consumes.class)) {
 				boolean consumer = isConsumer(method);
 				if (consumer) {
 					annotatedMethods.elem(method).consumer = true;
@@ -120,9 +127,38 @@ public class JavaEEModeller {
 		return model;
 	}
 
-	private boolean isProducer(Method method) {
+	/**
+	 * Find methods which are JAX-RS methods
+	 *
+	 * @param reflections the reflections object
+	 * @return a set of all appropriate methods
+	 */
+	private static Set<Method> findJaxRsMethods(Reflections reflections) {
+		Set<Method> resultSet = new TreeSet<>((Method m1, Method m2) -> {
+			int result = m1.getDeclaringClass().getName().compareTo(m2.getDeclaringClass().getName());
+			if (result != 0) {
+				return result;
+			}
+			return m1.getName().compareTo(m2.getName());
+		});
+		for (Class<? extends Annotation> annotation : annotationHttpMethodMap.keySet()) {
+			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
+		}
+		return resultSet;
+	}
+
+	private static boolean isProducer(Method method) {
 		Produces produces = method.getAnnotation(Produces.class);
-		if (produces != null && produces.value() != null) {
+		if (isJsonProducer(produces)) {
+			return true;
+		} else {
+			produces = method.getDeclaringClass().getAnnotation(Produces.class);
+			return isJsonProducer(produces);
+		}
+	}
+
+	private static boolean isJsonProducer(Produces produces) {
+		if (produces != null) {
 			for (String val : produces.value()) {
 				if (MediaType.APPLICATION_JSON.equals(val)) {
 					return true;
@@ -132,9 +168,18 @@ public class JavaEEModeller {
 		return false;
 	}
 
-	private boolean isConsumer(Method method) {
+	private static boolean isConsumer(Method method) {
 		Consumes consumes = method.getAnnotation(Consumes.class);
-		if (consumes != null && consumes.value() != null) {
+		if (isJsonConsumer(consumes)) {
+			return true;
+		} else {
+			consumes = method.getDeclaringClass().getAnnotation(Consumes.class);
+			return isJsonConsumer(consumes);
+		}
+	}
+
+	private static boolean isJsonConsumer(Consumes consumes) {
+		if (consumes != null) {
 			for (String val : consumes.value()) {
 				if (MediaType.APPLICATION_JSON.equals(val)) {
 					return true;
@@ -144,7 +189,7 @@ public class JavaEEModeller {
 		return false;
 	}
 
-	public String joinPaths(String startElement, String... pathElements) {
+	private static String joinPaths(String startElement, String... pathElements) {
 		String result = startElement;
 		for (String pathElement : pathElements) {
 			if (pathElement != null) {
@@ -167,39 +212,39 @@ public class JavaEEModeller {
 
 		Set<HttpMethod> httpMethods = identifyHttpMethods(method);
 
-		Map<String, MethodParameter> pathParameters = new LinkedHashMap<>();
-		Map<String, MethodParameter> nonPathParameters = new LinkedHashMap<>();
+		List<MethodParameter> parameters = new ArrayList<>();
+		MethodParameter bodyParam = null;
 
 		for (Parameter p : method.getParameters()) {
 			MethodParameter mp = new MethodParameter();
-			mp.setName(p.getName());
+			mp.setCodeName(p.getName());
 			mp.setType(p.getParameterizedType());
 			if (p.isAnnotationPresent(PathParam.class)) {
 				PathParam pathParam = p.getAnnotation(PathParam.class);
-				mp.setName(pathParam.value());
-				mp.setPathParam(true);
-				pathParameters.put(mp.getName(), mp);
+				mp.setNetworkName(pathParam.value());
+				mp.setNetworkType(EndpointParameter.NetworkType.PATH);
+				parameters.add(mp);
+			} else if (p.isAnnotationPresent(QueryParam.class)) {
+				QueryParam queryParam = p.getAnnotation(QueryParam.class);
+				mp.setNetworkName(queryParam.value());
+				mp.setNetworkType(EndpointParameter.NetworkType.QUERY);
+				parameters.add(mp);
+			} else if (p.isAnnotationPresent(FormParam.class)) {
+				FormParam formParam = p.getAnnotation(FormParam.class);
+				mp.setNetworkName(formParam.value());
+				mp.setNetworkType(EndpointParameter.NetworkType.FORM);
+				parameters.add(mp);
+			} else if (p.isAnnotationPresent(MatrixParam.class) || p.isAnnotationPresent(HeaderParam.class) ||
+					p.isAnnotationPresent(CookieParam.class) || p.isAnnotationPresent(Context.class)) {
+				// ignore
 			} else {
-				nonPathParameters.put(mp.getName(), mp);
+				mp.setNetworkType(EndpointParameter.NetworkType.BODY);
+				parameters.add(mp);
+				bodyParam = mp;
 			}
 		}
 
-		JType inType;
 		JType outType;
-		if (methodInfo.consumer) {
-			if (nonPathParameters.size() > 1) {
-				logger.warn("Cannot consume multiple JSON objects - not supported");
-				return;
-			}
-			if (nonPathParameters.isEmpty()) {
-				logger.warn("No parameter for request body - not supported");
-			}
-			JacksonTypeModeller modeller = new JacksonTypeModeller();
-			inType = modeller.analyze(model, nonPathParameters.entrySet().iterator().next().getValue().getType());
-		} else {
-			inType = null;
-		}
-
 		if (methodInfo.producer) {
 			JacksonTypeModeller modeller = new JacksonTypeModeller();
 			outType = modeller.analyze(model, method.getGenericReturnType());
@@ -218,19 +263,20 @@ public class JavaEEModeller {
 				suffix = "";
 			}
 			Endpoint endpoint = model.createEndpoint(method.getDeclaringClass().getName() + "." + method.getName() + suffix);
-			endpoint.setRequestBody(inType);
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(
-					joinPaths(urlPrefix, classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
-			for (MethodParameter pathParam : pathParameters.values()) {
+					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
+			for (MethodParameter pathParam : parameters) {
 				JacksonTypeModeller modeller = new JacksonTypeModeller();
-				endpoint.getPathParameters().put(pathParam.getName(), modeller.analyze(model, pathParam.getType()));
+				endpoint.getParameters()
+						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
+								modeller.analyze(model, pathParam.getType()), pathParam.getNetworkType()));
 			}
 			endpoint.setMethod(httpMethod);
 		}
 	}
 
-	private Set<HttpMethod> identifyHttpMethods(Method method) {
+	private static Set<HttpMethod> identifyHttpMethods(Method method) {
 		Set<HttpMethod> result = EnumSet.noneOf(HttpMethod.class);
 		for (Map.Entry<Class<? extends Annotation>, HttpMethod> entry : annotationHttpMethodMap.entrySet()) {
 			if (method.isAnnotationPresent(entry.getKey())) {

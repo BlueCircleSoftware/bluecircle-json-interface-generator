@@ -57,7 +57,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JAny jAny) {
-		throw new RuntimeException("not implemented");
+		return "any";
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 		StringBuilder sb = new StringBuilder();
 		sb.append(var.getName());
 		if (!var.getIntersectionBounds().isEmpty()) {
-			sb.append(" extends");
+			sb.append(" extends ");
 			boolean needsAmpersand = false;
 			for (JType bound : var.getIntersectionBounds()) {
 				if (needsAmpersand) {

@@ -19,7 +19,12 @@ package com.bluecirclesoft.open.jigen.output.typeScript;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.bluecirclesoft.open.jigen.model.Endpoint;
+import com.bluecirclesoft.open.jigen.model.JToplevelType;
 import com.bluecirclesoft.open.jigen.model.JType;
+import com.bluecirclesoft.open.jigen.model.Model;
 
 /**
  * This class represents a TypeScript namespace. It may contain other namespaces, or declarations of other types
@@ -28,24 +33,29 @@ public class Namespace {
 
 	private String name;
 
+	private Namespace containingNamespace;
+
 	private final List<Namespace> namespaces = new ArrayList<>();
 
-	private final List<JType> declarations = new ArrayList<>();
+	private final List<JToplevelType> declarations = new ArrayList<>();
 
-	public Namespace(String name) {
+	private final List<Endpoint> endpoints = new ArrayList<>();
+
+	private Namespace(Namespace containingNamespace, String name) {
+		this.containingNamespace = containingNamespace;
 		this.name = name;
 	}
 
-	public Namespace() {
+	private Namespace() {
 	}
 
-	public Namespace findSubNamespace(String name) {
+	private Namespace findSubNamespace(String name) {
 		for (Namespace thing : namespaces) {
 			if (thing != null && thing.getName().equals(name)) {
 				return thing;
 			}
 		}
-		Namespace newNamespace = new Namespace(name);
+		Namespace newNamespace = new Namespace(this, name);
 		namespaces.add(newNamespace);
 		return newNamespace;
 	}
@@ -58,12 +68,91 @@ public class Namespace {
 		this.name = name;
 	}
 
-	public List<Namespace> getNamespaces() {
+	List<Namespace> getNamespaces() {
 		return namespaces;
 	}
 
-	public List<JType> getDeclarations() {
+	private void setContainingNamespace(Namespace containingNamespace) {
+		this.containingNamespace = containingNamespace;
+	}
+
+	public String getReference() {
+		if (containingNamespace == null) {
+			if (StringUtils.isBlank(name)) {
+				return "";
+			} else {
+				return name;
+			}
+		} else {
+			String parent = containingNamespace.getReference();
+			if (StringUtils.isBlank(parent)) {
+				return name;
+			} else {
+				return parent + "." + name;
+			}
+		}
+	}
+
+	Iterable<? extends JToplevelType> getDeclarations() {
 		return declarations;
 	}
 
+	private void addDeclaration(JToplevelType tlType) {
+		declarations.add(tlType);
+		tlType.setContainingNamespace(this);
+	}
+
+	private boolean isDeclarationsEmpty() {
+		return declarations.isEmpty();
+	}
+
+	static Namespace namespacifyModel(Model model) {
+		Namespace top = new Namespace();
+
+		for (JType thing : model.getInterfaces()) {
+			if (thing instanceof JToplevelType) {
+				JToplevelType tlType = (JToplevelType) thing;
+				String name = tlType.getName();
+				String[] brokenName = name.split("\\.");
+				String finalName = brokenName[brokenName.length - 1];
+				Namespace containingName = top;
+				for (int i = 0; i < brokenName.length - 1; i++) {
+					containingName = containingName.findSubNamespace(brokenName[i]);
+				}
+				tlType.setName(finalName);
+				containingName.addDeclaration(tlType);
+			}
+		}
+
+		for (Endpoint endpoint : model.getEndpoints()) {
+			String name = endpoint.getId();
+			String[] brokenName = name.split("\\.");
+			String finalName = brokenName[brokenName.length - 1];
+			Namespace containingName = top;
+			for (int i = 0; i < brokenName.length - 1; i++) {
+				containingName = containingName.findSubNamespace(brokenName[i]);
+			}
+			endpoint.setId(finalName);
+			containingName.addEndpoint(endpoint);
+		}
+
+		// strip common namespaces
+		while (top.getNamespaces().size() == 1 && top.isDeclarationsEmpty()) {
+			top = top.getNamespaces().get(0);
+		}
+
+
+		top.setContainingNamespace(null);
+
+		return top;
+	}
+
+	private void addEndpoint(Endpoint endpoint) {
+		endpoints.add(endpoint);
+	}
+
+
+	public List<Endpoint> getEndpoints() {
+		return endpoints;
+	}
 }

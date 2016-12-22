@@ -16,10 +16,10 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * TODO document me
@@ -28,7 +28,7 @@ public class JEnum extends JToplevelType {
 
 	private String name;
 
-	private final Set<String> values = new HashSet<>();
+	private final Set<String> values = new LinkedHashSet<>();
 
 	public JEnum() {
 	}

@@ -16,15 +16,6 @@
 
 package com.bluecirclesoft.open.jigen.inputJackson;
 
-import com.bluecirclesoft.open.jigen.model.Model;
-import com.bluecirclesoft.open.jigen.output.typeScript.TypeScriptProducer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import org.junit.Test;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -34,6 +25,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.Test;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.output.typeScript.TypeScriptProducer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 
 /**
  * TODO document me
@@ -60,14 +61,13 @@ public class JacksonTypeModellerTest {
 		}
 		for (Class<?> cl : handledClasses) {
 			if (!leafClasses.contains(cl)) {
-				throw new RuntimeException("There is a handle() method for class " + cl.getName() +
-						", but it is not a leaf descendent of JsonSchema");
+				throw new RuntimeException(
+						"There is a handle() method for class " + cl.getName() + ", but it is not a leaf descendent of JsonSchema");
 			}
 		}
 		for (Class<?> cl : leafClasses) {
 			if (!handledClasses.contains(cl)) {
-				throw new RuntimeException(
-						"There is no handle() method for the lead class " + cl.getName());
+				throw new RuntimeException("There is no handle() method for the lead class " + cl.getName());
 			}
 		}
 	}
@@ -114,7 +114,7 @@ public class JacksonTypeModellerTest {
 		jacksonTypeModeller.enumerateProperties(model, ClassA.class, ClassB.class);
 		log.info("Resulting model: {}", model);
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out));
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out), "abc");
 		outputTypeScript.output(model);
 	}
 

@@ -16,12 +16,43 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.bluecirclesoft.open.jigen.output.typeScript.Namespace;
+
 /**
- * TODO document me
+ * Base class for types that are defined at top level (namely, objects and enums).
  */
 public abstract class JToplevelType extends JType {
 
+	private Namespace containingNamespace;
+
+	/**
+	 * Get the namespace that this type is defined in.
+	 *
+	 * @return the namespace
+	 */
+	public Namespace getContainingNamespace() {
+		return containingNamespace;
+	}
+
+	public void setContainingNamespace(Namespace containingNamespace) {
+		this.containingNamespace = containingNamespace;
+	}
+
 	abstract public String getName();
+
+	public String getReference() {
+		String namespace = "??";
+		if (containingNamespace != null) {
+			namespace = getContainingNamespace().getReference();
+		}
+		if (StringUtils.isBlank(namespace)) {
+			return getName();
+		} else {
+			return namespace + "." + getName();
+		}
+	}
 
 	abstract public void setName(String name);
 

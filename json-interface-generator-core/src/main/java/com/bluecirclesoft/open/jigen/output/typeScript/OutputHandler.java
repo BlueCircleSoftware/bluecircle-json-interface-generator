@@ -16,6 +16,10 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 /**
@@ -67,5 +71,20 @@ public class OutputHandler {
 
 	public void close() {
 		writer.close();
+	}
+
+	public void writeResource(String resourcePath) {
+		InputStream fileResource = OutputHandler.class.getResourceAsStream(resourcePath);
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileResource))) {
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) {
+					break;
+				}
+				line(line);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
