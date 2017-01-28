@@ -1,0 +1,16 @@
+
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    //    "outDir": "../../../target/generated-javascript/js"
+    "allowSyntheticDefaultImports": false
+  },
+  "awesomeTypescriptLoaderOptions": {
+    "forkChecker": true,
+    "useWebpackText": true
+  }
+}

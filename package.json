@@ -1,0 +1,18 @@
+{
+  "devDependencies": {
+    "@types/jasmine": "^2.5.40",
+    "@types/jquery": "^2.0.39",
+    "awesome-typescript-loader": "^3.0.0-beta.18",
+    "jasmine": "^2.5.3",
+    "jasmine-core": "^2.5.2",
+    "karma": "^1.4.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-jasmine": "^1.1.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^2.0.1",
+    "typescript": "^2.1.5",
+    "webpack": "^1.14.0",
+    "source-map-loader": "^0.1.5",
+    "webpack-fail-plugin": "^1.0.5"
+  }
+}

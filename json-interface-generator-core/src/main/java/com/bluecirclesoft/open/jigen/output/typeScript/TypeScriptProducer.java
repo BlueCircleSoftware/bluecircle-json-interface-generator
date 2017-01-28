@@ -72,6 +72,8 @@ public class TypeScriptProducer implements OutputProducer {
 		start();
 		try {
 			outputNamespace(ns, true);
+			writer.line();
+			writer.line("export {};");
 		} finally {
 			if (writer != null) {
 				writer.flush();
@@ -174,7 +176,7 @@ public class TypeScriptProducer implements OutputProducer {
 		if (namespace.getName() != null) {
 			writer.line();
 			// top-level namespaces should not get 'export' sub-namespaces should. Vagaries of JavaScript
-			writer.line((top ? "" : "export ") + "namespace " + namespace.getName() + " {");
+			writer.line("export namespace " + namespace.getName() + " {");
 			writer.indentIn();
 		}
 		for (JType intf : namespace.getDeclarations()) {

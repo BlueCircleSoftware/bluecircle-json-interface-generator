@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace jsonInterfaceGenerator {
+export namespace jsonInterfaceGenerator {
     export interface JsonOptions<R> {
         async?: boolean;
         complete? (jqXHR: JQueryXHR, textStatus: string): any;
@@ -22,6 +22,15 @@ namespace jsonInterfaceGenerator {
         success? (data: R, textStatus: string, jqXHR: JQueryXHR): any;
     }
     export let ajaxUrlPrefix: string|null = null;
+
+    export let logDebug: boolean = false;
+
+    function debug(...args: any[]) {
+        if (logDebug) {
+            console.log.apply(null, args);
+        }
+
+    }
 
     export function init(prefix: string) {
         ajaxUrlPrefix = prefix;
@@ -170,23 +179,39 @@ namespace jsonInterfaceGenerator {
         }
     }
 
-    export class AccessorBuilder<RootType,ValType> extends Accessor<ValType> {
-        list: RootType[];
+    export class AccessorBuilder<T> extends Accessor<T> {
+        list: any[];
         accessors: MemberAccessor<any,any>[] = [];
+        private toplevelCreator: () => any;
 
-        constructor(l: RootType[]) {
+        private constructor(l: any[], creator: () => T) {
             super();
             this.list = l;
+            this.toplevelCreator = creator;
         }
 
-        public add<SubValType>(acc: MemberAccessor<ValType,SubValType>): AccessorBuilder<RootType,SubValType> {
-            let newBuilder = new AccessorBuilder<RootType,SubValType>(this.list);
+        public static make<T>(creator: () => T, initial?: T | undefined): AccessorBuilder<T> {
+            let initArr = (initial === undefined ? [] : [initial]);
+            return new AccessorBuilder<T>(initArr, creator);
+        }
+
+        // Here's what I'd like to do: add a ValType type argument to AccessorBuilder, and use keyof ValType in the add method to return an
+        // AccessorBuilder<ValType[K]>.  This works fine for required props, but falls down currently for oprional props, which have a type
+        // of ValType[K]|undefined.  Then the next add() can't accept any properties, because there are no properties in common between the
+        // two. https://github.com/Microsoft/TypeScript/issues/12215 and others have been proposed apparently which might allow me to
+        // subtract undefined from the returned AccessorBuilder's type.
+        public add<S>(acc: MemberAccessor<T,S>): AccessorBuilder<S> {
+            let newBuilder = new AccessorBuilder<S>(this.list, this.toplevelCreator);
             newBuilder.accessors = this.accessors.slice();
             newBuilder.accessors.push(acc);
             return newBuilder;
         }
 
-        get(): ValType {
+        public reset() {
+            this.list.length = 0;
+        }
+
+        get(): T {
             let obj: any = this.list[this.list.length - 1];
             let index = 0;
             while (obj && index < this.accessors.length) {
@@ -197,29 +222,43 @@ namespace jsonInterfaceGenerator {
             return obj;
         }
 
-        set(val: ValType) {
+        set(val: T) {
+            debug("+++ set called with ", val);
             // basic algorithm here is to copy each parent object down to the point where we're actually making the mutation.
-            let lastElem = this.list[this.list.length - 1];
-            let obj: any = Object.create(lastElem);
+            let obj;
+            if (this.list.length === 0) {
+                obj = this.toplevelCreator();
+            } else {
+                let lastElem = this.list[this.list.length - 1];
+                obj = {...lastElem};
+            }
             this.list.push(obj);
+
             let index = 0;
             let accessorLength = this.accessors.length;
-            let acc: MemberAccessor<any,any>|undefined = undefined;
             while (index < accessorLength - 1) {
-                acc = this.accessors[index];
+                debug("index now ", index, " accessorLength is ", accessorLength);
+                let acc = this.accessors[index];
+                debug("accessor is ", acc);
                 const parent = obj;
+                debug("parent is ", parent);
                 let child = acc.get(parent);
-                const newChild = acc.createChild();
+                debug("child is ", child);
+                let newChild;
+                if (child === null || child === undefined) {
+                    newChild = acc.createChild();
+                } else {
+                    newChild = {...child};
+                }
                 acc.set(parent, newChild);
+                debug("after set - parent is now ", parent);
                 child = newChild;
                 obj = child;
                 index++;
             }
-            if (acc) {
-                this.accessors[accessorLength - 1].set(obj, val);
-            } else {
-                console.log("No accessor - too short?");
-            }
+            debug("index now ", index, " accessorLength is ", accessorLength);
+            this.accessors[index].set(obj, val);
+            debug("--- all done; this.list now ", this.list);
             return obj;
         }
     }

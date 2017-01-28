@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
   ~ Copyright 2015 Blue Circle Software, LLC
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +14,7 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>json-interface-generator</artifactId>
@@ -27,5 +25,82 @@
 
     <artifactId>json-typescript-generator</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.bluecirclesoft.open</groupId>
+            <artifactId>json-interface-generator-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bluecirclesoft.open</groupId>
+            <artifactId>json-jee7-reader</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <executions>
+                    <!-- Execution 1: install node packages -->
+                    <execution>
+                        <id>npm-install</id>
+                        <phase>test</phase>
+                        <inherited>false</inherited>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>npm</executable>
+                            <arguments>
+                                <argument>install</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <!-- Execution 2: run webpack -->
+                    <!-- TODO: never could get karma+webpack+typescript all working together, so doing a separate phase for webpack -->
+                    <execution>
+                        <id>run-webpack</id>
+                        <phase>test</phase>
+                        <inherited>false</inherited>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>../node_modules/.bin/webpack</executable>
+                        </configuration>
+                    </execution>
+                    <!-- Execution 3: run karma -->
+                    <execution>
+                        <id>run-karma</id>
+                        <phase>test</phase>
+                        <inherited>false</inherited>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>../node_modules/.bin/karma</executable>
+                            <arguments>
+                                <argument>start</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
 </project>
