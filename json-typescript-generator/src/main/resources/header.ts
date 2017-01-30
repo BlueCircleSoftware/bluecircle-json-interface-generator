@@ -41,6 +41,10 @@ export namespace jsonInterfaceGenerator {
      * whatever object it's reading from).
      */
     export abstract class Accessor<ValType> {
+        // this is not used - it's only here to force TypeScript to treat different type instances as
+        // not-convertible.
+        private unusedVal: ValType;
+
         /**
          * Get the current value
          */
@@ -58,6 +62,10 @@ export namespace jsonInterfaceGenerator {
      * is, the object to operate upon is passed in as a parameter).
      */
     export abstract class MemberAccessor<OwnerType,ValType> {
+        // this is not used - it's only here to force TypeScript to treat different type instances as
+        // not-convertible.
+        private unusedVal: OwnerType;
+
         /**
          * Get the current value of a member on the supplied object
          * @param obj the object to operate upon.
@@ -81,6 +89,10 @@ export namespace jsonInterfaceGenerator {
      * Default implementation of MemberAccessor
      */
     export class MemberAccessorImpl<OwnerType,ValType> extends MemberAccessor<OwnerType,ValType> {
+        // this is not used - it's only here to force TypeScript to treat different type instances as
+        // not-convertible.
+        private unusedVa2: OwnerType;
+
         fieldName: string;
         childCtor: () => ValType;
 
@@ -125,6 +137,9 @@ export namespace jsonInterfaceGenerator {
      * Accessor array members, which includes an index number
      */
     export class SubscriptedMemberAccessorImpl<OwnerType,ValType> extends MemberAccessor<OwnerType,ValType> {
+        // this is not used - it's only here to force TypeScript to treat different type instances as
+        // not-convertible.
+        private unusedVa2: OwnerType;
         fieldName: string;
         index: number;
         childCtor: () => ValType;
@@ -180,6 +195,9 @@ export namespace jsonInterfaceGenerator {
     }
 
     export class AccessorBuilder<T> extends Accessor<T> {
+        // this is not used - it's only here to force TypeScript to treat different type instances as
+        // not-convertible.
+        private unusedVa2: T;
         list: any[];
         accessors: MemberAccessor<any,any>[] = [];
         private toplevelCreator: () => any;
