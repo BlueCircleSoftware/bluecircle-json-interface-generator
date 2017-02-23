@@ -346,10 +346,9 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws NullPointerException if the specified key is null and this map
 	 *                              does not permit null keys
 	 *                              (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @implSpec The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 *                              or atomicity properties of this method. Any implementation providing
+	 *                              atomicity guarantees must override this method and document its
+	 *                              concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -365,19 +364,16 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * Exceptions thrown by the action are relayed to the caller.
 	 *
 	 * @param action The action to be performed for each entry
-	 * @throws NullPointerException            if the specified action is null
-	 * @throws ConcurrentModificationException if an entry is found to be
-	 *                                         removed during iteration
-	 * @implSpec The default implementation is equivalent to, for this {@code map}:
-	 * <pre> {@code
-	 * for (Map.Entry<K, V> entry : map.entrySet())
-	 *     action.accept(entry.getKey(), entry.getValue());
-	 * }</pre>
-	 * <p>
-	 * The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 * @throws NullPointerException if the specified action is null
+	 *                              <pre> {@code
+	 *                              for (Map.Entry<K, V> entry : map.entrySet())
+	 *                                  action.accept(entry.getKey(), entry.getValue());
+	 *                              }</pre>
+	 *                              <p>
+	 *                              The default implementation makes no guarantees about synchronization
+	 *                              or atomicity properties of this method. Any implementation providing
+	 *                              atomicity guarantees must override this method and document its
+	 *                              concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -392,34 +388,31 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * relayed to the caller.
 	 *
 	 * @param function the function to apply to each entry
-	 * @throws UnsupportedOperationException   if the {@code set} operation
-	 *                                         is not supported by this map's entry set iterator.
-	 * @throws ClassCastException              if the class of a replacement value
-	 *                                         prevents it from being stored in this map
-	 * @throws NullPointerException            if the specified function is null, or the
-	 *                                         specified replacement value is null, and this map does not permit null
-	 *                                         values
-	 * @throws ClassCastException              if a replacement value is of an inappropriate
-	 *                                         type for this map
-	 *                                         (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @throws NullPointerException            if function or a replacement value is null,
-	 *                                         and this map does not permit null keys or values
-	 *                                         (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @throws IllegalArgumentException        if some property of a replacement value
-	 *                                         prevents it from being stored in this map
-	 *                                         (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @throws ConcurrentModificationException if an entry is found to be
-	 *                                         removed during iteration
-	 * @implSpec <p>The default implementation is equivalent to, for this {@code map}:
-	 * <pre> {@code
-	 * for (Map.Entry<K, V> entry : map.entrySet())
-	 *     entry.setValue(function.apply(entry.getKey(), entry.getValue()));
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 * @throws UnsupportedOperationException if the {@code set} operation
+	 *                                       is not supported by this map's entry set iterator.
+	 * @throws ClassCastException            if the class of a replacement value
+	 *                                       prevents it from being stored in this map
+	 * @throws NullPointerException          if the specified function is null, or the
+	 *                                       specified replacement value is null, and this map does not permit null
+	 *                                       values
+	 * @throws ClassCastException            if a replacement value is of an inappropriate
+	 *                                       type for this map
+	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
+	 * @throws NullPointerException          if function or a replacement value is null,
+	 *                                       and this map does not permit null keys or values
+	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
+	 * @throws IllegalArgumentException      if some property of a replacement value
+	 *                                       prevents it from being stored in this map
+	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
+	 *                                       <pre> {@code
+	 *                                       for (Map.Entry<K, V> entry : map.entrySet())
+	 *                                           entry.setValue(function.apply(entry.getKey(), entry.getValue()));
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -451,21 +444,20 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws IllegalArgumentException      if some property of the specified key
 	 *                                       or value prevents it from being stored in this map
 	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @implSpec The default implementation is equivalent to, for this {@code
-	 * map}:
-	 * <p>
-	 * <pre> {@code
-	 * V v = map.get(key);
-	 * if (v == null)
-	 *     v = map.put(key, value);
+	 *                                       map}:
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       V v = map.get(key);
+	 *                                       if (v == null)
+	 *                                           v = map.put(key, value);
 	 *
-	 * return v;
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 *                                       return v;
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -489,20 +481,19 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws NullPointerException          if the specified key or value is null,
 	 *                                       and this map does not permit null keys or values
 	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @implSpec The default implementation is equivalent to, for this {@code map}:
-	 * <p>
-	 * <pre> {@code
-	 * if (map.containsKey(key) && Objects.equals(map.get(key), value)) {
-	 *     map.remove(key);
-	 *     return true;
-	 * } else
-	 *     return false;
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       if (map.containsKey(key) && Objects.equals(map.get(key), value)) {
+	 *                                           map.remove(key);
+	 *                                           return true;
+	 *                                       } else
+	 *                                           return false;
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -530,24 +521,23 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
 	 * @throws IllegalArgumentException      if some property of a specified key
 	 *                                       or value prevents it from being stored in this map
-	 * @implSpec The default implementation is equivalent to, for this {@code map}:
-	 * <p>
-	 * <pre> {@code
-	 * if (map.containsKey(key) && Objects.equals(map.get(key), value)) {
-	 *     map.put(key, newValue);
-	 *     return true;
-	 * } else
-	 *     return false;
-	 * }</pre>
-	 * <p>
-	 * The default implementation does not throw NullPointerException
-	 * for maps that do not support null values if oldValue is null unless
-	 * newValue is also null.
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       if (map.containsKey(key) && Objects.equals(map.get(key), value)) {
+	 *                                           map.put(key, newValue);
+	 *                                           return true;
+	 *                                       } else
+	 *                                           return false;
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       The default implementation does not throw NullPointerException
+	 *                                       for maps that do not support null values if oldValue is null unless
+	 *                                       newValue is also null.
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -576,19 +566,18 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 *                                       and this map does not permit null keys or values
 	 * @throws IllegalArgumentException      if some property of the specified key
 	 *                                       or value prevents it from being stored in this map
-	 * @implSpec The default implementation is equivalent to, for this {@code map}:
-	 * <p>
-	 * <pre> {@code
-	 * if (map.containsKey(key)) {
-	 *     return map.put(key, value);
-	 * } else
-	 *     return null;
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties.
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       if (map.containsKey(key)) {
+	 *                                           return map.put(key, value);
+	 *                                       } else
+	 *                                           return null;
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties.
 	 * @since 1.8
 	 */
 	@Override
@@ -631,25 +620,24 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws ClassCastException            if the class of the specified key or value
 	 *                                       prevents it from being stored in this map
 	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @implSpec The default implementation is equivalent to the following steps for this
-	 * {@code map}, then returning the current value or {@code null} if now
-	 * absent:
-	 * <p>
-	 * <pre> {@code
-	 * if (map.get(key) == null) {
-	 *     V newValue = mappingFunction.apply(key);
-	 *     if (newValue != null)
-	 *         map.put(key, newValue);
-	 * }
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties. In particular, all implementations of
-	 * subinterface {@link ConcurrentMap} must document
-	 * whether the function is applied once atomically only if the value is not
-	 * present.
+	 *                                       {@code map}, then returning the current value or {@code null} if now
+	 *                                       absent:
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       if (map.get(key) == null) {
+	 *                                           V newValue = mappingFunction.apply(key);
+	 *                                           if (newValue != null)
+	 *                                               map.put(key, newValue);
+	 *                                       }
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties. In particular, all implementations of
+	 *                                       subinterface {@link ConcurrentMap} must document
+	 *                                       whether the function is applied once atomically only if the value is not
+	 *                                       present.
 	 * @since 1.8
 	 */
 	@Override
@@ -677,28 +665,27 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws ClassCastException            if the class of the specified key or value
 	 *                                       prevents it from being stored in this map
 	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @implSpec The default implementation is equivalent to performing the following
-	 * steps for this {@code map}, then returning the current value or
-	 * {@code null} if now absent:
-	 * <p>
-	 * <pre> {@code
-	 * if (map.get(key) != null) {
-	 *     V oldValue = map.get(key);
-	 *     V newValue = remappingFunction.apply(key, oldValue);
-	 *     if (newValue != null)
-	 *         map.put(key, newValue);
-	 *     else
-	 *         map.remove(key);
-	 * }
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties. In particular, all implementations of
-	 * subinterface {@link ConcurrentMap} must document
-	 * whether the function is applied once atomically only if the value is not
-	 * present.
+	 *                                       steps for this {@code map}, then returning the current value or
+	 *                                       {@code null} if now absent:
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       if (map.get(key) != null) {
+	 *                                           V oldValue = map.get(key);
+	 *                                           V newValue = remappingFunction.apply(key, oldValue);
+	 *                                           if (newValue != null)
+	 *                                               map.put(key, newValue);
+	 *                                           else
+	 *                                               map.remove(key);
+	 *                                       }
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties. In particular, all implementations of
+	 *                                       subinterface {@link ConcurrentMap} must document
+	 *                                       whether the function is applied once atomically only if the value is not
+	 *                                       present.
 	 * @since 1.8
 	 */
 	@Override
@@ -733,33 +720,32 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws ClassCastException            if the class of the specified key or value
 	 *                                       prevents it from being stored in this map
 	 *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
-	 * @implSpec The default implementation is equivalent to performing the following
-	 * steps for this {@code map}, then returning the current value or
-	 * {@code null} if absent:
-	 * <p>
-	 * <pre> {@code
-	 * V oldValue = map.get(key);
-	 * V newValue = remappingFunction.apply(key, oldValue);
-	 * if (oldValue != null ) {
-	 *    if (newValue != null)
-	 *       map.put(key, newValue);
-	 *    else
-	 *       map.remove(key);
-	 * } else {
-	 *    if (newValue != null)
-	 *       map.put(key, newValue);
-	 *    else
-	 *       return null;
-	 * }
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties. In particular, all implementations of
-	 * subinterface {@link ConcurrentMap} must document
-	 * whether the function is applied once atomically only if the value is not
-	 * present.
+	 *                                       steps for this {@code map}, then returning the current value or
+	 *                                       {@code null} if absent:
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       V oldValue = map.get(key);
+	 *                                       V newValue = remappingFunction.apply(key, oldValue);
+	 *                                       if (oldValue != null ) {
+	 *                                          if (newValue != null)
+	 *                                             map.put(key, newValue);
+	 *                                          else
+	 *                                             map.remove(key);
+	 *                                       } else {
+	 *                                          if (newValue != null)
+	 *                                             map.put(key, newValue);
+	 *                                          else
+	 *                                             return null;
+	 *                                       }
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties. In particular, all implementations of
+	 *                                       subinterface {@link ConcurrentMap} must document
+	 *                                       whether the function is applied once atomically only if the value is not
+	 *                                       present.
 	 * @since 1.8
 	 */
 	@Override
@@ -800,27 +786,26 @@ public class InsertingMap<K, V> implements Map<K, V> {
 	 * @throws NullPointerException          if the specified key is null and this map
 	 *                                       does not support null keys or the value or remappingFunction is
 	 *                                       null
-	 * @implSpec The default implementation is equivalent to performing the following
-	 * steps for this {@code map}, then returning the current value or
-	 * {@code null} if absent:
-	 * <p>
-	 * <pre> {@code
-	 * V oldValue = map.get(key);
-	 * V newValue = (oldValue == null) ? value :
-	 *              remappingFunction.apply(oldValue, value);
-	 * if (newValue == null)
-	 *     map.remove(key);
-	 * else
-	 *     map.put(key, newValue);
-	 * }</pre>
-	 * <p>
-	 * <p>The default implementation makes no guarantees about synchronization
-	 * or atomicity properties of this method. Any implementation providing
-	 * atomicity guarantees must override this method and document its
-	 * concurrency properties. In particular, all implementations of
-	 * subinterface {@link ConcurrentMap} must document
-	 * whether the function is applied once atomically only if the value is not
-	 * present.
+	 *                                       steps for this {@code map}, then returning the current value or
+	 *                                       {@code null} if absent:
+	 *                                       <p>
+	 *                                       <pre> {@code
+	 *                                       V oldValue = map.get(key);
+	 *                                       V newValue = (oldValue == null) ? value :
+	 *                                                    remappingFunction.apply(oldValue, value);
+	 *                                       if (newValue == null)
+	 *                                           map.remove(key);
+	 *                                       else
+	 *                                           map.put(key, newValue);
+	 *                                       }</pre>
+	 *                                       <p>
+	 *                                       <p>The default implementation makes no guarantees about synchronization
+	 *                                       or atomicity properties of this method. Any implementation providing
+	 *                                       atomicity guarantees must override this method and document its
+	 *                                       concurrency properties. In particular, all implementations of
+	 *                                       subinterface {@link ConcurrentMap} must document
+	 *                                       whether the function is applied once atomically only if the value is not
+	 *                                       present.
 	 * @since 1.8
 	 */
 	@Override
