@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.bluecirclesoft.open</groupId>
     <artifactId>json-interface-generator</artifactId>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>json-interface-generator</name>
 
@@ -50,7 +50,7 @@
         <url>scm:git:git@github.com:mrami4/bluecircle-json-interface-generator.git</url>
         <developerConnection>scm:git:git@github.com:mrami4/bluecircle-json-interface-generator.git
         </developerConnection>
-        <tag>json-interface-generator-0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
