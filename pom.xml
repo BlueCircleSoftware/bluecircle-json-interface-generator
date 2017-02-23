@@ -21,6 +21,7 @@
     <version>0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>json-interface-generator</name>
+    <url>https://github.com/mrami4/bluecircle-json-interface-generator</url>
 
     <modules>
         <module>json-interface-generator-core</module>
