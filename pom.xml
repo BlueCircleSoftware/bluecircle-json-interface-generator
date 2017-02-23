@@ -14,7 +14,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.bluecirclesoft.open</groupId>
     <artifactId>json-interface-generator</artifactId>
@@ -22,6 +23,9 @@
     <packaging>pom</packaging>
     <name>json-interface-generator</name>
     <url>https://github.com/mrami4/bluecircle-json-interface-generator</url>
+    <description>
+        bluecircle-json-interface-generator - reads your Java web services and generates TypeScript interfaces from it.
+    </description>
 
     <modules>
         <module>json-interface-generator-core</module>
@@ -129,7 +133,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-
 
 
             <plugin>
