@@ -17,6 +17,7 @@
 package com.bluecirclesoft.open.jigen.jeeReader;
 
 import com.bluecirclesoft.open.getopt.ByArgument;
+import com.bluecirclesoft.open.getopt.ByFlag;
 
 /**
  * TODO document me
@@ -36,6 +37,10 @@ public class Options {
 	@ByArgument(longOpt = "typings-index-path", mnemonic = "<file>", documentation = "The path (relative to the output file) for the " +
 			"Typings index.d.ts")
 	private String typingsIndexPath;
+
+	@ByFlag(longOpt = "strip-common-packages", documentation = "Strip any common leading packages from all produced classes (default " +
+			"false)")
+	private boolean stripCommonPackages;
 
 	public String getPackageName() {
 		return packageName;

@@ -106,7 +106,7 @@ public class Namespace {
 		return declarations.isEmpty();
 	}
 
-	static Namespace namespacifyModel(Model model) {
+	static Namespace namespacifyModel(Model model, boolean stripCommonNamespaces) {
 		Namespace top = new Namespace();
 
 		for (JType thing : model.getInterfaces()) {
@@ -136,13 +136,14 @@ public class Namespace {
 			containingName.addEndpoint(endpoint);
 		}
 
-		// strip common namespaces
-		while (top.getNamespaces().size() == 1 && top.isDeclarationsEmpty()) {
-			top = top.getNamespaces().get(0);
+		if (stripCommonNamespaces) {
+			// strip common namespaces
+			while (top.getNamespaces().size() == 1 && top.isDeclarationsEmpty()) {
+				top = top.getNamespaces().get(0);
+			}
+
+			top.setContainingNamespace(null);
 		}
-
-
-		top.setContainingNamespace(null);
 
 		return top;
 	}

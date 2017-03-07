@@ -47,12 +47,30 @@ public class TypeScriptProducer implements OutputProducer {
 
 	private boolean produceAccessorFunctionals = true;
 
+	private boolean stripCommonNamespaces = false;
+
 	public boolean isProduceAccessors() {
 		return produceAccessors;
 	}
 
+	public void setProduceAccessors(boolean produceAccessors) {
+		this.produceAccessors = produceAccessors;
+	}
+
 	public boolean isProduceAccessorFunctionals() {
 		return produceAccessorFunctionals;
+	}
+
+	public void setProduceAccessorFunctionals(boolean produceAccessorFunctionals) {
+		this.produceAccessorFunctionals = produceAccessorFunctionals;
+	}
+
+	public boolean isStripCommonNamespaces() {
+		return stripCommonNamespaces;
+	}
+
+	public void setStripCommonNamespaces(boolean stripCommonNamespaces) {
+		this.stripCommonNamespaces = stripCommonNamespaces;
 	}
 
 	public TypeScriptProducer(File outputFile, String typingsPath) {
@@ -68,7 +86,7 @@ public class TypeScriptProducer implements OutputProducer {
 
 	@Override
 	public void output(Model model) throws IOException {
-		Namespace ns = Namespace.namespacifyModel(model);
+		Namespace ns = Namespace.namespacifyModel(model, stripCommonNamespaces);
 		start();
 		try {
 			outputNamespace(ns, true);
