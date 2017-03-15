@@ -30,6 +30,7 @@ import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.model.Namespace;
 import com.bluecirclesoft.open.jigen.output.OutputProducer;
 
 /**

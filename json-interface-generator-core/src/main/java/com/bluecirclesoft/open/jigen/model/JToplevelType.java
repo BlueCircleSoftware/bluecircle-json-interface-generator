@@ -18,8 +18,6 @@ package com.bluecirclesoft.open.jigen.model;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.bluecirclesoft.open.jigen.output.typeScript.Namespace;
-
 /**
  * Base class for types that are defined at top level (namely, objects and enums).
  */
