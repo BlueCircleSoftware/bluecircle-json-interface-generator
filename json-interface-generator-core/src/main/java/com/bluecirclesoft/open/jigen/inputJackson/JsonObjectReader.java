@@ -16,23 +16,30 @@
 
 package com.bluecirclesoft.open.jigen.inputJackson;
 
-import com.bluecirclesoft.open.jigen.model.JObject;
-import com.bluecirclesoft.open.jigen.model.JTypeVariable;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
-import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
-
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.bluecirclesoft.open.jigen.model.JObject;
+import com.bluecirclesoft.open.jigen.model.JTypeVariable;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
+
 /**
  * TODO document me
  */
 class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadingVisitor<JObject> {
+
+	private static final Logger log = LoggerFactory.getLogger(JsonObjectReader.class);
 
 	private final JacksonTypeModeller jacksonTypeModeller;
 
@@ -41,12 +48,35 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	JsonObjectReader(JacksonTypeModeller jacksonTypeModeller, Class<?> clazz) {
 		this.jacksonTypeModeller = jacksonTypeModeller;
 		jObject = new JObject(clazz.getName());
+		jObject.setNewObjectJson(createEmptyJsonFor(clazz));
 		for (int i = 0; i < clazz.getTypeParameters().length; i++) {
 			final int finalI = i;
 			jObject.getTypeVariables().add(null);
 			jacksonTypeModeller.queueType(clazz.getTypeParameters()[i]);
 			jacksonTypeModeller.addFixup(clazz.getTypeParameters()[i],
 					jType -> jObject.getTypeVariables().set(finalI, (JTypeVariable) jType));
+		}
+	}
+
+	/**
+	 * New up an instance of the class, and convert it to JSON
+	 * @param clazz the class to consider
+	 * @return a JSON string, or {@code null} if the JSON could not be produced.
+	 */
+	private String createEmptyJsonFor(Class<?> clazz) {
+		Object newInstance;
+		try {
+			newInstance = clazz.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			log.warn("Error instantiating class " + clazz.getName(), e);
+			return null;
+		}
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writeValueAsString(newInstance);
+		} catch (JsonProcessingException e) {
+			log.warn("Error creating JSON for new " + clazz.getName() + "()", e);
+			return null;
 		}
 	}
 
@@ -79,8 +109,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	}
 
 	@Override
-	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint)
-			throws JsonMappingException {
+	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) throws JsonMappingException {
 		throw new RuntimeException("not implemented");
 	}
 
@@ -91,8 +120,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	}
 
 	@Override
-	public void optionalProperty(String name, JsonFormatVisitable handler,
-	                             JavaType propertyTypeHint) throws JsonMappingException {
+	public void optionalProperty(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) throws JsonMappingException {
 		throw new RuntimeException("not implemented");
 	}
 

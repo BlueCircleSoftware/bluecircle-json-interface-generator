@@ -165,7 +165,9 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	}
 
 	private JType handleType(Type type) {
+		logger.debug("Handling {}", type);
 		if (type instanceof TypeVariable) {
+			logger.debug("is TypeVariable");
 			TypeVariable variable = (TypeVariable) type;
 			JTypeVariable jVariable = new JTypeVariable(variable.getName());
 			// if the bound is only Object, we're going to ignore it
@@ -180,6 +182,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			}
 			return jVariable;
 		} else if (type instanceof ParameterizedType) {
+			logger.debug("is ParameterizedType");
 			// parametrized type - type with type parameters (e.g. List<Integer>)
 			ParameterizedType pt = (ParameterizedType) type;
 			Type base = pt.getRawType();
@@ -207,9 +210,20 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				return jSpecialization;
 			}
 		} else if (type instanceof Class) {
-			if (FUNDAMENTAL_TYPES.containsKey(type)) {
+			logger.debug("is Class");
+			Class cl = (Class) type;
+			if (cl.isArray()) {
+				logger.debug("is array");
+				JArray result = new JArray();
+				result.setIndexType(new JNumber());
+				addFixup(cl.getComponentType(), result::setElementType);
+				queueType(cl.getComponentType());
+				return result;
+			} else if (FUNDAMENTAL_TYPES.containsKey(type)) {
+				logger.debug("is fundamental type");
 				return FUNDAMENTAL_TYPES.get(type).get();
 			} else {
+				logger.debug("is user-defined class");
 				return handleUserDefinedClass((Class) type);
 			}
 		} else {

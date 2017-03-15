@@ -66,6 +66,8 @@ public class JObject extends JToplevelType {
 
 	private final LinkedHashMap<String, Field> fields = new LinkedHashMap<>();
 
+	private String newObjectJson;
+
 	public JObject(String name) {
 		this.name = name;
 		JType.createdTypes.add(this);
@@ -89,6 +91,19 @@ public class JObject extends JToplevelType {
 
 	public Map<String, Field> getFields() {
 		return fields;
+	}
+
+	/**
+	 * Get the JSON for a newly created instance.
+	 *
+	 * @return the JSON, or null if it could not be produced.
+	 */
+	public String getNewObjectJson() {
+		return newObjectJson;
+	}
+
+	public void setNewObjectJson(String newObjectJson) {
+		this.newObjectJson = newObjectJson;
 	}
 
 	public void declareProperty(String name) {

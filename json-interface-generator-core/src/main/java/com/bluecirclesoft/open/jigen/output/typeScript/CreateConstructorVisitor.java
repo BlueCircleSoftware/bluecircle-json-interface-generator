@@ -30,13 +30,17 @@ import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 
 /**
- * In the case of accessor functionals, a "constructor" needs to be provided to creeaye new objects when walking down the chain.
+ * In the case of accessor functionals, a "constructor" needs to be provided to create new objects when walking down the chain.
  */
 class CreateConstructorVisitor implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JObject jObject) {
-		return "() => { return {}; }";
+		if (jObject.getNewObjectJson() == null) {
+			return null;
+		} else {
+			return "() => { return " + jObject.getNewObjectJson() + "; }";
+		}
 	}
 
 	@Override
