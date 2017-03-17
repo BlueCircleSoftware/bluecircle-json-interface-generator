@@ -117,7 +117,7 @@ public class TypeScriptProducer implements OutputProducer {
 			List<EndpointParameter> urlParams = sortedParams.get(EndpointParameter.NetworkType.PATH);
 			if (urlParams != null && !urlParams.isEmpty()) {
 				for (EndpointParameter param : urlParams) {
-					url = url.replace("{" + param.getNetworkName() + "}", "' + encodeURI(" + param.getCodeName() + ") + '");
+					url = url.replace("{" + param.getNetworkName() + "}", "' + encodeURI(String(" + param.getCodeName() + ")) + '");
 				}
 			}
 			addParameter(parameterList, needsComma, "options",
@@ -222,9 +222,12 @@ public class TypeScriptProducer implements OutputProducer {
 			}
 			writer = new OutputHandler(new PrintWriter(new FileWriter(outputFile)));
 		}
-		writer.line("/// <reference path=\"" + typingsPath + "\" />\n");
+		if (typingsPath != null) {
+			writer.line("/// <reference path=\"" + typingsPath + "\" />\n");
+		}
 		writer.writeResource("/header.ts");
 		writer.line();
+
 	}
 
 }

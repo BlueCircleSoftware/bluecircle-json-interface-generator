@@ -129,7 +129,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer();
 		for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
 			String typeString = prop.getValue().getType().accept(typeUsageProducer);
-			writer.line(prop.getKey() + (prop.getValue().isRequired() ? "" : "?") + ": " + typeString + ";");
+			writer.line(prop.getKey() + ": " + typeString + (prop.getValue().isRequired() ? "" : " | null") + ";");
 		}
 		writer.indentOut();
 		writer.line("}");
@@ -138,7 +138,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
 				String propertyName = prop.getKey();
 				JType propertyType = prop.getValue().getType();
-				String typeString = propertyType.accept(typeUsageProducer) + (prop.getValue().isRequired() ? "" : " | undefined");
+				String typeString = propertyType.accept(typeUsageProducer) + (prop.getValue().isRequired() ? "" : " | null");
 				String ctor = propertyType.accept(createConstructorVisitor);
 				if (intf.getTypeVariables().size() == 0 && ctor != null) {
 					// TODO handle interfaces with type variables properly. The straightforward thing to do would be to give the function
