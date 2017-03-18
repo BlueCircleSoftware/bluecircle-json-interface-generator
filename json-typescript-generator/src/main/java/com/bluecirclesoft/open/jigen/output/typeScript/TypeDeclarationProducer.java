@@ -134,28 +134,51 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.indentOut();
 		writer.line("}");
 
+		writer.line("export namespace " + interfaceLabel + " {");
+		writer.indentIn();
+		String typeVars = "";
+		if (!intf.getTypeVariables().isEmpty()) {
+			StringBuilder typeVarsBuilder = new StringBuilder();
+			typeVarsBuilder.append('<');
+			boolean needsComma = false;
+			for (JTypeVariable var : intf.getTypeVariables()) {
+				if (needsComma) {
+					typeVarsBuilder.append(',');
+				} else {
+					needsComma = true;
+				}
+				typeVarsBuilder.append(var.getName());
+			}
+			typeVarsBuilder.append('>');
+			typeVars = typeVarsBuilder.toString();
+		}
+		if (intf.getNewObjectJson() != null) {
+			writer.line("export function make" + typeVars + "() : " + interfaceLabel + typeVars + " { ");
+			writer.indentIn();
+			writer.line("return " + intf.getNewObjectJson() + ";");
+			writer.indentOut();
+			writer.line("}");
+		}
 		if (producer.isProduceAccessorFunctionals()) {
 			for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
 				String propertyName = prop.getKey();
 				JType propertyType = prop.getValue().getType();
-				String typeString = propertyType.accept(typeUsageProducer) + (prop.getValue().isRequired() ? "" : " | null");
+				String typeString = propertyType.accept(typeUsageProducer);
 				String ctor = propertyType.accept(createConstructorVisitor);
 				if (intf.getTypeVariables().size() == 0 && ctor != null) {
-					// TODO handle interfaces with type variables properly. The straightforward thing to do would be to give the function
-					// a type parameter, and pass in the appropriate constructor as a parameter. But I'm not really sure how useful this
-					// would be.
-
 					// Note if the ctor is null here, that means I don't actually know how to produce a construtcor. For now, we'll just
 					// skip this function.
 					String retType = "jsonInterfaceGenerator" + ".MemberAccessorImpl<" + interfaceLabel + "," + typeString + ">";
-					writer.line("export function " + interfaceLabel + "$" + propertyName + "() : " + retType + " { ");
+					writer.line("export function " + propertyName + "() : " + retType + typeVars + " { ");
 					writer.indentIn();
-					writer.line("return new " + retType + "('" + propertyName + "', " + ctor + ");");
+					writer.line("return new " + retType + typeVars + "('" + propertyName + "', " + ctor + ");");
 					writer.indentOut();
 					writer.line("}");
 				}
 			}
 		}
+		writer.indentOut();
+		writer.line("}");
 	}
 
 }
