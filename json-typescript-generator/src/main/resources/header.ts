@@ -21,7 +21,16 @@ export namespace jsonInterfaceGenerator {
         error? (jqXHR: JQueryXHR, textStatus: string, errorThrown: string): any;
         success? (data: R, textStatus: string, jqXHR: JQueryXHR): any;
     }
-    export let ajaxUrlPrefix: string|null = null;
+
+    let ajaxUrlPrefix: string|null = null;
+
+    export function getPrefix() :string {
+        if (!ajaxUrlPrefix) {
+            throw "The URL prefix has not been set, so no AJAX calls can be made. Set the URL prefix by calling" +
+            " jsonInterfaceGenerator.init()";
+        }
+        return ajaxUrlPrefix;
+    }
 
     export let logDebug: boolean = false;
 

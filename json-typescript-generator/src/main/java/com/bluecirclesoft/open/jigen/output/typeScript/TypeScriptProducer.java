@@ -147,7 +147,7 @@ public class TypeScriptProducer implements OutputProducer {
 				writer.indentOut();
 				writer.line("};");
 			}
-			writer.line("$.ajax(jsonInterfaceGenerator.ajaxUrlPrefix + " + url + ", {");
+			writer.line("$.ajax(jsonInterfaceGenerator.getPrefix() + " + url + ", {");
 			writer.indentIn();
 			writer.line("method: '" + endpoint.getMethod().name() + "',");
 			writer.line("contentType: \"application/json; charset=utf-8\",");
