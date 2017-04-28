@@ -44,6 +44,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
@@ -121,7 +122,11 @@ class JavaEEModeller {
 		}
 
 		for (MethodInfo method : annotatedMethods.values()) {
-			readMethod(method);
+			try {
+				readMethod(method);
+			} catch (Exception e) {
+				throw new RuntimeException("Error processing JAX-RS method " + method.method, e);
+			}
 		}
 
 		return model;
@@ -189,8 +194,8 @@ class JavaEEModeller {
 		return false;
 	}
 
-	private static String joinPaths(String startElement, String... pathElements) {
-		String result = startElement;
+	private static String joinPaths(String... pathElements) {
+		String result = "";
 		for (String pathElement : pathElements) {
 			if (pathElement != null) {
 				if (result.endsWith("/")) {
@@ -201,6 +206,9 @@ class JavaEEModeller {
 				}
 				result = result + pathElement;
 			}
+		}
+		if (StringUtils.isBlank(result)) {
+			throw new RuntimeException("No path provided (on class or method)");
 		}
 		return result;
 	}
