@@ -39,7 +39,7 @@ class CreateConstructorVisitor implements JTypeVisitor<String> {
 		if (jObject.getNewObjectJson() == null) {
 			return null;
 		} else {
-			return jObject.getName() + ".make";
+			return jObject.getReference() + ".make";
 		}
 	}
 
