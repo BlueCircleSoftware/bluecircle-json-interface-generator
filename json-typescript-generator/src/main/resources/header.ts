@@ -17,14 +17,17 @@
 export namespace jsonInterfaceGenerator {
     export interface JsonOptions<R> {
         async?: boolean;
+
         complete? (jqXHR: JQueryXHR, textStatus: string): any;
+
         error? (jqXHR: JQueryXHR, textStatus: string, errorThrown: string): any;
+
         success? (data: R, textStatus: string, jqXHR: JQueryXHR): any;
     }
 
-    let ajaxUrlPrefix: string|null = null;
+    let ajaxUrlPrefix: string | null = null;
 
-    export function getPrefix() :string {
+    export function getPrefix(): string {
         if (!ajaxUrlPrefix) {
             throw "The URL prefix has not been set, so no AJAX calls can be made. Set the URL prefix by calling" +
             " jsonInterfaceGenerator.init()";
@@ -43,6 +46,14 @@ export namespace jsonInterfaceGenerator {
 
     export function init(prefix: string) {
         ajaxUrlPrefix = prefix;
+    }
+
+    /**
+     * Defines something that is indexable by string.  This is used below for getters and setters to ensure that the object can be
+     * addressed by the index operator (i.e., [])
+     */
+    interface StringIndexable<ValType> {
+        [name: string]: ValType;
     }
 
     /**
@@ -70,7 +81,7 @@ export namespace jsonInterfaceGenerator {
      * Defines an accessor of a field on a given type (getter/setter) plus a child object creator.  Meant to work in a static way (that
      * is, the object to operate upon is passed in as a parameter).
      */
-    export abstract class MemberAccessor<OwnerType,ValType> {
+    export abstract class MemberAccessor<OwnerType, ValType> {
         // this is not used - it's only here to force TypeScript to treat different type instances as
         // not-convertible.
         private unusedVal: OwnerType;
@@ -79,14 +90,14 @@ export namespace jsonInterfaceGenerator {
          * Get the current value of a member on the supplied object
          * @param obj the object to operate upon.
          */
-        abstract get(obj: OwnerType): ValType;
+        abstract get(obj: OwnerType & StringIndexable<ValType | ValType[]>): ValType;
 
         /**
          * Set the value of a member on the supplied object
          * @param obj the object to operate upon
          * @param val the new value
          */
-        abstract set(obj: OwnerType, val: ValType): void;
+        abstract set(obj: OwnerType & StringIndexable<ValType | ValType[]>, val: ValType): void;
 
         /**
          * Create a child object to be assigned to the member.
@@ -97,7 +108,7 @@ export namespace jsonInterfaceGenerator {
     /**
      * Default implementation of MemberAccessor
      */
-    export class MemberAccessorImpl<OwnerType,ValType> extends MemberAccessor<OwnerType,ValType> {
+    export class MemberAccessorImpl<OwnerType, ValType> extends MemberAccessor<OwnerType, ValType> {
         // this is not used - it's only here to force TypeScript to treat different type instances as
         // not-convertible.
         private unusedVa2: OwnerType;
@@ -120,7 +131,7 @@ export namespace jsonInterfaceGenerator {
          * Get the current value of a member on the supplied object
          * @param obj the object to operate upon.
          */
-        get(obj: OwnerType): ValType {
+        get(obj: OwnerType & StringIndexable<ValType>): ValType {
             return obj[this.fieldName];
         }
 
@@ -129,7 +140,7 @@ export namespace jsonInterfaceGenerator {
          * @param obj the object to operate upon
          * @param val the new value
          */
-        set(obj: OwnerType, val: ValType): void {
+        set(obj: OwnerType & StringIndexable<ValType>, val: ValType): void {
             obj[this.fieldName] = val;
         }
 
@@ -145,7 +156,7 @@ export namespace jsonInterfaceGenerator {
     /**
      * Accessor array members, which includes an index number
      */
-    export class SubscriptedMemberAccessorImpl<OwnerType,ValType> extends MemberAccessor<OwnerType,ValType> {
+    export class SubscriptedMemberAccessorImpl<OwnerType, ValType> extends MemberAccessor<OwnerType, ValType> {
         // this is not used - it's only here to force TypeScript to treat different type instances as
         // not-convertible.
         private unusedVa2: OwnerType;
@@ -170,7 +181,7 @@ export namespace jsonInterfaceGenerator {
          * Get the current value of a member on the supplied object
          * @param obj the object to operate upon.
          */
-        get(obj: OwnerType): ValType {
+        get(obj: OwnerType & StringIndexable<ValType[]>): ValType {
             let arr = obj[this.fieldName];
             if (!arr) {
                 arr = [];
@@ -184,7 +195,7 @@ export namespace jsonInterfaceGenerator {
          * @param obj the object to operate upon
          * @param val the new value
          */
-        set(obj: OwnerType, val: ValType): void {
+        set(obj: OwnerType & StringIndexable<ValType[]>, val: ValType): void {
             let arr = obj[this.fieldName];
             if (!arr) {
                 arr = [];
@@ -208,7 +219,7 @@ export namespace jsonInterfaceGenerator {
         // not-convertible.
         private unusedVa2: T;
         list: any[];
-        accessors: MemberAccessor<any,any>[] = [];
+        accessors: MemberAccessor<any, any>[] = [];
         private toplevelCreator: () => any;
 
         private constructor(l: any[], creator: () => T) {
@@ -227,7 +238,7 @@ export namespace jsonInterfaceGenerator {
         // of ValType[K]|undefined.  Then the next add() can't accept any properties, because there are no properties in common between the
         // two. https://github.com/Microsoft/TypeScript/issues/12215 and others have been proposed apparently which might allow me to
         // subtract undefined from the returned AccessorBuilder's type.
-        public add<S>(acc: MemberAccessor<T,S>): AccessorBuilder<S> {
+        public add<S>(acc: MemberAccessor<T, S>): AccessorBuilder<S> {
             let newBuilder = new AccessorBuilder<S>(this.list, this.toplevelCreator);
             newBuilder.accessors = this.accessors.slice();
             newBuilder.accessors.push(acc);
