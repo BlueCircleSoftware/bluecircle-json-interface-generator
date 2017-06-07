@@ -16,6 +16,7 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,11 +30,11 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO document me
  */
-public class Model {
+public class Model implements Serializable {
 
 	private static final Logger log = LoggerFactory.getLogger(Model.class);
 
-	private final Map<Type, JType> interfaces = new HashMap<>();
+	private final Map<String, JType> interfaces = new HashMap<>();
 
 	private final Map<String, Endpoint> endpoints = new TreeMap<>();
 
@@ -49,13 +50,19 @@ public class Model {
 		if (jType == null) {
 			throw new RuntimeException("Failed to translate type " + type);
 		}
-		interfaces.put(type, jType);
+		interfaces.put(type.toString(), jType);
 	}
 
 
 	public Endpoint createEndpoint(String name) {
-		Endpoint endpoint = new Endpoint(name);
-		endpoints.put(name, endpoint);
+		String realName;
+		if (endpoints.get(name) != null) {
+			throw new RuntimeException("Multiple endpoints with same method name (cannot currently handle): " + name);
+		} else {
+			realName = name;
+		}
+		Endpoint endpoint = new Endpoint(realName);
+		endpoints.put(realName, endpoint);
 		return endpoint;
 	}
 
@@ -65,14 +72,24 @@ public class Model {
 	}
 
 	public boolean hasType(Type type) {
-		return interfaces.containsKey(type);
+		return interfaces.containsKey(type.toString());
 	}
 
 	public JType getType(Type key) {
-		return interfaces.get(key);
+		return interfaces.get(key.toString());
 	}
 
 	public Iterable<Endpoint> getEndpoints() {
 		return endpoints.values();
 	}
+
+	public Endpoint getEndpoint(String name) {
+		Endpoint endpoint = endpoints.get(name);
+		if (endpoint == null) {
+			throw new RuntimeException("No enpoint found named " + name);
+		}
+		return endpoint;
+	}
+
+
 }

@@ -16,10 +16,12 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.io.Serializable;
+
 /**
  * Holds relevant information about a web service method parameter.
  */
-public class EndpointParameter {
+public class EndpointParameter implements Serializable {
 
 	public enum NetworkType {
 		// parameter to be placed in the URL path
@@ -97,5 +99,11 @@ public class EndpointParameter {
 
 	public void setNetworkType(NetworkType networkType) {
 		this.networkType = networkType;
+	}
+
+	@Override
+	public String toString() {
+		return "EndpointParameter{" + "codeName='" + codeName + '\'' + ", networkName='" + networkName + '\'' + ", type=" + type +
+				", networkType=" + networkType + '}';
 	}
 }

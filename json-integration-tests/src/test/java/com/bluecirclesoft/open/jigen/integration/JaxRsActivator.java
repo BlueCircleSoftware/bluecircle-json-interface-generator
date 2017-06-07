@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integration;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
 /**
- * TODO document me
+ * Class to activate the JAX-RS system and define the path prefix for the test services.
  */
-abstract public class JType implements Serializable {
-
-	// TODO debugging only
-
-	public static List<JType> createdTypes = new ArrayList<>();
-
-	abstract public <T> T accept(JTypeVisitor<T> visitor);
+@ApplicationPath("/rest")
+public class JaxRsActivator extends Application {
 
 }

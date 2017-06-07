@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.DELETE;
@@ -52,7 +53,6 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bluecirclesoft.open.jigen.helper.InsertingMap;
 import com.bluecirclesoft.open.jigen.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -63,7 +63,7 @@ import com.bluecirclesoft.open.jigen.model.Model;
 /**
  * TODO document me
  */
-class JavaEEModeller {
+public class JavaEEModeller {
 
 	private static final Logger logger = LoggerFactory.getLogger(JavaEEModeller.class);
 
@@ -94,8 +94,8 @@ class JavaEEModeller {
 
 	private String urlPrefix;
 
-	Model createModel(String urlPrefix, String... packageNames) {
-		InsertingMap<Method, MethodInfo> annotatedMethods = new InsertingMap<>(new HashMap<>(), MethodInfo::new);
+	public Model createModel(String urlPrefix, String... packageNames) {
+		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
 					.setScanners(new MethodAnnotationsScanner()));
@@ -104,11 +104,11 @@ class JavaEEModeller {
 				logger.info("Handling method {}", method);
 				boolean producer = isProducer(method);
 				if (producer) {
-					annotatedMethods.elem(method).producer = true;
+					annotatedMethods.computeIfAbsent(method, MethodInfo::new).producer = true;
 				}
 				boolean consumer = isConsumer(method);
 				if (consumer) {
-					annotatedMethods.elem(method).consumer = true;
+					annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumer = true;
 				}
 			}
 		}
@@ -156,6 +156,8 @@ class JavaEEModeller {
 		Produces produces = method.getAnnotation(Produces.class);
 		if (isJsonProducer(produces)) {
 			return true;
+		} else if (method.getGenericReturnType() == Void.TYPE) {
+			return true;
 		} else {
 			produces = method.getDeclaringClass().getAnnotation(Produces.class);
 			return isJsonProducer(produces);
@@ -195,18 +197,19 @@ class JavaEEModeller {
 	}
 
 	private static String joinPaths(String... pathElements) {
-		String result = "";
+		StringBuilder pathBuilder = new StringBuilder();
 		for (String pathElement : pathElements) {
 			if (pathElement != null) {
-				if (result.endsWith("/")) {
-					result = result.substring(0, result.length() - 1);
+				if (pathBuilder.length() > 0 && pathBuilder.charAt(pathBuilder.length() - 1) == '/') {
+					pathBuilder.deleteCharAt(pathBuilder.length() - 1);
 				}
 				if (!pathElement.startsWith("/")) {
-					result = result + "/";
+					pathBuilder.append("/");
 				}
-				result = result + pathElement;
+				pathBuilder.append(pathElement);
 			}
 		}
+		String result = pathBuilder.toString();
 		if (StringUtils.isBlank(result)) {
 			throw new RuntimeException("No path provided (on class or method)");
 		}
@@ -225,26 +228,39 @@ class JavaEEModeller {
 
 		for (Parameter p : method.getParameters()) {
 			MethodParameter mp = new MethodParameter();
+			boolean hasName = p.isNamePresent();
 			mp.setCodeName(p.getName());
 			mp.setType(p.getParameterizedType());
 			if (p.isAnnotationPresent(PathParam.class)) {
 				PathParam pathParam = p.getAnnotation(PathParam.class);
+				if (!hasName && isValidJavaIdentifier(pathParam.value())) {
+					mp.setCodeName(pathParam.value());
+				}
 				mp.setNetworkName(pathParam.value());
 				mp.setNetworkType(EndpointParameter.NetworkType.PATH);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(QueryParam.class)) {
 				QueryParam queryParam = p.getAnnotation(QueryParam.class);
+				if (!hasName && isValidJavaIdentifier(queryParam.value())) {
+					mp.setCodeName(queryParam.value());
+				}
 				mp.setNetworkName(queryParam.value());
 				mp.setNetworkType(EndpointParameter.NetworkType.QUERY);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(FormParam.class)) {
 				FormParam formParam = p.getAnnotation(FormParam.class);
+				if (!hasName && isValidJavaIdentifier(formParam.value())) {
+					mp.setCodeName(formParam.value());
+				}
 				mp.setNetworkName(formParam.value());
 				mp.setNetworkType(EndpointParameter.NetworkType.FORM);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(MatrixParam.class) || p.isAnnotationPresent(HeaderParam.class) ||
 					p.isAnnotationPresent(CookieParam.class) || p.isAnnotationPresent(Context.class)) {
 				// ignore
+			} else if (p.isAnnotationPresent(BeanParam.class)) {
+				logger.warn("Cannot handle @BeanParam parameters - skipping method");
+				return;
 			} else {
 				mp.setNetworkType(EndpointParameter.NetworkType.BODY);
 				parameters.add(mp);
@@ -282,6 +298,21 @@ class JavaEEModeller {
 			}
 			endpoint.setMethod(httpMethod);
 		}
+	}
+
+	private static boolean isValidJavaIdentifier(String value) {
+		for (int i = 0; i < value.length(); i++) {
+			if (i == 0) {
+				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
+					return false;
+				}
+			} else {
+				if (!Character.isJavaIdentifierPart(value.charAt(i))) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private static Set<HttpMethod> identifyHttpMethods(Method method) {

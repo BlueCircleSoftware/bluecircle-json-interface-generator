@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integration;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+
+import javax.enterprise.context.SessionScoped;
 
 /**
- * TODO document me
+ * Test state for the {@link TestServicesVoid} test methods.  Basically, the test methods cat up a string, and at the end of the test, we
+ * retrieve it and test it to make sure that all the methods were invoked properly.
  */
-abstract public class JType implements Serializable {
+@SessionScoped
+public class VoidTestState implements Serializable {
 
-	// TODO debugging only
+	private String totalString = "";
 
-	public static List<JType> createdTypes = new ArrayList<>();
+	public String getTotalString() {
+		return totalString;
+	}
 
-	abstract public <T> T accept(JTypeVisitor<T> visitor);
-
+	public void addToTotalString(String part) {
+		this.totalString += part;
+	}
 }

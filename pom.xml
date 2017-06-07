@@ -30,6 +30,7 @@
         <module>json-interface-generator-core</module>
         <module>json-jee7-reader</module>
         <module>json-typescript-generator</module>
+        <module>json-integration-tests</module>
     </modules>
 
     <developers>

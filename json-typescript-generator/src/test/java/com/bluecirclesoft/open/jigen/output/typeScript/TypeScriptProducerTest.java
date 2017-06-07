@@ -16,19 +16,26 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.bluecirclesoft.open.jigen.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Model;
-import org.junit.Test;
-import testp1.p12.ClassB;
 import testp1.p12.ClassC;
-
-import java.io.IOException;
-import java.io.PrintWriter;
 
 /**
  * TODO document me
  */
 public class TypeScriptProducerTest {
+
+	private static final Logger log = LoggerFactory.getLogger(TypeScriptProducerTest.class);
 
 	@Test
 	public void testNamespaceCollapse() throws IOException {
@@ -36,7 +43,20 @@ public class TypeScriptProducerTest {
 		Model model = new Model();
 		jacksonTypeModeller.enumerateProperties(model, ClassC.class);
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out),"abc");
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out), "abc");
+		outputTypeScript.output(model);
+	}
+
+	@Test
+	public void testJavaEEModel() throws IOException, ClassNotFoundException {
+		File inFile = new File("../json-jee7-reader/JavaEEModellerTest.model.dat");
+		log.info("Looking for JavaEE model in " + inFile.getCanonicalPath());
+		FileInputStream in = new FileInputStream(inFile);
+		ObjectInputStream objectOutputStream = new ObjectInputStream(in);
+		Model model = (Model) objectOutputStream.readObject();
+		objectOutputStream.close();
+
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out), "abc");
 		outputTypeScript.output(model);
 	}
 

@@ -16,10 +16,18 @@
 
 package com.bluecirclesoft.open.jigen.jeeReader;
 
-import com.bluecirclesoft.open.jigen.model.Model;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.Collection;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.junit.Assert;
 import org.junit.Test;
+
+import com.bluecirclesoft.open.jigen.model.Endpoint;
+import com.bluecirclesoft.open.jigen.model.Model;
 
 /**
  * TODO document me
@@ -27,7 +35,7 @@ import org.junit.Test;
 public class JavaEEModellerTest {
 
 	@Test
-	public void testModeller() {
+	public void testModeller() throws IOException {
 
 		ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
 
@@ -35,7 +43,30 @@ public class JavaEEModellerTest {
 
 		Model model = modeller.createModel("/", "com.bluecirclesoft");
 
-		System.out.println(model);
+		Assert.assertEquals(5, sizeof(model.getEndpoints()));
+
+		// test complex endpoints
+		{
+			Endpoint endpoint = model.getEndpoint("com.bluecirclesoft.open.jigen.jeeReader.ComplexService.getMapSS");
+			Assert.assertEquals(0, endpoint.getParameters().size());
+			Assert.assertEquals("JMap[valueType=JString[]]", endpoint.getResponseBody().toString());
+		}
+
+		// Save model here, so it can be used in the typescript test
+		ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream("JavaEEModellerTest.model.dat"));
+		objectOutputStream.writeObject(model);
+		objectOutputStream.close();
 	}
 
+	private int sizeof(Iterable<?> iterable) {
+		if (iterable instanceof Collection) {
+			return ((Collection<?>) iterable).size();
+		} else {
+			int i = 0;
+			for (Object anIterable : iterable) {
+				i++;
+			}
+			return i;
+		}
+	}
 }

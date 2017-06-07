@@ -16,6 +16,7 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +29,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class JObject extends JToplevelType {
 
-	public class Field {
+	public class Field implements Serializable {
 
 		private final String name;
 

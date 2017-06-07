@@ -16,6 +16,7 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 /**
  * Holds information about a REST endpoint (one Java method may generate multiple endpoints, if it is annotated with multiple HTTP methods).
  */
-public class Endpoint {
+public class Endpoint implements Serializable {
 
 	private String id;
 

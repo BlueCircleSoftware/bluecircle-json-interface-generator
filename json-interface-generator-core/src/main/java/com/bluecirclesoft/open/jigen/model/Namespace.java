@@ -32,6 +32,7 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * This class represents a TypeScript namespace. It may contain other namespaces, or declarations of other types
  */
-public class Namespace {
+public class Namespace implements Serializable {
 
 	private String name;
 

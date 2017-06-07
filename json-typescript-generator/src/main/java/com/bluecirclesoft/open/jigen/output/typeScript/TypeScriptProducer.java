@@ -25,9 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
-import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.Namespace;
@@ -37,6 +39,8 @@ import com.bluecirclesoft.open.jigen.output.OutputProducer;
  * Generate TypeScript from a REST model.
  */
 public class TypeScriptProducer implements OutputProducer {
+
+	private static final Logger log = LoggerFactory.getLogger(TypeScriptProducer.class);
 
 	private final File outputFile;
 
@@ -105,62 +109,87 @@ public class TypeScriptProducer implements OutputProducer {
 
 	private void outputEndpoints(Namespace namespace) {
 		for (Endpoint endpoint : namespace.getEndpoints()) {
-			final String name = endpoint.getId();
-			//			writer.line("// Processing " + endpoint);
-			StringBuilder parameterList = new StringBuilder();
-			boolean needsComma[] = {false};
-			for (EndpointParameter parameter : endpoint.getParameters()) {
-				addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
+			writeEndpoint(endpoint);
+		}
+	}
+
+	private void writeEndpoint(Endpoint endpoint) {
+		final String name = endpoint.getId();
+		//			writer.line("// Processing " + endpoint);
+
+		// create parameter list for function declaration
+		StringBuilder parameterList = new StringBuilder();
+		boolean needsComma[] = {false};
+		for (EndpointParameter parameter : endpoint.getParameters()) {
+			addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
+		}
+		addParameter(parameterList, needsComma, "options",
+				"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer()) + ">");
+		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
+		writer.indentIn();
+
+		// construct AJAX url, encoding any path params
+		Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = sortParameters(endpoint.getParameters());
+		String url = "'" + endpoint.getPathTemplate() + "'";
+		List<EndpointParameter> urlParams = sortedParams.get(EndpointParameter.NetworkType.PATH);
+		// TODO add query params to URL for POST
+		if (urlParams != null && !urlParams.isEmpty()) {
+			for (EndpointParameter param : urlParams) {
+				url = url.replace("{" + param.getNetworkName() + "}", "' + encodeURI(String(" + param.getCodeName() + ")) + '");
 			}
-			Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = sortParameters(endpoint.getParameters());
-			String url = "'" + endpoint.getPathTemplate() + "'";
-			List<EndpointParameter> urlParams = sortedParams.get(EndpointParameter.NetworkType.PATH);
-			if (urlParams != null && !urlParams.isEmpty()) {
-				for (EndpointParameter param : urlParams) {
-					url = url.replace("{" + param.getNetworkName() + "}", "' + encodeURI(String(" + param.getCodeName() + ")) + '");
-				}
-			}
-			addParameter(parameterList, needsComma, "options",
-					"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer()) + ">");
-			writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
-			writer.indentIn();
-			if (endpoint.getMethod() == HttpMethod.POST) {
+		}
+
+		// construct submission body
+		switch (endpoint.getMethod()) {
+			case POST:
 				// adding body parameter
 				List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.BODY);
 				if (bodyParams != null && bodyParams.size() > 0) {
 					writer.line("const submitData = JSON.stringify(" + bodyParams.get(0).getCodeName() + ");");
 				} else {
-					writer.line("const submitData = null;");
+					List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.FORM);
+					createSubmitDataBodyFromParams(params);
 				}
-			} else {
+				break;
+			case GET:
 				// adding query parameters
 				List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.QUERY);
-				writer.line("const submitData = {");
-				writer.indentIn();
-				if (params != null) {
-					int plen = params.size();
-					for (int i = 0; i < plen; i++) {
-						EndpointParameter p = params.get(i);
-						writer.line("'" + p.getNetworkName() + "': " + p.getCodeName() + (i == plen - 1 ? "" : ","));
-					}
-				}
-				writer.indentOut();
-				writer.line("};");
-			}
-			writer.line("$.ajax(jsonInterfaceGenerator.getPrefix() + " + url + ", {");
-			writer.indentIn();
-			writer.line("method: '" + endpoint.getMethod().name() + "',");
-			writer.line("contentType: \"application/json; charset=utf-8\",");
-			writer.line("data: submitData,");
-			writer.line("complete: options.complete,");
-			writer.line("error: options.error,");
-			writer.line("success: options.success");
-			writer.indentOut();
-			writer.line("});");
-			writer.indentOut();
-			writer.line("}");
-
+				createSubmitDataBodyFromParams(params);
+				break;
+			default:
+				writer.line("const submitData = null;");
+				break;
 		}
+
+		// construct actual jQuery call
+		writer.line("$.ajax(jsonInterfaceGenerator.getPrefix() + " + url + ", {");
+		writer.indentIn();
+		writer.line("method: '" + endpoint.getMethod().name() + "',");
+//			writer.line("contentType: \"application/json; charset=utf-8\",");
+		writer.line("data: submitData,");
+		writer.line("dataType: 'json',");
+		writer.line("complete: options.complete,");
+		writer.line("error: options.error,");
+		writer.line("success: options.success,");
+		writer.line("async: options.hasOwnProperty(\"async\") ? options.async : true");
+		writer.indentOut();
+		writer.line("});");
+		writer.indentOut();
+		writer.line("}");
+	}
+
+	private void createSubmitDataBodyFromParams(List<EndpointParameter> params) {
+		writer.line("const submitData = {");
+		writer.indentIn();
+		if (params != null) {
+			int plen = params.size();
+			for (int i = 0; i < plen; i++) {
+				EndpointParameter p = params.get(i);
+				writer.line("'" + p.getNetworkName() + "': " + p.getCodeName() + (i == plen - 1 ? "" : ","));
+			}
+		}
+		writer.indentOut();
+		writer.line("};");
 	}
 
 	private Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortParameters(List<EndpointParameter> parameters) {
