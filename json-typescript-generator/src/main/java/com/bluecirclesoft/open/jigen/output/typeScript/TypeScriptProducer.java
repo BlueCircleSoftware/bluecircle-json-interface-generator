@@ -140,11 +140,16 @@ public class TypeScriptProducer implements OutputProducer {
 		}
 
 		// construct submission body
+		List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.BODY);
+		boolean isBodyParam = bodyParams != null && bodyParams.size() > 0;
 		switch (endpoint.getMethod()) {
 			case POST:
+				if (hasType(sortedParams, EndpointParameter.NetworkType.FORM) && isBodyParam) {
+					log.error("Can't have a @FormParam parameter and body parameter on POST requests, on endpoint {}", endpoint);
+					throw new RuntimeException("Unrecoverable error");
+				}
 				// adding body parameter
-				List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.BODY);
-				if (bodyParams != null && bodyParams.size() > 0) {
+				if (isBodyParam) {
 					writer.line("const submitData = JSON.stringify(" + bodyParams.get(0).getCodeName() + ");");
 				} else {
 					List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.FORM);
@@ -155,6 +160,14 @@ public class TypeScriptProducer implements OutputProducer {
 				// adding query parameters
 				List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.QUERY);
 				createSubmitDataBodyFromParams(params);
+				if (isBodyParam) {
+					log.error("Can't have a body parameter on GET requests, on endpoint {}", endpoint);
+					throw new RuntimeException("Unrecoverable error");
+				}
+				if (hasType(sortedParams, EndpointParameter.NetworkType.FORM)) {
+					log.error("Can't have a @FormParam parameter on GET requests, on endpoint {}", endpoint);
+					throw new RuntimeException("Unrecoverable error");
+				}
 				break;
 			default:
 				writer.line("const submitData = null;");
@@ -167,7 +180,11 @@ public class TypeScriptProducer implements OutputProducer {
 		writer.line("method: '" + endpoint.getMethod().name() + "',");
 //			writer.line("contentType: \"application/json; charset=utf-8\",");
 		writer.line("data: submitData,");
-		writer.line("dataType: 'json',");
+		if (!isBodyParam) {
+			writer.line("dataType: 'json',");
+		} else {
+			writer.line("contentType: \"application/json; charset=utf-8\",");
+		}
 		writer.line("complete: options.complete,");
 		writer.line("error: options.error,");
 		writer.line("success: options.success,");
@@ -176,6 +193,11 @@ public class TypeScriptProducer implements OutputProducer {
 		writer.line("});");
 		writer.indentOut();
 		writer.line("}");
+	}
+
+	private boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams, EndpointParameter.NetworkType form) {
+		List<EndpointParameter> endpointParameters = sortedParams.get(form);
+		return endpointParameters != null && endpointParameters.size() > 0;
 	}
 
 	private void createSubmitDataBodyFromParams(List<EndpointParameter> params) {
