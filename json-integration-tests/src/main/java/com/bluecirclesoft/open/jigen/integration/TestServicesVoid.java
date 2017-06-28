@@ -49,6 +49,7 @@ public class TestServicesVoid {
 	private HttpServletResponse response;
 
 	private void setCORSHeaders() {
+		// Allow cross-site - the test page is served from karma, so accessing wildfly is a cross-site request
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT");
 	}

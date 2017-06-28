@@ -15,5 +15,7 @@
     "webpack": "^1.14.0",
     "source-map-loader": "^0.1.5",
     "webpack-fail-plugin": "^1.0.5"
+  },
+  "dependencies": {
   }
 }

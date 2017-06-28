@@ -128,3 +128,40 @@ describe("test TestServicesString", () => {
         expect(result).toEqual(["abc", "abc", "abc"]);
     });
 });
+
+describe("test TestServicesObject", () => {
+
+    // Standard handler
+    function simpleHandler<T>(handler: (x: T) => void): JsonOptions<T> {
+        return {
+            success: (s: T, textStatus: string, jqXHR: JQueryXHR) => {
+                console.log("success: result ", s);
+                handler(s);
+            },
+            error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+                console.log("error: jqXHR=", jqXHR, " textStatus=", textStatus, " errorThrown=", errorThrown);
+            },
+            complete: () => {
+                console.log("complete");
+            },
+            async: false
+        };
+    }
+
+    it("can execute doubleUpBody", () => {
+        console.log("URL: " + jsonInterfaceGenerator.getPrefix() + '/testServicesObject/doubleUpBody');
+
+
+        let result: com.bluecirclesoft.open.jigen.integration.JsonResponse = {doubleA: null, doubleB: null, doubleBoth: null};
+        let arg0 = {
+            a: "one",
+            b: "two"
+        };
+        console.log("Data: " + JSON.stringify(arg0));
+        com.bluecirclesoft.open.jigen.integration.TestServicesObject.doubleUpBody(arg0, simpleHandler((s: com.bluecirclesoft.open.jigen.integration.JsonResponse) => {
+            result = s;
+        }));
+        expect(result).toEqual({doubleA: "oneone", doubleB: "twotwo", doubleBoth: "onetwoonetwo"});
+    });
+
+});
