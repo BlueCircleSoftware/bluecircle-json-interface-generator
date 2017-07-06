@@ -17,6 +17,7 @@
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
@@ -70,11 +71,14 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 	@Override
 	public Integer visit(JEnum jEnum) {
 		writer.line();
-		writer.line("export enum " + jEnum.getName() + " {");
+		String name = jEnum.getName();
+		// emit enum
+		writer.line("export enum " + name + " {");
 		writer.indentIn();
 		int count = 0;
-		int valueCount = jEnum.getValues().size() - 1;
-		for (String value : jEnum.getValues()) {
+		Set<String> values = jEnum.getValues();
+		int valueCount = values.size() - 1;
+		for (String value : values) {
 			String suffix;
 			if (count == valueCount) {
 				suffix = "";
@@ -86,6 +90,14 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 		writer.indentOut();
 		writer.line("}");
+		// enum already has index->name and name->index, but we will emit index->enum constant and name->enum constant
+		writer.line("export const " + name + "_values : jsonInterfaceGenerator.EnumReverseLookup<" + name + "> = {};");
+		int count2 = 0;
+		for (String value : values) {
+			writer.line(name + "_values[" + count2 + "] = " + name + "." + value + ";");
+			writer.line(name + "_values[\"" + value + "\"] = " + name + "." + value + ";");
+			count2++;
+		}
 		return null;
 	}
 

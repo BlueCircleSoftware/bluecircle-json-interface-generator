@@ -288,7 +288,20 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			return new JsonStringFormatVisitor.Base() {
 				@Override
 				public void enumTypes(Set<String> enums) {
-					reader = () -> new JEnum(type.getRawClass().getName(), enums);
+					reader = () -> {
+						// not sure what the ordering is on these enums, but I want them to match the Java ordering as much as possible.
+						Class<?> rawClass = type.getRawClass();
+						List<String> enumVals = new ArrayList<>();
+						if (rawClass.isEnum()) {
+							for (Object ec : rawClass.getEnumConstants()) {
+								enumVals.add(((Enum<?>) ec).name());
+							}
+						} else {
+							enumVals.addAll(enums);
+						}
+
+						return new JEnum(rawClass.getName(), enumVals);
+					};
 				}
 			};
 		}

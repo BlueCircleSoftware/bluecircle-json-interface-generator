@@ -49,6 +49,15 @@ export namespace jsonInterfaceGenerator {
     }
 
     /**
+     * Interface used during enum generation for enum reverse lookups
+     */
+    export interface EnumReverseLookup<EnumType> {
+        [key: string]: EnumType;
+
+        [index: number]: EnumType;
+    }
+
+    /**
      * Defines something that is indexable by string.  This is used below for getters and setters to ensure that the object can be
      * addressed by the index operator (i.e., [])
      */

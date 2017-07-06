@@ -17,7 +17,7 @@
 package com.bluecirclesoft.open.jigen.model;
 
 import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -28,12 +28,12 @@ public class JEnum extends JToplevelType {
 
 	private String name;
 
-	private final Set<String> values = new LinkedHashSet<>();
+	private final LinkedHashSet<String> values = new LinkedHashSet<>();
 
 	public JEnum() {
 	}
 
-	public JEnum(String name, Set<String> values) {
+	public JEnum(String name, List<String> values) {
 		this.name = name;
 		this.values.addAll(values);
 	}
@@ -46,7 +46,7 @@ public class JEnum extends JToplevelType {
 		this.name = name;
 	}
 
-	public Set<String> getValues() {
+	public LinkedHashSet<String> getValues() {
 		return values;
 	}
 
