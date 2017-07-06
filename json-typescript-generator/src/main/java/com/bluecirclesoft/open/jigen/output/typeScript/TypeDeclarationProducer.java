@@ -73,9 +73,10 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.line("export enum " + jEnum.getName() + " {");
 		writer.indentIn();
 		int count = 0;
+		int valueCount = jEnum.getValues().size() - 1;
 		for (String value : jEnum.getValues()) {
 			String suffix;
-			if (count == jEnum.getValues().size() - 1) {
+			if (count == valueCount) {
 				suffix = "";
 			} else {
 				suffix = ",";

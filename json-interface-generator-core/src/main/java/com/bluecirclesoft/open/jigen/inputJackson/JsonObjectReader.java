@@ -60,6 +60,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 	/**
 	 * New up an instance of the class, and convert it to JSON
+	 *
 	 * @param clazz the class to consider
 	 * @return a JSON string, or {@code null} if the JSON could not be produced.
 	 */
