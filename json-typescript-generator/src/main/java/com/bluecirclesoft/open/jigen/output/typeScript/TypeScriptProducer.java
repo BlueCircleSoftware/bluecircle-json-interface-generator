@@ -170,7 +170,7 @@ public class TypeScriptProducer implements OutputProducer {
 				}
 				break;
 			default:
-				writer.line("const submitData = null;");
+				writer.line("const submitData = undefined;");
 				break;
 		}
 
