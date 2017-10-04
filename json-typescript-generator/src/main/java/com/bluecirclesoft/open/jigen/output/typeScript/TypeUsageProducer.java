@@ -21,6 +21,7 @@ import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JMap;
+import com.bluecirclesoft.open.jigen.model.JNull;
 import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
@@ -28,6 +29,7 @@ import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
+import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 
 /**
@@ -35,9 +37,15 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
  */
 class TypeUsageProducer implements JTypeVisitor<String> {
 
+	private final String immutableSuffix;
+
+	public TypeUsageProducer(String immutableSuffix) {
+		this.immutableSuffix = immutableSuffix;
+	}
+
 	@Override
 	public String visit(JObject jObject) {
-		return jObject.getReference();
+		return jObject.getReference() + (immutableSuffix != null ? immutableSuffix : "");
 	}
 
 	@Override
@@ -101,5 +109,23 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JMap jMap) {
 		return "{[name: string]:" + jMap.getValueType().accept(this) + "}";
+	}
+
+	@Override
+	public String visit(JUnionType jUnionType) {
+		// get the strings for all the member types, and join them together with vertical bars
+		StringBuilder sb = new StringBuilder();
+		for (JType member : jUnionType.getMembers()) {
+			if (sb.length() > 0) {
+				sb.append(" | ");
+			}
+			sb.append(member.accept(this));
+		}
+		return sb.toString();
+	}
+
+	@Override
+	public String visit(JNull jNull) {
+		return "null";
 	}
 }

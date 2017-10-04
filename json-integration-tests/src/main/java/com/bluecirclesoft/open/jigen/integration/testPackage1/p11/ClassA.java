@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,20 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.inputJackson;
+package com.bluecirclesoft.open.jigen.integration.testPackage1.p11;
 
 /**
  * TODO document me
  */
-public class ClassC<T, U> {
+public class ClassA {
 
-	private T t;
+	private int x;
 
-	private U u;
-
-	public ClassC() {
+	public int getX() {
+		return x;
 	}
 
-	public ClassC(T t, U u) {
-		this.t = t;
-		this.u = u;
-	}
-
-	public T getT() {
-		return t;
-	}
-
-	public void setT(T t) {
-		this.t = t;
-	}
-
-	public U getU() {
-		return u;
-	}
-
-	public void setU(U u) {
-		this.u = u;
+	public void setX(int x) {
+		this.x = x;
 	}
 }

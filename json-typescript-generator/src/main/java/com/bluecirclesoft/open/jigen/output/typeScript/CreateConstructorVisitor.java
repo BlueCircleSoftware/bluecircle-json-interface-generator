@@ -21,12 +21,14 @@ import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JMap;
+import com.bluecirclesoft.open.jigen.model.JNull;
 import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
+import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 
 /**
@@ -60,7 +62,7 @@ class CreateConstructorVisitor implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JEnum jEnum) {
-		TypeUsageProducer typeUsageProducer = new TypeUsageProducer();
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null);
 		return "() => " + jEnum.accept(typeUsageProducer) + "." + jEnum.getValues().iterator().next();
 	}
 
@@ -92,5 +94,15 @@ class CreateConstructorVisitor implements JTypeVisitor<String> {
 	@Override
 	public String visit(JMap jMap) {
 		return null;
+	}
+
+	@Override
+	public String visit(JUnionType jUnionType) {
+		return jUnionType.getMembers().get(0).accept(this);
+	}
+
+	@Override
+	public String visit(JNull jNull) {
+		return "() => null";
 	}
 }

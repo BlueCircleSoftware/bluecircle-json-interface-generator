@@ -59,4 +59,9 @@ public class JEnum extends JToplevelType {
 	public String toString() {
 		return new ToStringBuilder(this).append("name", name).append("values", values).toString();
 	}
+
+	@Override
+	public boolean needsWrapping() {
+		return false;
+	}
 }

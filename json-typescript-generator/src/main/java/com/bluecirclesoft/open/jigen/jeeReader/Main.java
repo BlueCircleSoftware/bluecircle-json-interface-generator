@@ -56,6 +56,7 @@ public class Main {
 
 
 		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()), options.getTypingsIndexPath());
+		outputTypeScript.setProduceImmutables(!options.isNoImmutables());
 		outputTypeScript.output(model);
 
 	}

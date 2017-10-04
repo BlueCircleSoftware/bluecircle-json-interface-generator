@@ -54,6 +54,8 @@ public class TypeScriptProducer implements OutputProducer {
 
 	private boolean stripCommonNamespaces = false;
 
+	private boolean produceImmutables = true;
+
 	public boolean isProduceAccessors() {
 		return produceAccessors;
 	}
@@ -76,6 +78,15 @@ public class TypeScriptProducer implements OutputProducer {
 
 	public void setStripCommonNamespaces(boolean stripCommonNamespaces) {
 		this.stripCommonNamespaces = stripCommonNamespaces;
+	}
+
+	public boolean isProduceImmutables() {
+		return produceImmutables;
+	}
+
+	public void setProduceImmutables(boolean produceImmutables) {
+		this.produceImmutables = produceImmutables;
+		log.info("Producing immutables? {}", this.produceImmutables);
 	}
 
 	public TypeScriptProducer(File outputFile, String typingsPath) {
@@ -124,7 +135,7 @@ public class TypeScriptProducer implements OutputProducer {
 			addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
 		}
 		addParameter(parameterList, needsComma, "options",
-				"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer()) + ">");
+				"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer(null)) + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
 		writer.indentIn();
 
@@ -174,23 +185,24 @@ public class TypeScriptProducer implements OutputProducer {
 				break;
 		}
 
-		// construct actual jQuery call
-		writer.line("$.ajax(jsonInterfaceGenerator.getPrefix() + " + url + ", {");
-		writer.indentIn();
-		writer.line("method: '" + endpoint.getMethod().name() + "',");
+//		// construct actual jQuery call
+//		writer.line("$.ajax(jsonInterfaceGenerator.getPrefix() + " + url + ", {");
+//		writer.indentIn();
+//		writer.line("method: '" + endpoint.getMethod().name() + "',");
+////			writer.line("contentType: \"application/json; charset=utf-8\",");
+//		writer.line("data: submitData,");
+//		if (!isBodyParam) {
+//			writer.line("dataType: 'json',");
+//		} else {
 //			writer.line("contentType: \"application/json; charset=utf-8\",");
-		writer.line("data: submitData,");
-		if (!isBodyParam) {
-			writer.line("dataType: 'json',");
-		} else {
-			writer.line("contentType: \"application/json; charset=utf-8\",");
-		}
-		writer.line("complete: options.complete,");
-		writer.line("error: options.error,");
-		writer.line("success: options.success,");
-		writer.line("async: options.hasOwnProperty(\"async\") ? options.async : true");
-		writer.indentOut();
-		writer.line("});");
+//		}
+//		writer.line("complete: options.complete,");
+//		writer.line("error: options.error,");
+//		writer.line("success: options.success,");
+//		writer.line("async: options.hasOwnProperty(\"async\") ? options.async : true");
+//		writer.indentOut();
+//		writer.line("});");
+		writer.line("jsonInterfaceGenerator.callAjax("+url+", '"+endpoint.getMethod().name()+"', submitData, "+isBodyParam+", options);");
 		writer.indentOut();
 		writer.line("}");
 	}
@@ -228,7 +240,7 @@ public class TypeScriptProducer implements OutputProducer {
 	}
 
 	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
-		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer()));
+		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null)));
 	}
 
 	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
@@ -250,7 +262,7 @@ public class TypeScriptProducer implements OutputProducer {
 			writer.indentIn();
 		}
 		for (JType intf : namespace.getDeclarations()) {
-			intf.accept(new TypeDeclarationProducer(this, writer));
+			intf.accept(new TypeDeclarationProducer(this, writer, produceImmutables));
 		}
 		outputEndpoints(namespace);
 		for (Namespace subNamespace : namespace.getNamespaces()) {

@@ -35,12 +35,9 @@ public class JObject extends JToplevelType {
 
 		private final JType type;
 
-		private final boolean required;
-
-		private Field(String name, JType type, boolean required) {
+		private Field(String name, JType type) {
 			this.name = name;
 			this.type = type;
-			this.required = required;
 		}
 
 		public String getName() {
@@ -51,13 +48,9 @@ public class JObject extends JToplevelType {
 			return type;
 		}
 
-		public boolean isRequired() {
-			return required;
-		}
-
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append("name", name).append("type", type).append("required", required).toString();
+			return new ToStringBuilder(this).append("name", name).append("type", type).toString();
 		}
 	}
 
@@ -118,7 +111,17 @@ public class JObject extends JToplevelType {
 		if (type == null) {
 			throw new RuntimeException("type cannot be null");
 		}
-		fields.put(name, new Field(name, type, required));
+		JType realType;
+		if (!required) {
+			// if field is not required, add a union with null
+			JUnionType union = new JUnionType();
+			union.getMembers().add(type);
+			union.getMembers().add(new JNull());
+			realType = union;
+		} else {
+			realType = type;
+		}
+		fields.put(name, new Field(name, realType));
 	}
 
 	@Override
@@ -129,5 +132,10 @@ public class JObject extends JToplevelType {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this).append("name", name).append("typeVariables", typeVariables).append("fields", fields).toString();
+	}
+
+	@Override
+	public boolean needsWrapping() {
+		return true;
 	}
 }

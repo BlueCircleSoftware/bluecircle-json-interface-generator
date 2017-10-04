@@ -16,9 +16,16 @@
 
 package com.bluecirclesoft.open.jigen.integration;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
 import javax.ejb.Stateless;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -28,6 +35,11 @@ import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.bluecirclesoft.open.jigen.integration.testPackage1.p11.ClassA;
+import com.bluecirclesoft.open.jigen.integration.testPackage1.p12.ClassB;
+import com.bluecirclesoft.open.jigen.integration.testPackage1.p12.ClassC;
+import com.bluecirclesoft.open.jigen.integration.testPackage2.EnumA;
 
 /**
  * Test services that consume/produce objects
@@ -69,5 +81,87 @@ public class TestServicesObject {
 		return jsonResponse;
 	}
 
+	@OPTIONS
+	@Path("/doubleUpNested")
+	public String doubleUpNestedOptions() {
+		setCORSHeaders();
+		return "";
+	}
+
+	@POST
+	@Path("/doubleUpNested")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public NestedOuter doubleUpNested(NestedOuter x) {
+		log.info("Inside doubleUpNested, x = {}", x);
+		setCORSHeaders();
+		NestedOuter response = new NestedOuter();
+		response.setA(x.getA());
+		response.setB(x.getB());
+		response.setC(x.getC() * 2);
+		response.setD(x.getD() + x.getD());
+		return response;
+	}
+
+	@GET
+	@Path("/getClassC")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public ClassC getClassC() {
+		log.info("Inside getClassC");
+		setCORSHeaders();
+		ClassC response = new ClassC();
+		response.setB(new ClassB());
+		response.getB().setA(new ClassA());
+		return response;
+	}
+
+	@GET
+	@Path("/getClassB")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public com.bluecirclesoft.open.jigen.integration.testPackage2.ClassB getClassB() {
+		log.info("Inside getClassC");
+		setCORSHeaders();
+
+		com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA a1 =
+				new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA();
+		a1.setProp1(1);
+		a1.setProp2("Str");
+		a1.setProp3(new ArrayList<>());
+		Collections.addAll(a1.getProp3(), "e1", "e2", "e3", "e4");
+		a1.setProp4(EnumA.THREE);
+		a1.setProp5(new ArrayList<>());
+		Collections.addAll(a1.getProp5(), EnumA.TWO, EnumA.ONE, EnumA.TWO);
+		a1.getProp5().add(EnumA.TWO);
+		a1.getProp5().add(EnumA.ONE);
+		a1.setProp6(new HashSet<>());
+		Collections.addAll(a1.getProp6(), 10, 15, 12, 17, 1);
+		a1.setProp7(new HashMap<>());
+		a1.getProp7().put("k1", "v1");
+		a1.getProp7().put("k2", "v2");
+		a1.setProp8(new HashMap<>());
+		a1.getProp8().put(1, "Wun");
+		a1.getProp8().put(2, "Too");
+		a1.getProp8().put(3, "Three");
+		Map<String, String> k1 = new HashMap<>();
+		k1.put("a", "b");
+		Map<Integer, Integer> v1 = new HashMap<>();
+		v1.put(1, 2);
+		a1.getProp9().put(k1, v1);
+
+		com.bluecirclesoft.open.jigen.integration.testPackage2.ClassB b =
+				new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassB();
+		b.setOne(a1);
+		b.setTwo(new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA());
+		b.setThree(new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassC<>(34, "blah"));
+		b.setFour(new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassC<>(127, 128));
+		b.setFive(new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA[]{
+				new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA(),
+				new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA(),
+				new com.bluecirclesoft.open.jigen.integration.testPackage2.ClassA()});
+
+		return b;
+	}
 
 }

@@ -51,7 +51,7 @@ public class JEEToTypeScriptTest {
 		try {
 			log.info("Creating deployment");
 			WebArchive jar = ShrinkWrap.create(WebArchive.class)
-					.addPackage("com.bluecirclesoft.open.jigen.integration")
+					.addPackages(true, "com.bluecirclesoft.open.jigen.integration")
 					.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
 			log.info("Created deployment: {}", jar.toString(true));
 			return jar;

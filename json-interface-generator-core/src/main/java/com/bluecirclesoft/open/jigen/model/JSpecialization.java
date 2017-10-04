@@ -54,4 +54,9 @@ public class JSpecialization extends JType {
 				.append("parameters", parameters)
 				.toString();
 	}
+
+	@Override
+	public boolean needsWrapping() {
+		return base.needsWrapping();
+	}
 }

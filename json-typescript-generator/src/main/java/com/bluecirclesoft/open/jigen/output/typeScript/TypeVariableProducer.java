@@ -21,6 +21,7 @@ import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JMap;
+import com.bluecirclesoft.open.jigen.model.JNull;
 import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
@@ -28,6 +29,7 @@ import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
+import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 
 /**
@@ -35,10 +37,19 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
  */
 public class TypeVariableProducer implements JTypeVisitor<String> {
 
+	private final String immutableSuffix;
+
+	public TypeVariableProducer(String immutableSuffix) {
+		this.immutableSuffix = immutableSuffix;
+	}
+
 	@Override
 	public String visit(JObject jObject) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(jObject.getName());
+		if (immutableSuffix != null) {
+			sb.append(immutableSuffix);
+		}
 		if (!jObject.getTypeVariables().isEmpty()) {
 			sb.append("<");
 			boolean needsComma = false;
@@ -116,6 +127,16 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JMap jMap) {
+		throw new RuntimeException("not implemented");
+	}
+
+	@Override
+	public String visit(JUnionType jUnionType) {
+		throw new RuntimeException("not implemented");
+	}
+
+	@Override
+	public String visit(JNull jNull) {
 		throw new RuntimeException("not implemented");
 	}
 }

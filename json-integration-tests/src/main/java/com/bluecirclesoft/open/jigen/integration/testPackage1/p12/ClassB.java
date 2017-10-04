@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package testp1.p11;
+package com.bluecirclesoft.open.jigen.integration.testPackage1.p12;
+
+import com.bluecirclesoft.open.jigen.integration.testPackage1.p11.ClassA;
 
 /**
  * TODO document me
  */
-public class ClassA {
+public class ClassB {
 
-	private int x;
+	private ClassA a;
 
-	public int getX() {
-		return x;
+	public ClassA getA() {
+		return a;
 	}
 
-	public void setX(int x) {
-		this.x = x;
+	public void setA(ClassA a) {
+		this.a = a;
 	}
 }

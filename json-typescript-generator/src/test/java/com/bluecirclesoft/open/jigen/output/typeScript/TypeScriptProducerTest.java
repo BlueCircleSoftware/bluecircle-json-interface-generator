@@ -26,9 +26,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bluecirclesoft.open.jigen.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Model;
-import testp1.p12.ClassC;
 
 /**
  * TODO document me
@@ -36,16 +34,6 @@ import testp1.p12.ClassC;
 public class TypeScriptProducerTest {
 
 	private static final Logger log = LoggerFactory.getLogger(TypeScriptProducerTest.class);
-
-	@Test
-	public void testNamespaceCollapse() throws IOException {
-		JacksonTypeModeller jacksonTypeModeller = new JacksonTypeModeller();
-		Model model = new Model();
-		jacksonTypeModeller.enumerateProperties(model, ClassC.class);
-
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out), "abc");
-		outputTypeScript.output(model);
-	}
 
 	@Test
 	public void testJavaEEModel() throws IOException, ClassNotFoundException {

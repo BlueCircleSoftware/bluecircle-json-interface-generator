@@ -13,40 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {jsonInterfaceGenerator} from "../../main/resources/header";
 
-interface A {
-    s: string;
+package com.bluecirclesoft.open.jigen.integration;
+
+/**
+ * TODO document me
+ */
+public class NestedInner {
+
+	private String a;
+
+	private String b;
+
+	private int c;
+
+	private int d;
+
+	private int[] e;
+
+	public String getA() {
+		return a;
+	}
+
+	public void setA(String a) {
+		this.a = a;
+	}
+
+	public String getB() {
+		return b;
+	}
+
+	public void setB(String b) {
+		this.b = b;
+	}
+
+	public int getC() {
+		return c;
+	}
+
+	public void setC(int c) {
+		this.c = c;
+	}
+
+	public int getD() {
+		return d;
+	}
+
+	public void setD(int d) {
+		this.d = d;
+	}
+
+	public int[] getE() {
+		return e;
+	}
+
+	public void setE(int[] e) {
+		this.e = e;
+	}
 }
-
-interface B {
-    a: A;
-}
-
-interface C {
-    cstr?: string;
-}
-
-interface D {
-    dstr?: string;
-}
-
-interface E {
-    estr?: string;
-    d?: D;
-}
-
-interface F {
-    c?: C;
-    d?: D;
-    e?: E;
-}
-
-
-describe("jsonInterfaceGenerator", () => {
-
-    it("TODO move tests", () => {
-        expect(1).toEqual(1)
-    });
-
-});

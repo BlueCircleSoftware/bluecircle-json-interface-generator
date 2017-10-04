@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,38 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
+package com.bluecirclesoft.open.jigen.integration.testPackage2;
 
 /**
  * TODO document me
  */
-public class JVoid extends JType {
+public class ClassC<T, U> {
 
-	@Override
-	public <T> T accept(JTypeVisitor<T> visitor) {
-		return visitor.visit(this);
+	private T t;
+
+	private U u;
+
+	public ClassC() {
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).toString();
+	public ClassC(T t, U u) {
+		this.t = t;
+		this.u = u;
 	}
 
-	@Override
-	public boolean needsWrapping() {
-		return false;
+	public T getT() {
+		return t;
+	}
+
+	public void setT(T t) {
+		this.t = t;
+	}
+
+	public U getU() {
+		return u;
+	}
+
+	public void setU(U u) {
+		this.u = u;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,23 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TODO document me
  */
-public class JVoid extends JType {
+public class JUnionType extends JType {
+
+	private List<JType> members = new ArrayList<>();
+
+	public List<JType> getMembers() {
+		return members;
+	}
+
+	public void setMembers(List<JType> members) {
+		this.members = members;
+	}
 
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
@@ -29,12 +40,22 @@ public class JVoid extends JType {
 	}
 
 	@Override
-	public String toString() {
-		return new ToStringBuilder(this).toString();
+	public boolean needsWrapping() {
+		for (JType member : members) {
+			if (member.needsWrapping()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	@Override
-	public boolean needsWrapping() {
-		return false;
+	public JUnionType getStripped() {
+		JUnionType newType = new JUnionType();
+		for (JType member : members) {
+			if (!(member instanceof JNull)) {
+				newType.getMembers().add(member);
+			}
+		}
+		return newType;
 	}
 }

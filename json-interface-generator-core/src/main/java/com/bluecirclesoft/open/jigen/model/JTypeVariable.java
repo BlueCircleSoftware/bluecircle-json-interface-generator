@@ -64,4 +64,10 @@ public class JTypeVariable extends JType {
 				.append("intersectionBounds", intersectionBounds)
 				.toString();
 	}
+
+
+	@Override
+	public boolean needsWrapping() {
+		return true;
+	}
 }

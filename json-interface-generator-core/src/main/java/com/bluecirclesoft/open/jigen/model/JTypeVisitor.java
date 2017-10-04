@@ -43,4 +43,8 @@ public interface JTypeVisitor<ReturnType> {
 	ReturnType visit(JTypeVariable jTypeVariable);
 
 	ReturnType visit(JMap jMap);
+
+	ReturnType visit(JUnionType jUnionType);
+
+	ReturnType visit(JNull jNull);
 }

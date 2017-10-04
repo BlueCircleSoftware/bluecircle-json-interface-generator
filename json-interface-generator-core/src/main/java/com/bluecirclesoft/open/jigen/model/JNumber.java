@@ -32,4 +32,9 @@ public class JNumber extends JType {
 	public String toString() {
 		return new ToStringBuilder(this).toString();
 	}
+
+	@Override
+	public boolean needsWrapping() {
+		return false;
+	}
 }

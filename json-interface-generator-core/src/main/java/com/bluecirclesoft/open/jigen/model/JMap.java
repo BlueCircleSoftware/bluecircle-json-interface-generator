@@ -49,4 +49,9 @@ public class JMap extends JType {
 	public String toString() {
 		return new ToStringBuilder(this).append("valueType", valueType).toString();
 	}
+
+	@Override
+	public boolean needsWrapping() {
+		return true;
+	}
 }

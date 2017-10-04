@@ -24,13 +24,14 @@ import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JMap;
+import com.bluecirclesoft.open.jigen.model.JNull;
 import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
-import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
+import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 
 /**
@@ -42,9 +43,12 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final TypeScriptProducer producer;
 
-	public TypeDeclarationProducer(TypeScriptProducer typeScriptProducer, OutputHandler writer) {
+	private final boolean produceImmutable;
+
+	public TypeDeclarationProducer(TypeScriptProducer typeScriptProducer, OutputHandler writer, boolean produceImmutable) {
 		this.writer = writer;
 		this.producer = typeScriptProducer;
+		this.produceImmutable = produceImmutable;
 	}
 
 	@Override
@@ -90,7 +94,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 		writer.indentOut();
 		writer.line("}");
-		// enum already has index->name and name->index, but we will emit index->enum constant and name->enum constant
+		// enum already has index -> name and name -> index, but we will emit index -> enum constant and name -> enum constant
 		writer.line("export const " + name + "_values : jsonInterfaceGenerator.EnumReverseLookup<" + name + "> = {};");
 		int count2 = 0;
 		for (String value : values) {
@@ -131,23 +135,36 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		return null;
 	}
 
+	@Override
+	public Integer visit(JUnionType jUnionType) {
+		return null;
+	}
+
+	@Override
+	public Integer visit(JNull jNull) {
+		return null;
+	}
+
+
 	private void makeInterfaceDeclaration(JObject intf) {
 		CreateConstructorVisitor createConstructorVisitor = new CreateConstructorVisitor();
 		String interfaceLabel = intf.getName();
-		String interfaceType = intf.accept(new TypeVariableProducer());
+		String interfaceType = intf.accept(new TypeVariableProducer(null));
 		writer.line();
 		String declLine = "export interface " + interfaceType + " {";
 		writer.line(declLine);
 		writer.indentIn();
-		TypeUsageProducer typeUsageProducer = new TypeUsageProducer();
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null);
 		for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
 			String typeString = prop.getValue().getType().accept(typeUsageProducer);
-			writer.line(prop.getKey() + ": " + typeString + (prop.getValue().isRequired() ? "" : " | null") + ";");
+			writer.line(prop.getKey() + ": " + typeString + ";");
 		}
 		writer.indentOut();
 		writer.line("}");
 
-		writer.line("export namespace " + interfaceLabel + " {");
+		String immutableInterfaceType = intf.accept(new TypeVariableProducer("$Imm"));
+		declLine = "export class " + immutableInterfaceType + " {";
+		writer.line(declLine);
 		writer.indentIn();
 		String typeVars = "";
 		if (!intf.getTypeVariables().isEmpty()) {
@@ -166,28 +183,23 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			typeVars = typeVarsBuilder.toString();
 		}
 		if (intf.getNewObjectJson() != null) {
-			writer.line("export function make" + typeVars + "() : " + interfaceLabel + typeVars + " { ");
+			writer.line("static make" + typeVars + "() : " + interfaceLabel + typeVars + " { ");
 			writer.indentIn();
 			writer.line("return " + intf.getNewObjectJson() + ";");
 			writer.indentOut();
 			writer.line("}");
 		}
-		if (producer.isProduceAccessorFunctionals()) {
+
+		if (produceImmutable) {
+			writer.line("private $base : jsonInterfaceGenerator.DirectWrapper<" + interfaceType + ">");
+			writer.line("public constructor(base: jsonInterfaceGenerator.DirectWrapper<" + interfaceType + ">) {");
+			writer.indentIn();
+			writer.line("this.$base = base;");
+			writer.indentOut();
+			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
-				String propertyName = prop.getKey();
-				JType propertyType = prop.getValue().getType();
-				String typeString = propertyType.accept(typeUsageProducer);
-				String ctor = propertyType.accept(createConstructorVisitor);
-				if (intf.getTypeVariables().size() == 0 && ctor != null) {
-					// Note if the ctor is null here, that means I don't actually know how to produce a construtcor. For now, we'll just
-					// skip this function.
-					String retType = "jsonInterfaceGenerator" + ".MemberAccessorImpl<" + interfaceLabel + "," + typeString + ">";
-					writer.line("export function " + propertyName + "() : " + retType + typeVars + " { ");
-					writer.indentIn();
-					writer.line("return new " + retType + typeVars + "('" + propertyName + "', " + ctor + ");");
-					writer.indentOut();
-					writer.line("}");
-				}
+				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer);
+				prop.getValue().getType().accept(accessorProducer);
 			}
 		}
 		writer.indentOut();

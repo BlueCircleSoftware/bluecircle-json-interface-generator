@@ -131,10 +131,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		while (!typesToProcess.isEmpty()) {
 			Type type = typesToProcess.pollFirst();
 			if (model.hasType(type)) {
-				logger.info("Type {} already seen", type);
+				logger.debug("Type {} already seen", type);
 				continue;
 			}
-			logger.info("Type {} being added", type);
+			logger.debug("Type {} being added", type);
 			model.addType(type, handleType(type));
 		}
 		for (Map.Entry<Type, List<Consumer<JType>>> fixup : typeFixups.entrySet()) {
@@ -143,7 +143,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				processor.accept(jTYpe);
 			}
 		}
-		logger.info("Done");
+		logger.debug("Done");
 
 		Collection<JType> interfaces = model.getInterfaces();
 		for (JType createdType : JType.createdTypes) {

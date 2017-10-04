@@ -42,6 +42,9 @@ public class Options {
 			"false)")
 	private boolean stripCommonPackages;
 
+	@ByFlag(longOpt = "no-immutables", documentation = "Do not produce immutable classes for interfaces")
+	private boolean noImmutables = false;
+
 	public String getPackageName() {
 		return packageName;
 	}
@@ -72,5 +75,21 @@ public class Options {
 
 	public void setTypingsIndexPath(String typingsIndexPath) {
 		this.typingsIndexPath = typingsIndexPath;
+	}
+
+	public boolean isStripCommonPackages() {
+		return stripCommonPackages;
+	}
+
+	public void setStripCommonPackages(boolean stripCommonPackages) {
+		this.stripCommonPackages = stripCommonPackages;
+	}
+
+	public boolean isNoImmutables() {
+		return noImmutables;
+	}
+
+	public void setNoImmutables(boolean noImmutables) {
+		this.noImmutables = noImmutables;
 	}
 }

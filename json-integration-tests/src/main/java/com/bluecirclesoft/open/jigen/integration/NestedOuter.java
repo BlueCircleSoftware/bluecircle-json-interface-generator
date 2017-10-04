@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,50 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
+package com.bluecirclesoft.open.jigen.integration;
 
 /**
  * TODO document me
  */
-public class JVoid extends JType {
+public class NestedOuter {
 
-	@Override
-	public <T> T accept(JTypeVisitor<T> visitor) {
-		return visitor.visit(this);
+	private NestedInner a;
+
+	private NestedInner b;
+
+	private int c;
+
+	private String d;
+
+	public NestedInner getA() {
+		return a;
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).toString();
+	public void setA(NestedInner a) {
+		this.a = a;
 	}
 
-	@Override
-	public boolean needsWrapping() {
-		return false;
+	public NestedInner getB() {
+		return b;
+	}
+
+	public void setB(NestedInner b) {
+		this.b = b;
+	}
+
+	public int getC() {
+		return c;
+	}
+
+	public void setC(int c) {
+		this.c = c;
+	}
+
+	public String getD() {
+		return d;
+	}
+
+	public void setD(String d) {
+		this.d = d;
 	}
 }

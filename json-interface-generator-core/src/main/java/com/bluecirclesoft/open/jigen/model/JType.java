@@ -31,4 +31,10 @@ abstract public class JType implements Serializable {
 
 	abstract public <T> T accept(JTypeVisitor<T> visitor);
 
+	abstract public boolean needsWrapping();
+
+	public JType getStripped() {
+		return this;
+	}
+
 }

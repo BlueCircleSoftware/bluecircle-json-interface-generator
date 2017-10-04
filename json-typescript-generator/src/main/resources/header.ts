@@ -15,18 +15,49 @@
  */
 
 export namespace jsonInterfaceGenerator {
+
+    /**
+     * Generic options for an AJAX call.  I try to be ajax-lib-agnostic here, but my main dev library is jQuery.
+     * TODO more testing to see if this makes sense for, e.g., Axios
+     */
     export interface JsonOptions<R> {
+        /**
+         * Is this call async?
+         */
         async?: boolean;
 
-        complete? (jqXHR: JQueryXHR, textStatus: string): any;
+        /**
+         * Completion callback
+         * @param {boolean} success true if error() was not called
+         */
+        complete? (success: boolean): void;
 
-        error? (jqXHR: JQueryXHR, textStatus: string, errorThrown: string): any;
+        /**
+         * Error callback
+         * @param {string} errorThrown
+         * @returns {any}
+         */
+        error? (errorThrown: string): any;
 
-        success? (data: R, textStatus: string, jqXHR: JQueryXHR): any;
+        /**
+         * Success callback
+         * @param {R} data
+         * @returns {any}
+         */
+        success? (data: R): any;
     }
 
+    /**
+     * Prefix to be appended to all URLs
+     * TODO is this necessary since the client now installs an AJAX caller?
+     * @type {string} the prefix
+     */
     let ajaxUrlPrefix: string | null = null;
 
+    /**
+     * Get the prefix to be appended to all URLs
+     * @returns {string} the prefix
+     */
     export function getPrefix(): string {
         if (!ajaxUrlPrefix) {
             throw "The URL prefix has not been set, so no AJAX calls can be made. Set the URL prefix by calling" +
@@ -35,13 +66,22 @@ export namespace jsonInterfaceGenerator {
         return ajaxUrlPrefix;
     }
 
+    /**
+     * A type for a function that will handle AJAX calls
+     */
+    type AjaxInvoker = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => void;
+
+    /**
+     * The ajax caller used by generated code.
+     */
+    export let callAjax: AjaxInvoker;
+
     export let logDebug: boolean = false;
 
     function debug(...args: any[]) {
         if (logDebug) {
             console.log.apply(null, args);
         }
-
     }
 
     export function init(prefix: string) {
@@ -57,256 +97,203 @@ export namespace jsonInterfaceGenerator {
         [index: number]: EnumType;
     }
 
-    /**
-     * Defines something that is indexable by string.  This is used below for getters and setters to ensure that the object can be
-     * addressed by the index operator (i.e., [])
-     */
-    interface StringIndexable<ValType> {
-        [name: string]: ValType;
+    export enum WriteOption {
+        WRITE,
+        READ_FILL
     }
 
     /**
-     * Defines an accessor of a given type (getter/setter).  Meant to work in a non-static way (that is, the accessor has a reference to
-     * whatever object it's reading from).
+     * Thing that collects changes - may be a ChangeRoot, which has a list of versions of the tree
      */
-    export abstract class Accessor<ValType> {
-        // this is not used - it's only here to force TypeScript to treat different type instances as
-        // not-convertible.
-        private unusedVal: ValType;
+    export abstract class ChangeCollector<T> {
 
-        /**
-         * Get the current value
-         */
-        abstract get(): ValType;
+        private differentiator: T;
 
-        /**
-         * Set the value to the new value
-         * @param val the new value
-         */
-        abstract set(val: ValType): void;
+        public abstract get(key: string | number): any;
+
+        public abstract set(key: string | number, val: any): void;
+    }
+
+    export abstract class DirectWrapper<T> extends ChangeCollector<T> {
+
+        public abstract getObj(write: WriteOption): T;
     }
 
     /**
-     * Defines an accessor of a field on a given type (getter/setter) plus a child object creator.  Meant to work in a static way (that
-     * is, the object to operate upon is passed in as a parameter).
+     * A "change root" - contains a list of changes to an object/array
      */
-    export abstract class MemberAccessor<OwnerType, ValType> {
-        // this is not used - it's only here to force TypeScript to treat different type instances as
-        // not-convertible.
-        private unusedVal: OwnerType;
+    export class ChangeRoot<T> extends DirectWrapper<T> {
+        private l: T[] = [];
+        private factory: () => T;
 
-        /**
-         * Get the current value of a member on the supplied object
-         * @param obj the object to operate upon.
-         */
-        abstract get(obj: OwnerType & StringIndexable<ValType | ValType[]>): ValType;
-
-        /**
-         * Set the value of a member on the supplied object
-         * @param obj the object to operate upon
-         * @param val the new value
-         */
-        abstract set(obj: OwnerType & StringIndexable<ValType | ValType[]>, val: ValType): void;
-
-        /**
-         * Create a child object to be assigned to the member.
-         */
-        abstract createChild(): ValType;
-    }
-
-    /**
-     * Default implementation of MemberAccessor
-     */
-    export class MemberAccessorImpl<OwnerType, ValType> extends MemberAccessor<OwnerType, ValType> {
-        // this is not used - it's only here to force TypeScript to treat different type instances as
-        // not-convertible.
-        private unusedVa2: OwnerType;
-
-        fieldName: string;
-        childCtor: () => ValType;
-
-        /**
-         * Create a member accessor
-         * @param fieldName name of the field to access
-         * @param childCtor constructor function to make a new child object.
-         */
-        constructor(fieldName: string, childCtor: () => ValType) {
+        public constructor(initial: T | (() => T)) {
             super();
-            this.fieldName = fieldName;
-            this.childCtor = childCtor;
-        }
-
-        /**
-         * Get the current value of a member on the supplied object
-         * @param obj the object to operate upon.
-         */
-        get(obj: OwnerType & StringIndexable<ValType>): ValType {
-            return obj[this.fieldName];
-        }
-
-        /**
-         * Set the value of a member on the supplied object
-         * @param obj the object to operate upon
-         * @param val the new value
-         */
-        set(obj: OwnerType & StringIndexable<ValType>, val: ValType): void {
-            obj[this.fieldName] = val;
-        }
-
-        /**
-         * Create a child object to be assigned to the member.
-         */
-        createChild(): ValType {
-            return this.childCtor();
-        }
-    }
-
-
-    /**
-     * Accessor array members, which includes an index number
-     */
-    export class SubscriptedMemberAccessorImpl<OwnerType, ValType> extends MemberAccessor<OwnerType, ValType> {
-        // this is not used - it's only here to force TypeScript to treat different type instances as
-        // not-convertible.
-        private unusedVa2: OwnerType;
-        fieldName: string;
-        index: number;
-        childCtor: () => ValType;
-
-        /**
-         * Create an accessor for the specified element number of an array
-         * @param fieldName the name of the field to access
-         * @param index the array element number to access
-         * @param childCtor constructor function to make a new child object.
-         */
-        constructor(fieldName: string, index: number, childCtor: () => ValType) {
-            super();
-            this.fieldName = fieldName;
-            this.childCtor = childCtor;
-            this.index = index;
-        }
-
-        /**
-         * Get the current value of a member on the supplied object
-         * @param obj the object to operate upon.
-         */
-        get(obj: OwnerType & StringIndexable<ValType[]>): ValType {
-            let arr = obj[this.fieldName];
-            if (!arr) {
-                arr = [];
-                obj[this.fieldName] = arr;
-            }
-            return arr[this.index];
-        }
-
-        /**
-         * Set the value of a member on the supplied object
-         * @param obj the object to operate upon
-         * @param val the new value
-         */
-        set(obj: OwnerType & StringIndexable<ValType[]>, val: ValType): void {
-            let arr = obj[this.fieldName];
-            if (!arr) {
-                arr = [];
+            if (typeof initial === "function") {
+                this.factory = initial;
             } else {
-                arr = arr.slice();
+                this.factory = () => initial;
             }
-            obj[this.fieldName] = arr;
-            arr[this.index] = val;
         }
 
-        /**
-         * Create a child object to be assigned to the member.
-         */
-        createChild(): ValType {
-            return this.childCtor();
+        public getHistory(index: number): T {
+            return this.l[index];
+        }
+
+        public getHistorySize(): number {
+            return this.l.length;
+        }
+
+        public getCurrent(): T {
+            return this.getObj(WriteOption.READ_FILL);
+        }
+
+        public getObj(write: WriteOption): T {
+            let cur: T;
+            switch (write) {
+                case WriteOption.WRITE:
+                    if (this.l.length == 0) {
+                        cur = this.factory();
+                    } else {
+                        cur = this.l[this.l.length - 1];
+                    }
+                    let nxt: T;
+                    if (typeof cur === 'object') {
+                        nxt = (<any>Object).assign({}, cur);
+                    } else {
+                        nxt = <T><any>(<any[]>cur).slice();
+                    }
+                    this.l.push(nxt);
+                    return nxt;
+                case WriteOption.READ_FILL:
+                    if (this.l.length == 0) {
+                        cur = this.factory();
+                        this.l.push(cur);
+                    } else {
+                        cur = this.l[this.l.length - 1];
+                    }
+                    return cur;
+                default:
+                    throw "Unhandled " + write;
+            }
+        }
+
+        public get<K extends keyof T>(key: K): T[K] {
+            return this.getObj(WriteOption.READ_FILL)[key];
+        }
+
+        public set<K extends keyof T>(key: K, val: T[K]): void {
+            this.getObj(WriteOption.WRITE)[key] = val;
         }
     }
 
-    export class AccessorBuilder<T> extends Accessor<T> {
-        // this is not used - it's only here to force TypeScript to treat different type instances as
-        // not-convertible.
-        private unusedVa2: T;
-        list: any[];
-        accessors: MemberAccessor<any, any>[] = [];
-        private toplevelCreator: () => any;
+    // wrapper to build descendants
+    export class ObjectWrapper<T> extends DirectWrapper<T> {
+        private parent: DirectWrapper<any>;
+        private myIndex: string | number;
+        private factory: () => T;
 
-        private constructor(l: any[], creator: () => T) {
+        public constructor(parent: DirectWrapper<any>, myIndex: string | number, factory: () => T) {
             super();
-            this.list = l;
-            this.toplevelCreator = creator;
+            this.parent = parent;
+            this.myIndex = myIndex;
+            this.factory = factory;
         }
 
-        public static make<T>(creator: () => T, initial?: T | undefined): AccessorBuilder<T> {
-            let initArr = (initial === undefined ? [] : [initial]);
-            return new AccessorBuilder<T>(initArr, creator);
-        }
+        public getObj(write: WriteOption): T {
+            let parentObj = this.parent.getObj(write);
+            let myObj = parentObj[this.myIndex];
 
-        // Here's what I'd like to do: add a ValType type argument to AccessorBuilder, and use keyof ValType in the add method to return an
-        // AccessorBuilder<ValType[K]>.  This works fine for required props, but falls down currently for oprional props, which have a type
-        // of ValType[K]|undefined.  Then the next add() can't accept any properties, because there are no properties in common between the
-        // two. https://github.com/Microsoft/TypeScript/issues/12215 and others have been proposed apparently which might allow me to
-        // subtract undefined from the returned AccessorBuilder's type.
-        public add<S>(acc: MemberAccessor<T, S>): AccessorBuilder<S> {
-            let newBuilder = new AccessorBuilder<S>(this.list, this.toplevelCreator);
-            newBuilder.accessors = this.accessors.slice();
-            newBuilder.accessors.push(acc);
-            return newBuilder;
-        }
-
-        public reset() {
-            this.list.length = 0;
-        }
-
-        get(): T {
-            let obj: any = this.list[this.list.length - 1];
-            let index = 0;
-            while (obj && index < this.accessors.length) {
-                let acc = this.accessors[index];
-                obj = acc.get(obj);
-                index++;
+            switch (write) {
+                case WriteOption.WRITE:
+                case WriteOption.READ_FILL:
+                    if (myObj === undefined) {
+                        myObj = this.factory();
+                        parentObj[this.myIndex] = myObj;
+                    }
+                    return myObj;
+                default:
+                    throw "Unhandled " + write;
             }
-            return obj;
         }
 
-        set(val: T) {
-            debug("+++ set called with ", val);
-            // basic algorithm here is to copy each parent object down to the point where we're actually making the mutation.
-            let obj;
-            if (this.list.length === 0) {
-                obj = this.toplevelCreator();
-            } else {
-                let lastElem = this.list[this.list.length - 1];
-                obj = {...lastElem};
-            }
-            this.list.push(obj);
+        public get<K extends keyof T>(key: K): T[K] {
+            return this.getObj(WriteOption.READ_FILL)[key];
+        }
 
-            let index = 0;
-            let accessorLength = this.accessors.length;
-            while (index < accessorLength - 1) {
-                debug("index now ", index, " accessorLength is ", accessorLength);
-                let acc = this.accessors[index];
-                debug("accessor is ", acc);
-                const parent = obj;
-                debug("parent is ", parent);
-                let child = acc.get(parent);
-                debug("child is ", child);
-                let newChild;
-                if (child === null || child === undefined) {
-                    newChild = acc.createChild();
-                } else {
-                    newChild = {...child};
-                }
-                acc.set(parent, newChild);
-                debug("after set - parent is now ", parent);
-                child = newChild;
-                obj = child;
-                index++;
-            }
-            debug("index now ", index, " accessorLength is ", accessorLength);
-            this.accessors[index].set(obj, val);
-            debug("--- all done; this.list now ", this.list);
-            return obj;
+        public set<K extends keyof T>(key: K, val: T[K]): void {
+            this.getObj(WriteOption.WRITE)[key] = val;
         }
     }
+
+    export class OLeafAcc<DataType, WrapperType> extends ChangeCollector<DataType> {
+        private parent: ObjectWrapper<DataType>;
+        private myIndex: keyof DataType;
+
+        public constructor(parent: ObjectWrapper<DataType>, myIndex: keyof DataType) {
+            super();
+            this.parent = parent;
+            this.myIndex = myIndex;
+        }
+
+        public get<K extends keyof DataType>(key: K): DataType[K] {
+            return this.parent.getObj(WriteOption.READ_FILL)[key];
+        }
+
+        public set<K extends keyof DataType>(key: K, val: DataType[K]): void {
+            this.parent.getObj(WriteOption.WRITE)[key] = val;
+        }
+    }
+
+    export class ArrayWrapper<T> extends DirectWrapper<T> {
+        private parent: DirectWrapper<any>;
+        private myIndex: string | number;
+        private factory: () => T[];
+
+        public constructor(parent: DirectWrapper<any>, myIndex: string | number, factory: () => T[]) {
+            super();
+            this.parent = parent;
+            this.myIndex = myIndex;
+            this.factory = factory;
+        }
+
+        public getObj(write: WriteOption): T {
+            let parentObj = this.parent.getObj(write);
+            let myObj = parentObj[this.myIndex];
+
+            switch (write) {
+                case WriteOption.WRITE:
+                case WriteOption.READ_FILL:
+                    if (myObj === undefined) {
+                        myObj = this.factory();
+                        parentObj[this.myIndex] = myObj;
+                    }
+                    return myObj;
+                default:
+                    throw "Unhandled " + write;
+            }
+        }
+
+        public get(key: number): T {
+            return (<T[]><any>this.getObj(WriteOption.READ_FILL))[key];
+        }
+
+        public set(key: number, val: T): void {
+            (<T[]><any>this.getObj(WriteOption.WRITE))[key] = val;
+        }
+    }
+
+    export class WrappedElementArrayWrapper<DataType, WrapperType> {
+        private parent: ArrayWrapper<DataType>;
+        private leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType;
+
+        public constructor(parent: ArrayWrapper<DataType>, leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType) {
+            this.parent = parent;
+            this.leafWrapper = leafWrapper;
+        }
+
+        public get(key: number): WrapperType {
+            return this.leafWrapper(this.parent, key);
+        }
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package testp1.p12;
-
-import testp1.p11.ClassA;
+package com.bluecirclesoft.open.jigen.model;
 
 /**
  * TODO document me
  */
-public class ClassB {
+public class JNull extends JType {
 
-	private ClassA a;
-
-	public ClassA getA() {
-		return a;
+	@Override
+	public <T> T accept(JTypeVisitor<T> visitor) {
+		return visitor.visit(this);
 	}
 
-	public void setA(ClassA a) {
-		this.a = a;
+	@Override
+	public boolean needsWrapping() {
+		return false;
 	}
 }

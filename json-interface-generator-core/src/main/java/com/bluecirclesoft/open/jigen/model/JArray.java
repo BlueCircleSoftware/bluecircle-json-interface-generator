@@ -52,4 +52,9 @@ public class JArray extends JType {
 	public String toString() {
 		return new ToStringBuilder(this).append("indexType", indexType).append("elementType", elementType).toString();
 	}
+
+	@Override
+	public boolean needsWrapping() {
+		return true;
+	}
 }
