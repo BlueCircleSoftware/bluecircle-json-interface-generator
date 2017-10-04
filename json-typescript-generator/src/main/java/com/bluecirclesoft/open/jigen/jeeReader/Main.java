@@ -52,7 +52,8 @@ public class Main {
 		}
 
 		JavaEEModeller modeller = new JavaEEModeller();
-		Model model = modeller.createModel(options.getUrlPrefix(), options.getPackageName());
+		String[] packages = options.getPackageName().split("[, \t]");
+		Model model = modeller.createModel(options.getUrlPrefix(), packages);
 
 
 		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()), options.getTypingsIndexPath());
