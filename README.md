@@ -2,7 +2,46 @@
 
 A utility to read your Java JAX-RS methods, and generate TypeScript interfaces and AJAX calls to use those interfaces.
 
-*THIS IS A WORK IN PROGRESS* - So far, this has only been used internally. Please report any bugs you find.
+*THIS IS A WORK IN PROGRESS* - So far, this has only been used internally. Bugs, comments, suggestions? Please tell us!
+
+## What does it do?
+
+It takes Java JAX-RS code like this:
+
+```java
+	@POST
+	@Path("/doubleUpBody")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public JsonResponse doubleUpBody(JsonRequest x) {
+		JsonResponse jsonResponse = new JsonResponse();
+		jsonResponse.setDoubleA(x.getA() + x.getA());
+		jsonResponse.setDoubleB(x.getB() + x.getB());
+		jsonResponse.setDoubleBoth(x.getA() + x.getB() + x.getA() + x.getB());
+		return jsonResponse;
+	}
+
+```
+
+and generates TypeScript like this:
+
+```typescript
+	export interface JsonRequest {
+		a: string | null;
+		b: string | null;
+	}
+
+	export interface JsonResponse {
+		doubleA: string | null;
+		doubleB: string | null;
+		doubleBoth: string | null;
+	}
+                    
+	export function doubleUpBody(arg0 : com.bluecirclesoft.open.jigen.integration.JsonRequest, options : jsonInterfaceGenerator.JsonOptions<com.bluecirclesoft.open.jigen.integration.JsonResponse>) : void {
+		const submitData = JSON.stringify(arg0);
+		jsonInterfaceGenerator.callAjax('/testServicesObject/doubleUpBody', 'POST', submitData, true, options);
+	}
+```
 
 ## Sample usage
 
@@ -62,6 +101,91 @@ Option | Description
 --typings-index-path \<path\> | Insert a "/// \<reference path="..." />" in the resulting output
 --strip-common-packages | By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
 --no-immutables | By default, immutable wrappers are generated for all interfaces. Selecting this option disables those wrappers.
+
+## Making AJAX calls
+
+I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with
+the handler you want to use to invoke AJAX calls. The function you'll need to implement looks like this:
+ 
+```typescript
+export namespace jsonInterfaceGenerator {
+    export interface JsonOptions<R> {
+        /**
+         * Is this call async?
+         */
+        async?: boolean;
+
+        /**
+         * Completion callback
+         * @param {boolean} success true if error() was not called
+         */
+        complete? (success: boolean): void;
+
+        /**
+         * Error callback
+         * @param {string} errorThrown
+         * @returns {any}
+         */
+        error? (errorThrown: string): any;
+
+        /**
+         * Success callback
+         * @param {R} data
+         * @returns {any}
+         */
+        success? (data: R): any;
+    }
+
+    /**
+     * A type for a function that will handle AJAX calls
+     */
+    type AjaxInvoker = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => void;
+
+    /**
+     * The ajax caller used by generated code.
+     */
+    export let callAjax: AjaxInvoker;
+}
+```
+
+Here is the implementation we use for jQuery:
+
+```typescript
+
+jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
+    let error = false;
+    let settings: JQueryAjaxSettings = {
+        method: method,
+        data: data,
+        async: options.hasOwnProperty("async") ? options.async : true
+    };
+    if (options.success) {
+        let fn = options.success;
+        settings["success"] = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+            fn(responseData);
+        };
+    }
+    if (options.error) {
+        let fn = options.error;
+        settings["error"] = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+            error = true;
+            fn(errorThrown);
+        };
+    }
+    if (options.complete) {
+        let fn = options.complete;
+        settings["complete"] = (jqXHR: JQueryXHR, textStatus: string) => {
+            fn(error);
+        };
+    }
+    if (isBodyParam) {
+        settings["contentType"] = "application/json; charset=utf-8";
+    } else {
+        settings["dataType"] = "json";
+    }
+    $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
+};
+```
 
 ## Miscellaneous Weirdness
 
