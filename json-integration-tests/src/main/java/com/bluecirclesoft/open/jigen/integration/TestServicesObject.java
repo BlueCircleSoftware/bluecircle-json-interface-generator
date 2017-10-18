@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.ejb.Stateless;
@@ -36,6 +37,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bluecirclesoft.open.jigen.integration.testPackage1.GenericList;
 import com.bluecirclesoft.open.jigen.integration.testPackage1.p11.ClassA;
 import com.bluecirclesoft.open.jigen.integration.testPackage1.p12.ClassB;
 import com.bluecirclesoft.open.jigen.integration.testPackage1.p12.ClassC;
@@ -164,4 +166,17 @@ public class TestServicesObject {
 		return b;
 	}
 
+	@GET
+	@Path("/getGenericListOfInt")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public GenericList<Integer> getGenericListOfInt() {
+		GenericList<Integer> result = new GenericList<>();
+		List<Integer> l = new ArrayList<>();
+		l.add(1);
+		l.add(3);
+		l.add(5);
+		result.setList(l);
+		return result;
+	}
 }

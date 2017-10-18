@@ -138,4 +138,9 @@ public class JObject extends JToplevelType {
 	public boolean needsWrapping() {
 		return true;
 	}
+
+	@Override
+	public boolean isConstructible() {
+		return newObjectJson != null;
+	}
 }

@@ -16,6 +16,9 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
@@ -36,6 +39,8 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
  * TODO document me
  */
 class AccessorProducer implements JTypeVisitor<Object> {
+
+	private static final Logger log = LoggerFactory.getLogger(AccessorProducer.class);
 
 	private final String name;
 
@@ -103,7 +108,9 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JObject jObject) {
-		objectAccessor(jObject.getReference());
+		if (jObject.isConstructible()) {
+			objectAccessor(jObject.getReference());
+		}
 		return null;
 	}
 
@@ -118,9 +125,16 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	public Object visit(JArray jArray) {
 		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null));
 		if (jArray.getElementType().needsWrapping()) {
-			TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm");
-			String wrapperName = jArray.getElementType().accept(typeUsageProducer);
-			objectArrayAccessor(interfaceName, wrapperName);
+			if (jArray.getElementType() instanceof JTypeVariable) {
+				// TODO skipping this for now - the immutable wrapper wants to auto-create objects all the way down, but we have a type
+				// variable here, so there's no good way to implement that.  Holding off for now, until I understand a good use case
+				log.info("Cannot create immutable wrapper for array of type {}", new TypeUsageProducer(null).visit(jArray));
+			} else if (!jArray.getElementType().isConstructible()) {
+			} else {
+				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm");
+				String wrapperName = jArray.getElementType().accept(typeUsageProducer);
+				objectArrayAccessor(interfaceName, wrapperName);
+			}
 		} else {
 			primitiveArrayAccessor(interfaceName);
 		}

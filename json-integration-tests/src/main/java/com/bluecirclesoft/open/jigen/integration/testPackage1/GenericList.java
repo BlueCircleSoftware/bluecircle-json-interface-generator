@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,32 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integration.testPackage1;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO document me
+ * A generic list
  */
-abstract public class JType implements Serializable {
+public class GenericList<T> {
 
-	// TODO debugging only
+	private List<T> list;
 
-	public static List<JType> createdTypes = new ArrayList<>();
+	private boolean more;
 
-	abstract public <T> T accept(JTypeVisitor<T> visitor);
-
-	abstract public boolean needsWrapping();
-
-	public JType getStripped() {
-		return this;
+	public List<T> getList() {
+		return list;
 	}
 
-	public boolean isConstructible() {
-		return false;
+	public void setList(List<T> list) {
+		this.list = list;
+	}
+
+	public boolean isMore() {
+		return more;
+	}
+
+	public void setMore(boolean more) {
+		this.more = more;
 	}
 }
