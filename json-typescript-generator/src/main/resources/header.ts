@@ -280,6 +280,16 @@ export namespace jsonInterfaceGenerator {
         public set(key: number, val: T): void {
             (<T[]><any>this.getObj(WriteOption.WRITE))[key] = val;
         }
+
+        public toArray(): T[] {
+            return <T[]><any>this.getObj(WriteOption.READ_FILL);
+        }
+
+        public fromArray(newArray: T[]): void {
+            let arr = <T[]><any>this.getObj(WriteOption.WRITE);
+            arr.length = 0;
+            arr.push(...newArray);
+        }
     }
 
     export class WrappedElementArrayWrapper<DataType, WrapperType> {

@@ -37,9 +37,12 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
  */
 public class TypeVariableProducer implements JTypeVisitor<String> {
 
+	private final UsageLocation location;
+
 	private final String immutableSuffix;
 
-	public TypeVariableProducer(String immutableSuffix) {
+	public TypeVariableProducer(UsageLocation location, String immutableSuffix) {
+		this.location = location;
 		this.immutableSuffix = immutableSuffix;
 	}
 
@@ -110,16 +113,19 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 	public String visit(JTypeVariable var) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(var.getName());
-		if (!var.getIntersectionBounds().isEmpty()) {
-			sb.append(" extends ");
-			boolean needsAmpersand = false;
-			for (JType bound : var.getIntersectionBounds()) {
-				if (needsAmpersand) {
-					sb.append("&");
-				} else {
-					needsAmpersand = true;
+		// if you have a type like MyType<T extends OtherType>, TypeScript only allows the extends clause when the type is being declared.
+		if (location == UsageLocation.DEFINITION) {
+			if (!var.getIntersectionBounds().isEmpty()) {
+				sb.append(" extends ");
+				boolean needsAmpersand = false;
+				for (JType bound : var.getIntersectionBounds()) {
+					if (needsAmpersand) {
+						sb.append("&");
+					} else {
+						needsAmpersand = true;
+					}
+					sb.append(bound.accept(this));
 				}
-				sb.append(bound.accept(this));
 			}
 		}
 		return sb.toString();

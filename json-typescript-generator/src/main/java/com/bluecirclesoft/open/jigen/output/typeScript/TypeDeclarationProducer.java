@@ -147,11 +147,10 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 
 	private void makeInterfaceDeclaration(JObject intf) {
-		CreateConstructorVisitor createConstructorVisitor = new CreateConstructorVisitor();
 		String interfaceLabel = intf.getName();
-		String interfaceType = intf.accept(new TypeVariableProducer(null));
+		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null));
 		writer.line();
-		String declLine = "export interface " + interfaceType + " {";
+		String declLine = "export interface " + definterfaceType + " {";
 		writer.line(declLine);
 		writer.indentIn();
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null);
@@ -162,7 +161,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.indentOut();
 		writer.line("}");
 
-		String immutableInterfaceType = intf.accept(new TypeVariableProducer("$Imm"));
+		String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm"));
 		declLine = "export class " + immutableInterfaceType + " {";
 		writer.line(declLine);
 		writer.indentIn();
@@ -191,8 +190,9 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 
 		if (produceImmutable) {
-			writer.line("private $base : jsonInterfaceGenerator.DirectWrapper<" + interfaceType + ">");
-			writer.line("public constructor(base: jsonInterfaceGenerator.DirectWrapper<" + interfaceType + ">) {");
+			String usinterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.USAGE, null));
+			writer.line("private $base : jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">;");
+			writer.line("public constructor(base: jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">) {");
 			writer.indentIn();
 			writer.line("this.$base = base;");
 			writer.indentOut();
