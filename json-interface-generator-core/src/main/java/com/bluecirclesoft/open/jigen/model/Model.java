@@ -66,6 +66,10 @@ public class Model implements Serializable {
 		return endpoint;
 	}
 
+	public void removeEndpoint(Endpoint endpoint) {
+		endpoints.remove(endpoint.getId());
+	}
+
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this).append("interfaces", interfaces).toString();
@@ -90,6 +94,4 @@ public class Model implements Serializable {
 		}
 		return endpoint;
 	}
-
-
 }

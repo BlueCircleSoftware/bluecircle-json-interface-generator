@@ -59,6 +59,7 @@ import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 
 /**
  * TODO document me
@@ -297,6 +298,16 @@ public class JavaEEModeller {
 								modeller.analyze(model, pathParam.getType()), pathParam.getNetworkType()));
 			}
 			endpoint.setMethod(httpMethod);
+
+			// check validity
+			ValidEndpointResponse validity = endpoint.isValid();
+			if (!validity.ok) {
+				logger.warn("Problems encountered while reading method {}:", method);
+				for (String problem : validity.problems) {
+					logger.warn("error: {}", problem);
+				}
+				model.removeEndpoint(endpoint);
+			}
 		}
 	}
 

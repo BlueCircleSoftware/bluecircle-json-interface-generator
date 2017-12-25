@@ -29,28 +29,31 @@ jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBod
     };
     if (options.success) {
         let fn = options.success;
-        settings["success"] = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+        settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
             fn(responseData);
         };
     }
     if (options.error) {
         let fn = options.error;
-        settings["error"] = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+        settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+            console.error("Error!");
+            console.error("jqXHR: ", jqXHR.status);
+            console.error("textStatus: ", textStatus);
             error = true;
             fn(errorThrown);
         };
     }
     if (options.complete) {
         let fn = options.complete;
-        settings["complete"] = (jqXHR: JQueryXHR, textStatus: string) => {
-            fn(error);
+        settings.complete = (jqXHR: JQueryXHR, textStatus: string) => {
+            fn(!error);
         };
     }
     if (isBodyParam) {
-        settings["contentType"] = "application/json; charset=utf-8";
-    } else {
-        settings["dataType"] = "json";
+        settings.headers = {"Content-Type": "application/json; charset=utf-8"};
     }
+    settings.dataType = "json";
+    // }
     $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
 };
 
@@ -260,5 +263,196 @@ describe("test TestServicesObject", () => {
 
 
     });
+
+});
+
+describe("test TestAllCombosTwoParameters", () => {
+
+    // Standard handler
+    function simpleHandler<T>(handler: (x: T) => void): JsonOptions<T> {
+        return {
+            success: (s: T) => {
+                console.log("success: result ", s);
+                handler(s);
+            },
+            error: (errorThrown: string) => {
+                console.log("errorThrown=", errorThrown);
+            },
+            complete: (success: boolean) => {
+                console.log("complete: success ", success);
+            },
+            async: false
+        };
+    }
+
+    it("can execute testAllCombosTwoParametersGePaPa", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaPa('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersGeQuPa", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuPa('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    // MALFORMED - no Body on GET
+    // it("can execute testAllCombosTwoParametersGeBoPa", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeBoPa({"a":"abc","b":"def","c":"ghi"}, 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"ABCP1","b":"DEFP1","c":"GHIP1"});
+    // });
+
+    it("can execute testAllCombosTwoParametersGePaQu", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaQu('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersGeQuQu", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuQu('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    // MALFORMED - no Body on GET
+    // it("can execute testAllCombosTwoParametersGeBoQu", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeBoQu({"a":"abc","b":"def","c":"ghi"}, 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"ABCP1","b":"DEFP1","c":"GHIP1"});
+    // });
+
+    // MALFORMED - no Body on GET
+    // it("can execute testAllCombosTwoParametersGePaBo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaBo('p0', {"a":"abc","b":"def","c":"ghi"}, simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0ABC","b":"P0DEF","c":"P0GHI"});
+    // });
+
+    // MALFORMED - no Body on GET
+    // it("can execute testAllCombosTwoParametersGeQuBo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuBo('p0', {"a":"abc","b":"def","c":"ghi"}, simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0ABC","b":"P0DEF","c":"P0GHI"});
+    // });
+
+    // MALFORMED - no Body on GET
+    // it("can execute testAllCombosTwoParametersGeBoBo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeBoBo({"a":"abc","b":"def","c":"ghi"}, {"a":"abc","b":"def","c":"ghi"}, simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"ABCABC","b":"DEFDEF","c":"GHIGHI"});
+    // });
+
+    it("can execute testAllCombosTwoParametersPoPaPa", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaPa('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoQuPa", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuPa('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoBoPa", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoPa({
+            "a": "abc",
+            "b": "def",
+            "c": "ghi"
+        }, 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "ABCP1", "b": "DEFP1", "c": "GHIP1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoPaQu", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaQu('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoQuQu", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuQu('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoBoQu", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoQu({
+            "a": "abc",
+            "b": "def",
+            "c": "ghi"
+        }, 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "ABCP1", "b": "DEFP1", "c": "GHIP1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoPaBo", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaBo('p0', {
+            "a": "abc",
+            "b": "def",
+            "c": "ghi"
+        }, simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0ABC", "b": "P0DEF", "c": "P0GHI"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoQuBo", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuBo('p0', {
+            "a": "abc",
+            "b": "def",
+            "c": "ghi"
+        }, simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0ABC", "b": "P0DEF", "c": "P0GHI"});
+    });
+
+    // MALFORMED - can't have more than one Body param
+    // it("can execute testAllCombosTwoParametersPoBoBo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoBo({
+    //         "a": "abc",
+    //         "b": "def",
+    //         "c": "ghi"
+    //     }, {"a": "abc", "b": "def", "c": "ghi"}, simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a": "ABCABC", "b": "DEFDEF", "c": "GHIGHI"});
+    // });
 
 });

@@ -20,6 +20,10 @@
     <container qualifier="jbossas-managed" default="true">
         <configuration>
             <property name="jbossHome">target/wildfly-10.1.0.Final</property>
+            <property name="javaVmArguments">-ea</property>
+            <!-- DEBUG - comment out above line, and uncomment below to start Arquillian's WildFly in debug mode -->
+            <!-- use in conjuction with karma.conf to debug the karma tests -->
+            <!--<property name="javaVmArguments">-ea -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n</property>-->
         </configuration>
     </container>
 </arquillian>

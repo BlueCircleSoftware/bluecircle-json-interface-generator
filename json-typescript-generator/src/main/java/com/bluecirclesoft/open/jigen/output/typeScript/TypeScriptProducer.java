@@ -20,19 +20,22 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
+import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.Namespace;
+import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 import com.bluecirclesoft.open.jigen.output.OutputProducer;
 
 /**
@@ -120,7 +123,15 @@ public class TypeScriptProducer implements OutputProducer {
 
 	private void outputEndpoints(Namespace namespace) {
 		for (Endpoint endpoint : namespace.getEndpoints()) {
-			writeEndpoint(endpoint);
+			ValidEndpointResponse validity = endpoint.isValid();
+			if (validity.ok) {
+				writeEndpoint(endpoint);
+			} else {
+				log.warn("Could not create caller for endpoint {}:", endpoint);
+				for (String msg : validity.problems) {
+					log.warn("endpoint problem: {}", msg);
+				}
+			}
 		}
 	}
 
@@ -140,13 +151,24 @@ public class TypeScriptProducer implements OutputProducer {
 		writer.indentIn();
 
 		// construct AJAX url, encoding any path params
-		Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = sortParameters(endpoint.getParameters());
-		String url = "'" + endpoint.getPathTemplate() + "'";
+		Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = endpoint.getSortedParameters();
+		final JsStringBuilder url = new JsStringBuilder();
 		List<EndpointParameter> urlParams = sortedParams.get(EndpointParameter.NetworkType.PATH);
-		// TODO add query params to URL for POST
-		if (urlParams != null && !urlParams.isEmpty()) {
-			for (EndpointParameter param : urlParams) {
-				url = url.replace("{" + param.getNetworkName() + "}", "' + encodeURI(String(" + param.getCodeName() + ")) + '");
+		handleUrlParams(endpoint.getPathTemplate(), url, urlParams);
+
+		List<EndpointParameter> queryParams = sortedParams.get(EndpointParameter.NetworkType.QUERY);
+		if (endpoint.getMethod() == HttpMethod.POST && queryParams != null && !queryParams.isEmpty()) {
+			url.addLiteral("?");
+			boolean needAnd = false;
+			for (EndpointParameter param : queryParams) {
+				if (needAnd) {
+					url.addLiteral("&");
+				} else {
+					needAnd = true;
+				}
+				url.addLiteral(param.getNetworkName());
+				url.addLiteral("=");
+				url.addCode("encodeURI(String(" + param.getCodeName() + "))");
 			}
 		}
 
@@ -155,10 +177,6 @@ public class TypeScriptProducer implements OutputProducer {
 		boolean isBodyParam = bodyParams != null && bodyParams.size() > 0;
 		switch (endpoint.getMethod()) {
 			case POST:
-				if (hasType(sortedParams, EndpointParameter.NetworkType.FORM) && isBodyParam) {
-					log.error("Can't have a @FormParam parameter and body parameter on POST requests, on endpoint {}", endpoint);
-					throw new RuntimeException("Unrecoverable error");
-				}
 				// adding body parameter
 				if (isBodyParam) {
 					writer.line("const submitData = JSON.stringify(" + bodyParams.get(0).getCodeName() + ");");
@@ -171,45 +189,42 @@ public class TypeScriptProducer implements OutputProducer {
 				// adding query parameters
 				List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.QUERY);
 				createSubmitDataBodyFromParams(params);
-				if (isBodyParam) {
-					log.error("Can't have a body parameter on GET requests, on endpoint {}", endpoint);
-					throw new RuntimeException("Unrecoverable error");
-				}
-				if (hasType(sortedParams, EndpointParameter.NetworkType.FORM)) {
-					log.error("Can't have a @FormParam parameter on GET requests, on endpoint {}", endpoint);
-					throw new RuntimeException("Unrecoverable error");
-				}
 				break;
 			default:
 				writer.line("const submitData = undefined;");
 				break;
 		}
 
-//		// construct actual jQuery call
-//		writer.line("$.ajax(jsonInterfaceGenerator.getPrefix() + " + url + ", {");
-//		writer.indentIn();
-//		writer.line("method: '" + endpoint.getMethod().name() + "',");
-////			writer.line("contentType: \"application/json; charset=utf-8\",");
-//		writer.line("data: submitData,");
-//		if (!isBodyParam) {
-//			writer.line("dataType: 'json',");
-//		} else {
-//			writer.line("contentType: \"application/json; charset=utf-8\",");
-//		}
-//		writer.line("complete: options.complete,");
-//		writer.line("error: options.error,");
-//		writer.line("success: options.success,");
-//		writer.line("async: options.hasOwnProperty(\"async\") ? options.async : true");
-//		writer.indentOut();
-//		writer.line("});");
-		writer.line("jsonInterfaceGenerator.callAjax("+url+", '"+endpoint.getMethod().name()+"', submitData, "+isBodyParam+", options);");
+		writer.line("jsonInterfaceGenerator.callAjax(" + url.get() + ", '" + endpoint.getMethod().name() + "', submitData, " + isBodyParam +
+				", options);");
 		writer.indentOut();
 		writer.line("}");
 	}
 
-	private boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams, EndpointParameter.NetworkType form) {
-		List<EndpointParameter> endpointParameters = sortedParams.get(form);
-		return endpointParameters != null && endpointParameters.size() > 0;
+	private void handleUrlParams(String template, JsStringBuilder url, List<EndpointParameter> urlParams) {
+		SortedMap<Integer, EndpointParameter> starts = new TreeMap<>();
+		Map<Integer, Integer> ends = new HashMap<>();
+
+		if (urlParams != null) {
+			for (EndpointParameter param : urlParams) {
+				String pexpr = "{" + param.getNetworkName() + "}";
+				int pos = template.indexOf(pexpr);
+				if (pos >= 0) {
+					starts.put(pos, param);
+					ends.put(pos, pos + pexpr.length());
+				}
+			}
+		}
+		int curPos = 0;
+		for (Map.Entry<Integer, EndpointParameter> entry : starts.entrySet()) {
+			int newPos = entry.getKey();
+			url.addLiteral(template.substring(curPos, newPos));
+			url.addCode("encodeURI(String(" + entry.getValue().getCodeName() + "))");
+			curPos = ends.get(newPos);
+		}
+		if (curPos < template.length()) {
+			url.addLiteral(template.substring(curPos));
+		}
 	}
 
 	private void createSubmitDataBodyFromParams(List<EndpointParameter> params) {
@@ -224,19 +239,6 @@ public class TypeScriptProducer implements OutputProducer {
 		}
 		writer.indentOut();
 		writer.line("};");
-	}
-
-	private Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortParameters(List<EndpointParameter> parameters) {
-		Map<EndpointParameter.NetworkType, List<EndpointParameter>> result = new HashMap<>();
-		for (EndpointParameter parameter : parameters) {
-			List<EndpointParameter> list = result.get(parameter.getNetworkType());
-			if (list == null) {
-				list = new ArrayList<>();
-				result.put(parameter.getNetworkType(), list);
-			}
-			list.add(parameter);
-		}
-		return result;
 	}
 
 	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
