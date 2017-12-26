@@ -44,6 +44,7 @@ public class TestCreator {
 	}
 
 	private enum ParamType {
+		FORM(false, "Fo"),
 		PATH(false, "Pa"),
 		QUERY(false, "Qu"),
 		BODY(true, "Bo");
@@ -192,14 +193,14 @@ public class TestCreator {
 		StringBuilder path = new StringBuilder();
 		path.append("/").append(testMethod);
 
-		boolean hasBodyParam = false;
-		bodySearch:
+		boolean hasFormParam = false;
+		formSearch:
 		for (int param : params) {
 			ParamType paramType = ParamType.values()[param];
 			switch (paramType) {
-				case BODY:
-					hasBodyParam = true;
-					break bodySearch;
+				case FORM:
+					hasFormParam = true;
+					break formSearch;
 			}
 		}
 
@@ -216,7 +217,11 @@ public class TestCreator {
 		serviceClass.append("\n");
 		serviceClass.append("\t@OPTIONS\n");
 		serviceClass.append("\t@Path(\"" + path.toString() + "\")\n");
-		serviceClass.append("\t@Consumes(MediaType.APPLICATION_JSON)\n");
+		if (hasFormParam) {
+			serviceClass.append("\t@Consumes(MediaType.APPLICATION_FORM_URLENCODED)\n");
+		} else {
+			serviceClass.append("\t@Consumes(MediaType.APPLICATION_JSON)\n");
+		}
 		serviceClass.append("\t@Produces(MediaType.APPLICATION_JSON)\n");
 		serviceClass.append("\tpublic Response " + testMethod + "Options(" + makeServicesOptionsParameterList(params) + ") {\n");
 		serviceClass.append("\t\tlog.info(\"Called " + testMethod + "Options\");\n");
@@ -226,7 +231,11 @@ public class TestCreator {
 		serviceClass.append("\n");
 		serviceClass.append("\t@").append(httpMethod.name()).append("\n");
 		serviceClass.append("\t@Path(\"").append(path.toString()).append("\")\n");
-		serviceClass.append("\t@Consumes(MediaType.APPLICATION_JSON)\n");
+		if (hasFormParam) {
+			serviceClass.append("\t@Consumes(MediaType.APPLICATION_FORM_URLENCODED)\n");
+		} else {
+			serviceClass.append("\t@Consumes(MediaType.APPLICATION_JSON)\n");
+		}
 		serviceClass.append("\t@Produces(MediaType.APPLICATION_JSON)\n");
 		serviceClass.append("\tpublic TestDto ").append(testMethod).append("(");
 		serviceClass.append(plist);
@@ -256,6 +265,9 @@ public class TestCreator {
 			switch (paramType) {
 				case BODY:
 					break;
+				case FORM:
+					p = "@FormParam(\"p" + paramNum + "\") ";
+					break;
 				case PATH:
 					p = "@PathParam(\"p" + paramNum + "\") ";
 					break;
@@ -282,11 +294,11 @@ public class TestCreator {
 			ParamType paramType = ParamType.values()[param];
 			switch (paramType) {
 				case BODY:
+				case QUERY:
+				case FORM:
 					break;
 				case PATH:
 					comma.add("@PathParam(\"p" + paramNum + "\") String p" + paramNum);
-					break;
-				case QUERY:
 					break;
 				default:
 					throw new RuntimeException("Unhandled parameter type " + paramType);
@@ -330,14 +342,14 @@ public class TestCreator {
 		do {
 			sb.append(i1[0]).append("|");
 		} while (next(i1));
-		Assert.assertEquals("0|1|2|", sb.toString());
+		Assert.assertEquals("0|1|2|3|", sb.toString());
 
 		sb = new StringBuilder();
 		int[] i2 = new int[2];
 		do {
 			sb.append(i2[0]).append(i2[1]).append("|");
 		} while (next(i2));
-		Assert.assertEquals("00|10|20|01|11|21|02|12|22|", sb.toString());
+		Assert.assertEquals("00|10|20|30|01|11|21|31|02|12|22|32|03|13|23|33|", sb.toString());
 	}
 
 }

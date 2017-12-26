@@ -19,6 +19,7 @@ package com.bluecirclesoft.open.jigen.integration;
 import javax.ejb.Stateless;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
@@ -50,6 +51,106 @@ public class TestAllCombosTwoParameters {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 		response.setHeader("Access-Control-Allow-Headers", "origin, x-csrftoken, content-type, accept");
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersGeFoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGeFoFoOptions() {
+		log.info("Called testAllCombosTwoParametersGeFoFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGeFoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGeFoFo(@FormParam("p0") String p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGeFoFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersGePaFo/{p0}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGePaFoOptions(@PathParam("p0") String p0) {
+		log.info("Called testAllCombosTwoParametersGePaFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGePaFo/{p0}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGePaFo(@PathParam("p0") String p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGePaFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersGeQuFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGeQuFoOptions() {
+		log.info("Called testAllCombosTwoParametersGeQuFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGeQuFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGeQuFo(@QueryParam("p0") String p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGeQuFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersGeBoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGeBoFoOptions() {
+		log.info("Called testAllCombosTwoParametersGeBoFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGeBoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGeBoFo(TestDto p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGeBoFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersGeFoPa/{p1}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGeFoPaOptions(@PathParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGeFoPaOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGeFoPa/{p1}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGeFoPa(@FormParam("p0") String p0, @PathParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGeFoPa");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
 	}
 
 	@OPTIONS
@@ -108,6 +209,26 @@ public class TestAllCombosTwoParameters {
 	@Produces(MediaType.APPLICATION_JSON)
 	public TestDto testAllCombosTwoParametersGeBoPa(TestDto p0, @PathParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoPa");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersGeFoQu")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGeFoQuOptions() {
+		log.info("Called testAllCombosTwoParametersGeFoQuOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGeFoQu")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGeFoQu(@FormParam("p0") String p0, @QueryParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersGeFoQu");
 		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
@@ -173,6 +294,26 @@ public class TestAllCombosTwoParameters {
 	}
 
 	@OPTIONS
+	@Path("/testAllCombosTwoParametersGeFoBo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersGeFoBoOptions() {
+		log.info("Called testAllCombosTwoParametersGeFoBoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/testAllCombosTwoParametersGeFoBo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersGeFoBo(@FormParam("p0") String p0, TestDto p1) {
+		log.info("Called testAllCombosTwoParametersGeFoBo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
 	@Path("/testAllCombosTwoParametersGePaBo/{p0}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -228,6 +369,106 @@ public class TestAllCombosTwoParameters {
 	@Produces(MediaType.APPLICATION_JSON)
 	public TestDto testAllCombosTwoParametersGeBoBo(TestDto p0, TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeBoBo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoFoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoFoFoOptions() {
+		log.info("Called testAllCombosTwoParametersPoFoFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoFoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoFoFo(@FormParam("p0") String p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoFoFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoPaFo/{p0}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoPaFoOptions(@PathParam("p0") String p0) {
+		log.info("Called testAllCombosTwoParametersPoPaFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoPaFo/{p0}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoPaFo(@PathParam("p0") String p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoPaFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoQuFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoQuFoOptions() {
+		log.info("Called testAllCombosTwoParametersPoQuFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoQuFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoQuFo(@QueryParam("p0") String p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoQuFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoBoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoBoFoOptions() {
+		log.info("Called testAllCombosTwoParametersPoBoFoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoBoFo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoBoFo(TestDto p0, @FormParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoBoFo");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoFoPa/{p1}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoFoPaOptions(@PathParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoFoPaOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoFoPa/{p1}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoFoPa(@FormParam("p0") String p0, @PathParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoFoPa");
 		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
@@ -293,6 +534,26 @@ public class TestAllCombosTwoParameters {
 	}
 
 	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoFoQu")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoFoQuOptions() {
+		log.info("Called testAllCombosTwoParametersPoFoQuOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoFoQu")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoFoQu(@FormParam("p0") String p0, @QueryParam("p1") String p1) {
+		log.info("Called testAllCombosTwoParametersPoFoQu");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
 	@Path("/testAllCombosTwoParametersPoPaQu/{p0}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -348,6 +609,26 @@ public class TestAllCombosTwoParameters {
 	@Produces(MediaType.APPLICATION_JSON)
 	public TestDto testAllCombosTwoParametersPoBoQu(TestDto p0, @QueryParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoQu");
+		setCORSHeaders();
+		return MergeHelper.merge(p0, p1);
+	}
+
+	@OPTIONS
+	@Path("/testAllCombosTwoParametersPoFoBo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response testAllCombosTwoParametersPoFoBoOptions() {
+		log.info("Called testAllCombosTwoParametersPoFoBoOptions");
+		setCORSHeaders();
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/testAllCombosTwoParametersPoFoBo")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TestDto testAllCombosTwoParametersPoFoBo(@FormParam("p0") String p0, TestDto p1) {
+		log.info("Called testAllCombosTwoParametersPoFoBo");
 		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}

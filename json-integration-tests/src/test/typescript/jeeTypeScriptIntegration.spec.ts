@@ -285,6 +285,51 @@ describe("test TestAllCombosTwoParameters", () => {
         };
     }
 
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGeFoFo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeFoFo('p0', 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
+    // });
+
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGePaFo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaFo('p0', 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
+    // });
+
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGeQuFo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuFo('p0', 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
+    // });
+
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGeBoFo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeBoFo({"a":"abc","b":"def","c":"ghi"}, 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"ABCP1","b":"DEFP1","c":"GHIP1"});
+    // });
+
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGeFoPa", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeFoPa('p0', 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
+    // });
+
     it("can execute testAllCombosTwoParametersGePaPa", () => {
         let result: object = {};
         com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaPa('p0', 'p1', simpleHandler((s: object) => {
@@ -310,6 +355,15 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a":"ABCP1","b":"DEFP1","c":"GHIP1"});
     // });
 
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGeFoQu", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeFoQu('p0', 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
+    // });
+
     it("can execute testAllCombosTwoParametersGePaQu", () => {
         let result: object = {};
         com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaQu('p0', 'p1', simpleHandler((s: object) => {
@@ -333,6 +387,15 @@ describe("test TestAllCombosTwoParameters", () => {
     //         result = s;
     //     }));
     //     expect(result).toEqual({"a":"ABCP1","b":"DEFP1","c":"GHIP1"});
+    // });
+
+    // MALFORMED - no @FormParam on GET
+    // it("can execute testAllCombosTwoParametersGeFoBo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersGeFoBo('p0', {"a":"abc","b":"def","c":"ghi"}, simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0ABC","b":"P0DEF","c":"P0GHI"});
     // });
 
     // MALFORMED - no Body on GET
@@ -362,6 +425,47 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a":"ABCABC","b":"DEFDEF","c":"GHIGHI"});
     // });
 
+    it("can execute testAllCombosTwoParametersPoFoFo", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoFo('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoPaFo", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaFo('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoQuFo", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuFo('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
+    // MALFORMED - can't have body param and form param
+    // it("can execute testAllCombosTwoParametersPoBoFo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoFo({"a":"abc","b":"def","c":"ghi"}, 'p1', simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"ABCP1","b":"DEFP1","c":"GHIP1"});
+    // });
+
+    it("can execute testAllCombosTwoParametersPoFoPa", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoPa('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
+    });
+
     it("can execute testAllCombosTwoParametersPoPaPa", () => {
         let result: object = {};
         com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaPa('p0', 'p1', simpleHandler((s: object) => {
@@ -388,6 +492,14 @@ describe("test TestAllCombosTwoParameters", () => {
             result = s;
         }));
         expect(result).toEqual({"a": "ABCP1", "b": "DEFP1", "c": "GHIP1"});
+    });
+
+    it("can execute testAllCombosTwoParametersPoFoQu", () => {
+        let result: object = {};
+        com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoQu('p0', 'p1', simpleHandler((s: object) => {
+            result = s;
+        }));
+        expect(result).toEqual({"a": "P0P1", "b": "P0P1", "c": "P0P1"});
     });
 
     it("can execute testAllCombosTwoParametersPoPaQu", () => {
@@ -418,6 +530,15 @@ describe("test TestAllCombosTwoParameters", () => {
         expect(result).toEqual({"a": "ABCP1", "b": "DEFP1", "c": "GHIP1"});
     });
 
+    // MALFORMED - can't have body param and form param
+    // it("can execute testAllCombosTwoParametersPoFoBo", () => {
+    //     let result: object = {};
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoBo('p0', {"a":"abc","b":"def","c":"ghi"}, simpleHandler((s: object) => {
+    //         result = s;
+    //     }));
+    //     expect(result).toEqual({"a":"P0ABC","b":"P0DEF","c":"P0GHI"});
+    // });
+
     it("can execute testAllCombosTwoParametersPoPaBo", () => {
         let result: object = {};
         com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaBo('p0', {
@@ -445,14 +566,10 @@ describe("test TestAllCombosTwoParameters", () => {
     // MALFORMED - can't have more than one Body param
     // it("can execute testAllCombosTwoParametersPoBoBo", () => {
     //     let result: object = {};
-    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoBo({
-    //         "a": "abc",
-    //         "b": "def",
-    //         "c": "ghi"
-    //     }, {"a": "abc", "b": "def", "c": "ghi"}, simpleHandler((s: object) => {
+    //     com.bluecirclesoft.open.jigen.integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoBo({"a":"abc","b":"def","c":"ghi"}, {"a":"abc","b":"def","c":"ghi"}, simpleHandler((s: object) => {
     //         result = s;
     //     }));
-    //     expect(result).toEqual({"a": "ABCABC", "b": "DEFDEF", "c": "GHIGHI"});
+    //     expect(result).toEqual({"a":"ABCABC","b":"DEFDEF","c":"GHIGHI"});
     // });
 
 });
