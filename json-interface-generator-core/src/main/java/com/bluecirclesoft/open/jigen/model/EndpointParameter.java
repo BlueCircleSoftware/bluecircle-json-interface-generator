@@ -34,13 +34,13 @@ public class EndpointParameter implements Serializable {
 		BODY
 	}
 
-	private String codeName;
+	private final String codeName;
 
-	private String networkName;
+	private final String networkName;
 
 	private JType type;
 
-	private NetworkType networkType;
+	private final NetworkType networkType;
 
 	public EndpointParameter(String codeName, String networkName, JType type, NetworkType networkType) {
 		this.codeName = codeName;
@@ -58,10 +58,6 @@ public class EndpointParameter implements Serializable {
 		return codeName;
 	}
 
-	public void setCodeName(String codeName) {
-		this.codeName = codeName;
-	}
-
 	/**
 	 * Get the name for the parameter as it gets transmitted over the network (as a query parameter, form parameter, etc.)
 	 *
@@ -69,10 +65,6 @@ public class EndpointParameter implements Serializable {
 	 */
 	public String getNetworkName() {
 		return networkName;
-	}
-
-	public void setNetworkName(String networkName) {
-		this.networkName = networkName;
 	}
 
 	public void setType(JType type) {
@@ -95,10 +87,6 @@ public class EndpointParameter implements Serializable {
 	 */
 	public NetworkType getNetworkType() {
 		return networkType;
-	}
-
-	public void setNetworkType(NetworkType networkType) {
-		this.networkType = networkType;
 	}
 
 	@Override

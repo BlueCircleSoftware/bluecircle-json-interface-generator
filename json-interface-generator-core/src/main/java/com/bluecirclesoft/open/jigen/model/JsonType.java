@@ -90,6 +90,6 @@ public class JsonType {
 	}
 
 	public static JsonType makeArrayOf(JsonType base) {
-		return new JsonType(base.getType(), base.classId, true);
+		return new JsonType(base.getType(), base.getClassId(), true);
 	}
 }

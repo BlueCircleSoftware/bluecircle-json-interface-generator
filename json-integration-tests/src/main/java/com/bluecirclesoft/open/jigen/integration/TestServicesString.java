@@ -121,7 +121,7 @@ public class TestServicesString {
 		return makeList(x, 3);
 	}
 
-	private List<String> makeList(String x, int i) {
+	private static List<String> makeList(String x, int i) {
 		List<String> result = new ArrayList<>(i);
 		for (int j = 0; j < i; j++) {
 			result.add(x);

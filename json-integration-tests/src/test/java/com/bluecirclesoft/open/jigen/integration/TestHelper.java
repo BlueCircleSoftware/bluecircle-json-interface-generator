@@ -32,7 +32,7 @@ import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 /**
  * Helpers for testing
  */
-public class TestHelper {
+public final class TestHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(TestHelper.class);
 
@@ -46,6 +46,9 @@ public class TestHelper {
 			this.name = name;
 			this.value = value;
 		}
+	}
+
+	private TestHelper() {
 	}
 
 	/**

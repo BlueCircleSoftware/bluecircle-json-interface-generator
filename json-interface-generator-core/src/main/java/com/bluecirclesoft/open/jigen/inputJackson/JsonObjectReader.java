@@ -29,7 +29,6 @@ import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
@@ -64,7 +63,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 * @param clazz the class to consider
 	 * @return a JSON string, or {@code null} if the JSON could not be produced.
 	 */
-	private String createEmptyJsonFor(Class<?> clazz) {
+	private static String createEmptyJsonFor(Class<?> clazz) {
 		Object newInstance;
 		try {
 			newInstance = clazz.newInstance();
@@ -104,24 +103,24 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	}
 
 	@Override
-	public void property(BeanProperty prop) throws JsonMappingException {
+	public void property(BeanProperty prop) {
 		handleField(prop);
 
 	}
 
 	@Override
-	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) throws JsonMappingException {
+	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
 		throw new RuntimeException("not implemented");
 	}
 
 	@Override
-	public void optionalProperty(BeanProperty prop) throws JsonMappingException {
+	public void optionalProperty(BeanProperty prop) {
 		handleField(prop);
 
 	}
 
 	@Override
-	public void optionalProperty(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) throws JsonMappingException {
+	public void optionalProperty(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
 		throw new RuntimeException("not implemented");
 	}
 

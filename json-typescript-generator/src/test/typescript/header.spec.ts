@@ -42,11 +42,10 @@ interface F {
     e?: E;
 }
 
-
 describe("jsonInterfaceGenerator", () => {
 
     it("TODO move tests", () => {
-        expect(1).toEqual(1)
+        expect(1).toEqual(1);
     });
 
 });

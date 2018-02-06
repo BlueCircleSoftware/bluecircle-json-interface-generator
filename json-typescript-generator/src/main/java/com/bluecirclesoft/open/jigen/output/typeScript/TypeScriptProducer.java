@@ -47,8 +47,6 @@ public class TypeScriptProducer implements OutputProducer {
 
 	private final File outputFile;
 
-	private final String typingsPath;
-
 	private OutputHandler writer;
 
 	private boolean produceAccessors = true;
@@ -92,15 +90,13 @@ public class TypeScriptProducer implements OutputProducer {
 		log.info("Producing immutables? {}", this.produceImmutables);
 	}
 
-	public TypeScriptProducer(File outputFile, String typingsPath) {
+	public TypeScriptProducer(File outputFile) {
 		this.outputFile = outputFile;
-		this.typingsPath = typingsPath;
 	}
 
-	public TypeScriptProducer(PrintWriter writer, String typingsPath) {
+	TypeScriptProducer(PrintWriter writer) {
 		outputFile = null;
 		this.writer = new OutputHandler(writer);
-		this.typingsPath = typingsPath;
 	}
 
 	@Override
@@ -108,7 +104,7 @@ public class TypeScriptProducer implements OutputProducer {
 		Namespace ns = Namespace.namespacifyModel(model, stripCommonNamespaces);
 		start();
 		try {
-			outputNamespace(ns, true);
+			outputNamespace(ns);
 			writer.line();
 			writer.line("export {};");
 		} finally {
@@ -177,6 +173,9 @@ public class TypeScriptProducer implements OutputProducer {
 		boolean isBodyParam = bodyParams != null && bodyParams.size() > 0;
 		switch (endpoint.getMethod()) {
 			case POST:
+			case PUT:
+			case OPTIONS:
+			case PATCH:
 				// adding body parameter
 				if (isBodyParam) {
 					writer.line("const submitData = JSON.stringify(" + bodyParams.get(0).getCodeName() + ");");
@@ -186,6 +185,8 @@ public class TypeScriptProducer implements OutputProducer {
 				}
 				break;
 			case GET:
+			case HEAD:
+			case DELETE:
 				// adding query parameters
 				List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.QUERY);
 				createSubmitDataBodyFromParams(params);
@@ -201,17 +202,17 @@ public class TypeScriptProducer implements OutputProducer {
 		writer.line("}");
 	}
 
-	private void handleUrlParams(String template, JsStringBuilder url, List<EndpointParameter> urlParams) {
+	private static void handleUrlParams(String template, JsStringBuilder url, List<EndpointParameter> urlParams) {
 		SortedMap<Integer, EndpointParameter> starts = new TreeMap<>();
 		Map<Integer, Integer> ends = new HashMap<>();
 
 		if (urlParams != null) {
 			for (EndpointParameter param : urlParams) {
-				String pexpr = "{" + param.getNetworkName() + "}";
-				int pos = template.indexOf(pexpr);
+				String paramExpression = "{" + param.getNetworkName() + "}";
+				int pos = template.indexOf(paramExpression);
 				if (pos >= 0) {
 					starts.put(pos, param);
-					ends.put(pos, pos + pexpr.length());
+					ends.put(pos, pos + paramExpression.length());
 				}
 			}
 		}
@@ -231,21 +232,21 @@ public class TypeScriptProducer implements OutputProducer {
 		writer.line("const submitData = {");
 		writer.indentIn();
 		if (params != null) {
-			int plen = params.size();
-			for (int i = 0; i < plen; i++) {
+			int numParams = params.size();
+			for (int i = 0; i < numParams; i++) {
 				EndpointParameter p = params.get(i);
-				writer.line("'" + p.getNetworkName() + "': " + p.getCodeName() + (i == plen - 1 ? "" : ","));
+				writer.line("'" + p.getNetworkName() + "': " + p.getCodeName() + (i == numParams - 1 ? "" : ","));
 			}
 		}
 		writer.indentOut();
 		writer.line("};");
 	}
 
-	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
+	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
 		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null)));
 	}
 
-	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
+	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
 		if (needsComma[0]) {
 			parameterList.append(", ");
 		} else {
@@ -256,19 +257,19 @@ public class TypeScriptProducer implements OutputProducer {
 		parameterList.append(type);
 	}
 
-	private void outputNamespace(Namespace namespace, boolean top) {
+	private void outputNamespace(Namespace namespace) {
 		if (namespace.getName() != null) {
 			writer.line();
 			// top-level namespaces should not get 'export' sub-namespaces should. Vagaries of JavaScript
 			writer.line("export namespace " + namespace.getName() + " {");
 			writer.indentIn();
 		}
-		for (JType intf : namespace.getDeclarations()) {
-			intf.accept(new TypeDeclarationProducer(this, writer, produceImmutables));
+		for (JType type : namespace.getDeclarations()) {
+			type.accept(new TypeDeclarationProducer(this, writer, produceImmutables));
 		}
 		outputEndpoints(namespace);
 		for (Namespace subNamespace : namespace.getNamespaces()) {
-			outputNamespace(subNamespace, false);
+			outputNamespace(subNamespace);
 		}
 		if (namespace.getName() != null) {
 			writer.indentOut();
@@ -286,9 +287,6 @@ public class TypeScriptProducer implements OutputProducer {
 				}
 			}
 			writer = new OutputHandler(new PrintWriter(new FileWriter(outputFile)));
-		}
-		if (typingsPath != null) {
-			writer.line("/// <reference path=\"" + typingsPath + "\" />\n");
 		}
 		writer.writeResource("/header.ts");
 		writer.line();

@@ -58,9 +58,9 @@ public class TestDto {
 	}
 
 	public void append(TestDto t) {
-		a += t.a.toUpperCase();
-		b += t.b.toUpperCase();
-		c += t.c.toUpperCase();
+		a += t.getA().toUpperCase();
+		b += t.getB().toUpperCase();
+		c += t.getC().toUpperCase();
 	}
 
 	@Override

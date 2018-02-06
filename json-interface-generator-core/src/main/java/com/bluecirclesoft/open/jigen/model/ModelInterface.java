@@ -28,7 +28,7 @@ public class ModelInterface {
 
 	private final String name;
 
-	private Map<String, JsonProperty> properties = new HashMap<>();
+	private final Map<String, JsonProperty> properties = new HashMap<>();
 
 	public ModelInterface(String name) {
 		this.name = name;

@@ -30,21 +30,21 @@ export namespace jsonInterfaceGenerator {
          * Completion callback
          * @param {boolean} success true if error() was not called
          */
-        complete? (success: boolean): void;
+        complete?(success: boolean): void;
 
         /**
          * Error callback
          * @param {string} errorThrown
          * @returns {any}
          */
-        error? (errorThrown: string): any;
+        error?(errorThrown: string): any;
 
         /**
          * Success callback
          * @param {R} data
          * @returns {any}
          */
-        success? (data: R): any;
+        success?(data: R): any;
     }
 
     /**
@@ -60,8 +60,8 @@ export namespace jsonInterfaceGenerator {
      */
     export function getPrefix(): string {
         if (!ajaxUrlPrefix) {
-            throw "The URL prefix has not been set, so no AJAX calls can be made. Set the URL prefix by calling" +
-            " jsonInterfaceGenerator.init()";
+            throw new Error("The URL prefix has not been set, so no AJAX calls can be made. Set the URL prefix by calling" +
+                " jsonInterfaceGenerator.init()");
         }
         return ajaxUrlPrefix;
     }
@@ -99,7 +99,7 @@ export namespace jsonInterfaceGenerator {
 
     export enum WriteOption {
         WRITE,
-        READ_FILL
+        READ_FILL,
     }
 
     /**
@@ -124,7 +124,7 @@ export namespace jsonInterfaceGenerator {
      */
     export class ChangeRoot<T> extends DirectWrapper<T> {
         private l: T[] = [];
-        private factory: () => T;
+        private readonly factory: () => T;
 
         public constructor(initial: T | (() => T)) {
             super();
@@ -151,21 +151,21 @@ export namespace jsonInterfaceGenerator {
             let cur: T;
             switch (write) {
                 case WriteOption.WRITE:
-                    if (this.l.length == 0) {
+                    if (this.l.length === 0) {
                         cur = this.factory();
                     } else {
                         cur = this.l[this.l.length - 1];
                     }
                     let nxt: T;
-                    if (typeof cur === 'object') {
-                        nxt = (<any>Object).assign({}, cur);
+                    if (typeof cur === "object") {
+                        nxt = (Object as any).assign({}, cur);
                     } else {
-                        nxt = <T><any>(<any[]>cur).slice();
+                        nxt = (cur as any[]).slice() as any as T;
                     }
                     this.l.push(nxt);
                     return nxt;
                 case WriteOption.READ_FILL:
-                    if (this.l.length == 0) {
+                    if (this.l.length === 0) {
                         cur = this.factory();
                         this.l.push(cur);
                     } else {
@@ -173,7 +173,7 @@ export namespace jsonInterfaceGenerator {
                     }
                     return cur;
                 default:
-                    throw "Unhandled " + write;
+                    throw new Error("Unhandled " + write);
             }
         }
 
@@ -189,8 +189,8 @@ export namespace jsonInterfaceGenerator {
     // wrapper to build descendants
     export class ObjectWrapper<T> extends DirectWrapper<T> {
         private parent: DirectWrapper<any>;
-        private myIndex: string | number;
-        private factory: () => T;
+        private readonly myIndex: string | number;
+        private readonly factory: () => T;
 
         public constructor(parent: DirectWrapper<any>, myIndex: string | number, factory: () => T) {
             super();
@@ -200,7 +200,7 @@ export namespace jsonInterfaceGenerator {
         }
 
         public getObj(write: WriteOption): T {
-            let parentObj = this.parent.getObj(write);
+            const parentObj = this.parent.getObj(write);
             let myObj = parentObj[this.myIndex];
 
             switch (write) {
@@ -212,7 +212,7 @@ export namespace jsonInterfaceGenerator {
                     }
                     return myObj;
                 default:
-                    throw "Unhandled " + write;
+                    throw new Error("Unhandled " + write);
             }
         }
 
@@ -246,8 +246,8 @@ export namespace jsonInterfaceGenerator {
 
     export class ArrayWrapper<T> extends DirectWrapper<T> {
         private parent: DirectWrapper<any>;
-        private myIndex: string | number;
-        private factory: () => T[];
+        private readonly myIndex: string | number;
+        private readonly factory: () => T[];
 
         public constructor(parent: DirectWrapper<any>, myIndex: string | number, factory: () => T[]) {
             super();
@@ -257,7 +257,7 @@ export namespace jsonInterfaceGenerator {
         }
 
         public getObj(write: WriteOption): T {
-            let parentObj = this.parent.getObj(write);
+            const parentObj = this.parent.getObj(write);
             let myObj = parentObj[this.myIndex];
 
             switch (write) {
@@ -269,32 +269,32 @@ export namespace jsonInterfaceGenerator {
                     }
                     return myObj;
                 default:
-                    throw "Unhandled " + write;
+                    throw new Error("Unhandled " + write);
             }
         }
 
         public get(key: number): T {
-            return (<T[]><any>this.getObj(WriteOption.READ_FILL))[key];
+            return (this.getObj(WriteOption.READ_FILL) as any as T[])[key];
         }
 
         public set(key: number, val: T): void {
-            (<T[]><any>this.getObj(WriteOption.WRITE))[key] = val;
+            (this.getObj(WriteOption.WRITE) as any as T[])[key] = val;
         }
 
         public toArray(): T[] {
-            return <T[]><any>this.getObj(WriteOption.READ_FILL);
+            return this.getObj(WriteOption.READ_FILL) as any as T[];
         }
 
         public fromArray(newArray: T[]): void {
-            let arr = <T[]><any>this.getObj(WriteOption.WRITE);
+            const arr = this.getObj(WriteOption.WRITE) as any as T[];
             arr.length = 0;
             arr.push(...newArray);
         }
     }
 
     export class WrappedElementArrayWrapper<DataType, WrapperType> {
-        private parent: ArrayWrapper<DataType>;
-        private leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType;
+        private readonly parent: ArrayWrapper<DataType>;
+        private readonly leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType;
 
         public constructor(parent: ArrayWrapper<DataType>, leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType) {
             this.parent = parent;

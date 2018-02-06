@@ -111,11 +111,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	}
 
 	void addFixup(Type type, Consumer<JType> fixup) {
-		List<Consumer<JType>> list = typeFixups.get(type);
-		if (list == null) {
-			list = new ArrayList<>();
-			typeFixups.put(type, list);
-		}
+		List<Consumer<JType>> list = typeFixups.computeIfAbsent(type, k -> new ArrayList<>());
 		list.add(fixup);
 	}
 
@@ -231,12 +227,12 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 	}
 
-	private boolean isMap(Type base) {
+	private static boolean isMap(Type base) {
 		return base instanceof Class && Map.class.isAssignableFrom((Class<?>) base);
 	}
 
 
-	private boolean isCollection(Type base) {
+	private static boolean isCollection(Type base) {
 		return base instanceof Class && Collection.class.isAssignableFrom((Class<?>) base);
 	}
 
@@ -263,12 +259,12 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 		private TypeReadingVisitor<?> reader;
 
-		public TypeReadingVisitor<?> getReader() {
+		TypeReadingVisitor<?> getReader() {
 			return reader;
 		}
 
 		@Override
-		public JsonArrayFormatVisitor expectArrayFormat(JavaType type) throws JsonMappingException {
+		public JsonArrayFormatVisitor expectArrayFormat(JavaType type) {
 			return new JsonArrayFormatVisitor.Base() {
 				@Override
 				public void itemsFormat(JsonFormatVisitable handler, JavaType elementType) throws JsonMappingException {
@@ -283,7 +279,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 
 		@Override
-		public JsonStringFormatVisitor expectStringFormat(JavaType type) throws JsonMappingException {
+		public JsonStringFormatVisitor expectStringFormat(JavaType type) {
 			reader = JString::new;
 			return new JsonStringFormatVisitor.Base() {
 				@Override
@@ -307,7 +303,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 
 		@Override
-		public JsonNumberFormatVisitor expectNumberFormat(JavaType type) throws JsonMappingException {
+		public JsonNumberFormatVisitor expectNumberFormat(JavaType type) {
 			reader = JNumber::new;
 			return new JsonNumberFormatVisitor() {
 				@Override
@@ -328,35 +324,35 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 
 		@Override
-		public JsonIntegerFormatVisitor expectIntegerFormat(JavaType type) throws JsonMappingException {
+		public JsonIntegerFormatVisitor expectIntegerFormat(JavaType type) {
 			reader = JNumber::new;
 			return new JsonIntegerFormatVisitor.Base() {
 			};
 		}
 
 		@Override
-		public JsonBooleanFormatVisitor expectBooleanFormat(JavaType type) throws JsonMappingException {
+		public JsonBooleanFormatVisitor expectBooleanFormat(JavaType type) {
 			reader = JNumber::new;
 			return new JsonBooleanFormatVisitor.Base() {
 			};
 		}
 
 		@Override
-		public JsonNullFormatVisitor expectNullFormat(JavaType type) throws JsonMappingException {
+		public JsonNullFormatVisitor expectNullFormat(JavaType type) {
 			reader = JNumber::new;
 			return new JsonNullFormatVisitor.Base() {
 			};
 		}
 
 		@Override
-		public JsonAnyFormatVisitor expectAnyFormat(JavaType type) throws JsonMappingException {
+		public JsonAnyFormatVisitor expectAnyFormat(JavaType type) {
 			reader = JAny::new;
 			return new JsonAnyFormatVisitor.Base() {
 			};
 		}
 
 		@Override
-		public JsonMapFormatVisitor expectMapFormat(JavaType type) throws JsonMappingException {
+		public JsonMapFormatVisitor expectMapFormat(JavaType type) {
 			// We would only have gotten here for a raw map; it's element type is any
 			JMap map = new JMap(new JAny());
 			reader = () -> map;
@@ -365,7 +361,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 
 		@Override
-		public JsonObjectFormatVisitor expectObjectFormat(JavaType type) throws JsonMappingException {
+		public JsonObjectFormatVisitor expectObjectFormat(JavaType type) {
 			JsonObjectReader myReader = new JsonObjectReader(JacksonTypeModeller.this, type.getRawClass());
 			reader = myReader;
 			return myReader;

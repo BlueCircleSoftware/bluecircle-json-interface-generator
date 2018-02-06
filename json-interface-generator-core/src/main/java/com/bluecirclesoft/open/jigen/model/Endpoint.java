@@ -39,14 +39,8 @@ public class Endpoint implements Serializable {
 
 	private final List<EndpointParameter> parameters = new ArrayList<>();
 
-	public Endpoint(String id) {
+	Endpoint(String id) {
 		this.id = id;
-	}
-
-	public Endpoint(String id, HttpMethod method, JObject responseBody) {
-		this.id = id;
-		this.method = method;
-		this.responseBody = responseBody;
 	}
 
 	public HttpMethod getMethod() {
@@ -63,10 +57,6 @@ public class Endpoint implements Serializable {
 
 	public JType getResponseBody() {
 		return responseBody;
-	}
-
-	public void setResponseBody(JObject responseBody) {
-		this.responseBody = responseBody;
 	}
 
 	public String getId() {
@@ -120,8 +110,8 @@ public class Endpoint implements Serializable {
 	 * @param type         the desired type
 	 * @return yes or no
 	 */
-	public static boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams,
-	                              EndpointParameter.NetworkType type) {
+	private static boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams,
+	                               EndpointParameter.NetworkType type) {
 		List<EndpointParameter> endpointParameters = sortedParams.get(type);
 		return endpointParameters != null && endpointParameters.size() > 0;
 	}

@@ -73,10 +73,10 @@ public class JEEToTypeScriptTest {
 
 		// Create model
 		JavaEEModeller modeller = new JavaEEModeller();
-		Model model = modeller.createModel("/", "com.bluecirclesoft");
+		Model model = modeller.createModel("com.bluecirclesoft");
 
 		// Create typescript
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File("target/generated-sources/jeeToTypeScript.ts"), null);
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File("target/generated-sources/jeeToTypeScript.ts"));
 		outputTypeScript.output(model);
 
 		// Run test cases from test browser

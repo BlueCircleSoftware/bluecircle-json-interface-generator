@@ -25,21 +25,21 @@ import java.io.PrintWriter;
 /**
  * TODO document me
  */
-public class OutputHandler {
+class OutputHandler {
 
-	PrintWriter writer;
+	private PrintWriter writer;
 
 	private int indentLevel = 0;
 
-	public OutputHandler(PrintWriter writer) {
+	OutputHandler(PrintWriter writer) {
 		this.writer = writer;
 	}
 
-	public void line() {
+	void line() {
 		writer.println();
 	}
 
-	public void line(String str) {
+	void line(String str) {
 		indent();
 		writer.println(str);
 	}
@@ -65,15 +65,15 @@ public class OutputHandler {
 	}
 
 
-	public void flush() {
+	void flush() {
 		writer.flush();
 	}
 
-	public void close() {
+	void close() {
 		writer.close();
 	}
 
-	public void writeResource(String resourcePath) {
+	void writeResource(String resourcePath) {
 		InputStream fileResource = OutputHandler.class.getResourceAsStream(resourcePath);
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileResource))) {
 			while (true) {

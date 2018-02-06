@@ -28,7 +28,10 @@ import com.bluecirclesoft.open.jigen.output.typeScript.TypeScriptProducer;
 /**
  * TODO document me
  */
-public class Main {
+public final class Main {
+
+	private Main() {
+	}
 
 	public static void main(String[] args) throws IOException {
 		Options options = new Options();
@@ -53,10 +56,10 @@ public class Main {
 
 		JavaEEModeller modeller = new JavaEEModeller();
 		String[] packages = options.getPackageName().split("[, \t]");
-		Model model = modeller.createModel(options.getUrlPrefix(), packages);
+		Model model = modeller.createModel(packages);
 
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()), options.getTypingsIndexPath());
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()));
 		outputTypeScript.setProduceImmutables(!options.isNoImmutables());
 		outputTypeScript.output(model);
 

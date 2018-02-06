@@ -22,9 +22,12 @@ import org.slf4j.LoggerFactory;
 /**
  * For testing, merge TestDTOs
  */
-public class MergeHelper {
+public final class MergeHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(MergeHelper.class);
+
+	private MergeHelper() {
+	}
 
 	/**
 	 * Merge test DTOs

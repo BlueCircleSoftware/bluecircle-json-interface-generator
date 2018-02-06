@@ -93,9 +93,7 @@ public class JavaEEModeller {
 
 	private Model model;
 
-	private String urlPrefix;
-
-	public Model createModel(String urlPrefix, String... packageNames) {
+	public Model createModel(String... packageNames) {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
@@ -115,12 +113,6 @@ public class JavaEEModeller {
 		}
 
 		model = new Model();
-
-		if (urlPrefix.endsWith("/")) {
-			this.urlPrefix = urlPrefix;
-		} else {
-			this.urlPrefix = urlPrefix + "/";
-		}
 
 		for (MethodInfo method : annotatedMethods.values()) {
 			try {
@@ -225,7 +217,6 @@ public class JavaEEModeller {
 		Set<HttpMethod> httpMethods = identifyHttpMethods(method);
 
 		List<MethodParameter> parameters = new ArrayList<>();
-		MethodParameter bodyParam = null;
 
 		for (Parameter p : method.getParameters()) {
 			MethodParameter mp = new MethodParameter();
@@ -265,7 +256,6 @@ public class JavaEEModeller {
 			} else {
 				mp.setNetworkType(EndpointParameter.NetworkType.BODY);
 				parameters.add(mp);
-				bodyParam = mp;
 			}
 		}
 

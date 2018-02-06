@@ -41,7 +41,7 @@ public class JavaEEModellerTest {
 
 		JavaEEModeller modeller = new JavaEEModeller();
 
-		Model model = modeller.createModel("/", "com.bluecirclesoft");
+		Model model = modeller.createModel("com.bluecirclesoft");
 
 		Assert.assertEquals(5, sizeof(model.getEndpoints()));
 

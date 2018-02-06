@@ -65,28 +65,28 @@ abstract public class SchemaDispatcher<T> {
 		}
 	}
 
-	private String toString(JsonSchema schema) {
+	private static String toString(JsonSchema schema) {
 		return "{schema id: " + schema.getId() + ", type: " + schema.getType().value() + ", description: " + schema.getDescription() + "}";
 	}
 
-	protected abstract T handle(ReferenceSchema schema);
+	abstract T handle(ReferenceSchema schema);
 
-	protected abstract T handle(HyperSchema schema);
+	abstract T handle(HyperSchema schema);
 
-	protected abstract T handle(UnionTypeSchema unionTypeSchema);
+	abstract T handle(UnionTypeSchema unionTypeSchema);
 
-	protected abstract T handle(StringSchema stringSchema);
+	abstract T handle(StringSchema stringSchema);
 
-	protected abstract T handle(ObjectSchema objectSchema);
+	abstract T handle(ObjectSchema objectSchema);
 
-	protected abstract T handle(NullSchema nullSchema);
+	abstract T handle(NullSchema nullSchema);
 
-	protected abstract T handle(IntegerSchema integerSchema);
+	abstract T handle(IntegerSchema integerSchema);
 
-	protected abstract T handle(BooleanSchema booleanSchema);
+	abstract T handle(BooleanSchema booleanSchema);
 
-	protected abstract T handle(ArraySchema arraySchema);
+	abstract T handle(ArraySchema arraySchema);
 
-	protected abstract T handle(AnySchema anySchema);
+	abstract T handle(AnySchema anySchema);
 
 }

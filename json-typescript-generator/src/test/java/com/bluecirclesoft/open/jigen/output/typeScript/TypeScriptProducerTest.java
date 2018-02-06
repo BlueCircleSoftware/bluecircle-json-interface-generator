@@ -44,7 +44,7 @@ public class TypeScriptProducerTest {
 		Model model = (Model) objectOutputStream.readObject();
 		objectOutputStream.close();
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out), "abc");
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out));
 		outputTypeScript.output(model);
 	}
 
