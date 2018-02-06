@@ -107,7 +107,7 @@ export namespace jsonInterfaceGenerator {
      */
     export abstract class ChangeCollector<T> {
 
-        private differentiator: T;
+        private differentiator: T | undefined = undefined;
 
         public abstract get(key: string | number): any;
 
