@@ -46,6 +46,8 @@ public class ClassA {
 
 	private Map<Map<String, String>, Map<Integer, Integer>> prop9 = new HashMap<>();
 
+	private Map prop10 = new HashMap();
+
 	public int getProp1() {
 		return prop1;
 	}
@@ -116,5 +118,13 @@ public class ClassA {
 
 	public void setProp9(Map<Map<String, String>, Map<Integer, Integer>> prop9) {
 		this.prop9 = prop9;
+	}
+
+	public Map getProp10() {
+		return prop10;
+	}
+
+	public void setProp10(Map prop10) {
+		this.prop10 = prop10;
 	}
 }

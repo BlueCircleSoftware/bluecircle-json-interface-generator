@@ -21,7 +21,7 @@ import java.util.List;
 
 public interface PropertyEnumerator {
 
-	List<JType> enumerateProperties(Model model, Type... types);
+	List<JType> readTypes(Model model, Type... types);
 
-	JType analyze(Model mode, Type type);
+	JType readOneType(Model mode, Type type);
 }

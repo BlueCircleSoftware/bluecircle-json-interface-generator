@@ -17,10 +17,9 @@
 package com.bluecirclesoft.open.jigen.model;
 
 /**
- * TODO document me
+ * Visitor for the different concrete TypeScript types.
  */
 public interface JTypeVisitor<ReturnType> {
-
 
 	ReturnType visit(JObject jObject);
 

@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 
 /**
- * TODO document me
+ * Use jackson to read a class definition, and create a TypeScript type definition as a result.
  */
 class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadingVisitor<JObject> {
 
@@ -44,10 +44,19 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 	private final JObject jObject;
 
+	/**
+	 * Prepare to read a class and determine the resulting object properties
+	 *
+	 * @param jacksonTypeModeller the type modeller that contains the total model
+	 * @param clazz               the class to read
+	 */
 	JsonObjectReader(JacksonTypeModeller jacksonTypeModeller, Class<?> clazz) {
 		this.jacksonTypeModeller = jacksonTypeModeller;
+		// make a stub type for this class
 		jObject = new JObject(clazz.getName());
+		// create a new instance, if possible
 		jObject.setNewObjectJson(createEmptyJsonFor(clazz));
+		// read through the type parameters, and see if we need to queue up any other classes for reading
 		for (int i = 0; i < clazz.getTypeParameters().length; i++) {
 			final int finalI = i;
 			jObject.getTypeVariables().add(null);
@@ -80,45 +89,78 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		}
 	}
 
-	private void handleField(BeanProperty prop) {
-		String name = prop.getName();
+	/**
+	 * Take the bean property given back by Jackson, and put it into the object's definition. Figure out its type, and whether it's
+	 * required.
+	 *
+	 * @param beanProperty the property
+	 */
+	private void handleField(BeanProperty beanProperty) {
+		String name = beanProperty.getName();
 		Type type;
-		AnnotatedElement annotatedThing = prop.getMember().getAnnotated();
+		AnnotatedElement annotatedThing = beanProperty.getMember().getAnnotated();
 		if (annotatedThing instanceof Field) {
 			type = ((Field) annotatedThing).getGenericType();
 		} else if (annotatedThing instanceof Method) {
 			type = ((Method) annotatedThing).getGenericReturnType();
 		} else {
+			// Don't know how we would get here - property should be a field or getter
 			throw new RuntimeException("Can't handle " + annotatedThing);
 		}
+
+		// if it's a Java primitive, override 'required'
 		boolean required;
 		if (type instanceof Class && ((Class) type).isPrimitive()) {
 			required = true;
 		} else {
-			required = prop.isRequired();
+			required = beanProperty.isRequired();
 		}
+
+		// declare property now
 		jObject.declareProperty(name);
+		// actually define property at fixup time
 		jacksonTypeModeller.addFixup(type, jType -> jObject.makeProperty(name, jType, required));
+		// queue this property's type for processing
 		jacksonTypeModeller.queueType(type);
 	}
 
+	/**
+	 * Jackson event - property encountered
+	 *
+	 * @param prop the property
+	 */
 	@Override
 	public void property(BeanProperty prop) {
 		handleField(prop);
 
 	}
 
+	/**
+	 * Jackson event - non-POJO property encountered (see {@link JsonObjectFormatVisitor#property(java.lang.String, com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable, com.fasterxml.jackson.databind.JavaType)}
+	 * <p>
+	 * TODO implement
+	 */
 	@Override
 	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
 		throw new RuntimeException("not implemented");
 	}
 
+	/**
+	 * Jackson event - property encountered
+	 *
+	 * @param prop the property
+	 */
 	@Override
 	public void optionalProperty(BeanProperty prop) {
 		handleField(prop);
 
 	}
 
+	/**
+	 * Jackson event - non-POJO property encountered (see {@link JsonObjectFormatVisitor#property(java.lang.String, com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable, com.fasterxml.jackson.databind.JavaType)}
+	 * <p>
+	 * TODO implement
+	 */
 	@Override
 	public void optionalProperty(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
 		throw new RuntimeException("not implemented");

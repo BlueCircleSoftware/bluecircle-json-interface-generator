@@ -262,10 +262,10 @@ public class JavaEEModeller {
 		JType outType;
 		if (methodInfo.producer) {
 			JacksonTypeModeller modeller = new JacksonTypeModeller();
-			outType = modeller.analyze(model, method.getGenericReturnType());
+			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
 			JacksonTypeModeller modeller = new JacksonTypeModeller();
-			outType = modeller.analyze(model, String.class);
+			outType = modeller.readOneType(model, String.class);
 		}
 
 		boolean appendHttpMethodName = httpMethods.size() > 1;
@@ -285,7 +285,7 @@ public class JavaEEModeller {
 				JacksonTypeModeller modeller = new JacksonTypeModeller();
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
-								modeller.analyze(model, pathParam.getType()), pathParam.getNetworkType()));
+								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
 			}
 			endpoint.setMethod(httpMethod);
 

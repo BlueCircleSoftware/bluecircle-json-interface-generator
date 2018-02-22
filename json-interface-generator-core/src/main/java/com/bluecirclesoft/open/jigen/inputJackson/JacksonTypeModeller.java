@@ -67,12 +67,28 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonStringFormatVisitor
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat;
 
 /**
- * Imports the information about a given type into the Model using Jackson.
+ * <p>The JacksonTypeModeller coordinates the reading of a set of Java types, producing TypeScript types from them, and collecting the
+ * resulting TS types into a Model.</p>
+ * <p>This class uses a breadth-first search to find referenced types. When a type is processed, all the types it references are placed on a
+ * queue, and the process is repeated until the queue is empty.</p>
+ * <p>To ease the eventual reading of the model, I wanted to make sure that if a type in the TS model references another type, that it's
+ * a direct reference, to avoid having to go to a lookup table or something like that.  This is necessary, in particular, for circular
+ * references - one type clearly can't have a reference to another type that hasn't been digested yet. So to solve this, as types are
+ * read, the modeller stores 'fixups' to join the types properly later. This creates two steps:</p>
+ * <ol>
+ * <li>All types are read, but references to other types are stubbed, and fixups are registered for later</li>
+ * <li>The modeller runs all the fixups, connecting concrete JTypes with other concrete JTypes.</li>
+ * </ol>
+ *
+ * @see Model
  */
 public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private static final Logger logger = LoggerFactory.getLogger(JacksonTypeModeller.class);
 
+	/**
+	 * Types that are intrinsic to TypeScript
+	 */
 	private static final Map<Class, Supplier<JType>> FUNDAMENTAL_TYPES = new HashMap<>();
 
 	static {
@@ -102,28 +118,59 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		FUNDAMENTAL_TYPES.put(Character.TYPE, JString::new);
 	}
 
+	/**
+	 * Queue of pending types to process
+	 */
 	private final ArrayDeque<Type> typesToProcess = new ArrayDeque<>();
 
+	/**
+	 * List of fixups to run after ingesting.
+	 */
 	private final Map<Type, List<Consumer<JType>>> typeFixups = new HashMap<>();
 
+
+	/**
+	 * Create a modeller.
+	 */
 	public JacksonTypeModeller() {
+		// clear list of created types (for debugging)
 		JType.createdTypes.clear();
 	}
 
+	/**
+	 * Add a fixup for a given type
+	 *
+	 * @param type  the type
+	 * @param fixup the fixup to apply
+	 */
 	void addFixup(Type type, Consumer<JType> fixup) {
 		List<Consumer<JType>> list = typeFixups.computeIfAbsent(type, k -> new ArrayList<>());
 		list.add(fixup);
 	}
 
+	/**
+	 * Queue a type for future processing
+	 *
+	 * @param type
+	 */
 	void queueType(Type type) {
 		typesToProcess.add(type);
 	}
 
+	/**
+	 * Read Java types into the model.
+	 *
+	 * @param model the model
+	 * @param types the types to add
+	 * @return a list of TS types added this run
+	 */
 	@Override
-	public List<JType> enumerateProperties(Model model, Type... types) {
+	public List<JType> readTypes(Model model, Type... types) {
 
+		// enqueue start types
 		Collections.addAll(typesToProcess, types);
 
+		// drain the queue
 		while (!typesToProcess.isEmpty()) {
 			Type type = typesToProcess.pollFirst();
 			if (model.hasType(type)) {
@@ -133,6 +180,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			logger.debug("Type {} being added", type);
 			model.addType(type, handleType(type));
 		}
+		// apply fixups
 		for (Map.Entry<Type, List<Consumer<JType>>> fixup : typeFixups.entrySet()) {
 			JType jTYpe = model.getType(fixup.getKey());
 			for (Consumer<JType> processor : fixup.getValue()) {
@@ -141,13 +189,15 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 		logger.debug("Done");
 
+		// double-check that all our types wound up in the model
 		Collection<JType> interfaces = model.getInterfaces();
 		for (JType createdType : JType.createdTypes) {
 			if (!interfaces.contains(createdType)) {
-				throw new RuntimeException("Type " + createdType + " was created, but not in " + "interfaces");
+				throw new RuntimeException("Type " + createdType + " was created, but it's not in interfaces");
 			}
 		}
 
+		// find all the TS types created for the type parameters, and return them, in the same order (necessary for #readOneType)
 		List<JType> result = new ArrayList<>(types.length);
 		for (Type type : types) {
 			result.add(model.getType(type));
@@ -155,14 +205,26 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		return result;
 	}
 
+	/**
+	 * Convenience method to process just one type. This may, of course trigger the processing of other types by reference, and they'll
+	 * be added to the model, but the other TS types won't be returned.
+	 *
+	 * @param model the model
+	 * @param type  the Java type
+	 * @return the TS type
+	 */
 	@Override
-	public JType analyze(Model model, Type type) {
-		return enumerateProperties(model, type).get(0);
+	public JType readOneType(Model model, Type type) {
+		return readTypes(model, type).get(0);
 	}
 
 	private JType handleType(Type type) {
 		logger.debug("Handling {}", type);
 		if (type instanceof TypeVariable) {
+			// Case 1: type variable
+			// Given a type like MyType<T>, the TypeVariable represents T. For a more complex instance like
+			// MyType<T extends InterfaceA & InterfaceB>, then InterfaceA and InterfaceB will be in the 'intersectionBounds'. This can be
+			// represented in TypeScript, and the syntax is the same.
 			logger.debug("is TypeVariable");
 			TypeVariable variable = (TypeVariable) type;
 			JTypeVariable jVariable = new JTypeVariable(variable.getName());
@@ -178,22 +240,26 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			}
 			return jVariable;
 		} else if (type instanceof ParameterizedType) {
+			// Case 2: parametrized type
+			// This is for the case of a generic type specialization, where the variables have been specified (e.g. List<Integer>)
 			logger.debug("is ParameterizedType");
-			// parametrized type - type with type parameters (e.g. List<Integer>)
 			ParameterizedType pt = (ParameterizedType) type;
 			Type base = pt.getRawType();
 			if (isCollection(base)) {
+				// Collection<T> -> Array<T>
 				JArray result = new JArray();
 				result.setIndexType(new JNumber());
 				addFixup(pt.getActualTypeArguments()[0], result::setElementType);
 				queueType(pt.getActualTypeArguments()[0]);
 				return result;
 			} else if (isMap(base)) {
+				// Map<String, T> -> { [key: string]: T }
 				JMap result = new JMap();
 				addFixup(pt.getActualTypeArguments()[1], result::setValueType);
 				queueType(pt.getActualTypeArguments()[1]);
 				return result;
 			} else {
+				// everything else: A<B> -> A<B>
 				JSpecialization jSpecialization = new JSpecialization();
 				jSpecialization.setParameters(new JType[pt.getActualTypeArguments().length]);
 				addFixup(pt.getRawType(), jSpecialization::setBase);
@@ -206,9 +272,11 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				return jSpecialization;
 			}
 		} else if (type instanceof Class) {
+			// Case 3: class (non-generic, plain vanilla)
 			logger.debug("is Class");
 			Class cl = (Class) type;
 			if (cl.isArray()) {
+				// array: A[] -> Array<A>
 				logger.debug("is array");
 				JArray result = new JArray();
 				result.setIndexType(new JNumber());
@@ -216,9 +284,11 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				queueType(cl.getComponentType());
 				return result;
 			} else if (FUNDAMENTAL_TYPES.containsKey(type)) {
+				// built-in type: int -> number, etc
 				logger.debug("is fundamental type");
 				return FUNDAMENTAL_TYPES.get(type).get();
 			} else {
+				// everything else -> interface
 				logger.debug("is user-defined class");
 				return handleUserDefinedClass((Class) type);
 			}
@@ -227,20 +297,32 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 	}
 
+	/**
+	 * Is this Java type a Map? (will turn into an object)
+	 *
+	 * @param base the type
+	 * @return yes or no
+	 */
 	private static boolean isMap(Type base) {
 		return base instanceof Class && Map.class.isAssignableFrom((Class<?>) base);
 	}
 
-
+	/**
+	 * Is this Java type a collection? (will turn into an array)
+	 *
+	 * @param base the type
+	 * @return yes or no
+	 */
 	private static boolean isCollection(Type base) {
 		return base instanceof Class && Collection.class.isAssignableFrom((Class<?>) base);
 	}
 
 	private JType handleUserDefinedClass(Class type) {
 
+		// Run a Jackson JsonFormatVisitor over our class, let it process all the object properties, and rteurn the resulting JType.
 		TypeReadingVisitor<?> reader;
 		try {
-			MyBase wrapper = new MyBase();
+			ClassReader wrapper = new ClassReader();
 			ObjectMapper objectMapper = new ObjectMapper();
 			objectMapper.acceptJsonFormatVisitor(type, wrapper);
 			reader = wrapper.getReader();
@@ -254,8 +336,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 	}
 
-
-	private class MyBase extends JsonFormatVisitorWrapper.Base {
+	/**
+	 * Jackson format visitor which will be invoked over all the properties.
+	 */
+	private class ClassReader extends JsonFormatVisitorWrapper.Base {
 
 		private TypeReadingVisitor<?> reader;
 

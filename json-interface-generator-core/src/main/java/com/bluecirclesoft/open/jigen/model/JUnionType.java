@@ -24,14 +24,10 @@ import java.util.List;
  */
 public class JUnionType extends JType {
 
-	private List<JType> members = new ArrayList<>();
+	private final List<JType> members = new ArrayList<>();
 
 	public List<JType> getMembers() {
 		return members;
-	}
-
-	public void setMembers(List<JType> members) {
-		this.members = members;
 	}
 
 	@Override
