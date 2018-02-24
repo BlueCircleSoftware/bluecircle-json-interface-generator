@@ -19,10 +19,13 @@ package com.bluecirclesoft.open.jigen.model;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * TODO document me
+ * Corresponds to TypeScript {@code Array<elementType>}.
  */
 public class JArray extends JType {
 
+	/**
+	 * TODO this is always numeric in the code, I think it should be always numeric. Remove.
+	 */
 	private JType indexType;
 
 	private JType elementType;

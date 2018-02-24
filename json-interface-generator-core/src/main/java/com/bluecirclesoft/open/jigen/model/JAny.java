@@ -19,7 +19,7 @@ package com.bluecirclesoft.open.jigen.model;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * TODO document me
+ * Corresponds to TypeScript 'any' type.
  */
 public class JAny extends JType {
 
