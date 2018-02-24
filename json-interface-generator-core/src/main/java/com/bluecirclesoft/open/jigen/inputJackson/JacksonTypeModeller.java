@@ -48,6 +48,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.PropertyEnumerator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -369,18 +370,8 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				@Override
 				public void enumTypes(Set<String> enums) {
 					reader = () -> {
-						// not sure what the ordering is on these enums, but I want them to match the Java ordering as much as possible.
 						Class<?> rawClass = type.getRawClass();
-						List<String> enumVals = new ArrayList<>();
-						if (rawClass.isEnum()) {
-							for (Object ec : rawClass.getEnumConstants()) {
-								enumVals.add(((Enum<?>) ec).name());
-							}
-						} else {
-							enumVals.addAll(enums);
-						}
-
-						return new JEnum(rawClass.getName(), enumVals);
+						return buildEnum((Class<Enum<?>>) rawClass);
 					};
 				}
 			};
@@ -449,6 +440,38 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			JsonObjectReader myReader = new JsonObjectReader(JacksonTypeModeller.this, type.getRawClass());
 			reader = myReader;
 			return myReader;
+		}
+	}
+
+	private static JEnum buildEnum(Class<Enum<?>> rawClass) {
+		try {
+			List<JEnum.EnumDeclaration> entries = new ArrayList<>();
+			Enum<?>[] constants = rawClass.getEnumConstants();
+			Map<String, Enum<?>> usedValues = new HashMap<>();
+			for (Enum<?> enumConstant : constants) {
+				// Reading annotations off enums is cray cray
+				// https://stackoverflow.com/questions/7254126/get-annotations-for-enum-type-variable/7260009#7260009
+
+				JsonProperty jsonPropertyAnnotation =
+						enumConstant.getClass().getField(enumConstant.name()).getAnnotation(JsonProperty.class);
+				String enumConstantValue;
+				if (jsonPropertyAnnotation != null && !jsonPropertyAnnotation.value().equals(JsonProperty.USE_DEFAULT_NAME)) {
+					enumConstantValue = jsonPropertyAnnotation.value();
+				} else {
+					enumConstantValue = enumConstant.name();
+				}
+				if (usedValues.containsKey(enumConstantValue)) {
+					logger.warn("Computed serialized value of {} to be {}, but that value was also used for {} " +
+									"- keeping first definition only",
+							new Object[]{enumConstant, enumConstantValue, usedValues.get(enumConstantValue)});
+				} else {
+					usedValues.put(enumConstantValue, enumConstant);
+				}
+				entries.add(new JEnum.EnumDeclaration(enumConstant.name(), enumConstant.ordinal(), enumConstantValue));
+			}
+			return new JEnum(rawClass.getName(), JEnum.EnumType.NUMERIC, entries);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }

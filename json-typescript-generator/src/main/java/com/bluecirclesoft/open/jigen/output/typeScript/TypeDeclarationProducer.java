@@ -16,8 +16,10 @@
 
 package com.bluecirclesoft.open.jigen.output.typeScript;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
@@ -80,27 +82,30 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.line("export enum " + name + " {");
 		writer.indentIn();
 		int count = 0;
-		Set<String> values = jEnum.getValues();
+		List<JEnum.EnumDeclaration> values = jEnum.getValues();
 		int valueCount = values.size() - 1;
-		for (String value : values) {
+		for (JEnum.EnumDeclaration value : values) {
 			String suffix;
 			if (count == valueCount) {
 				suffix = "";
 			} else {
 				suffix = ",";
 			}
-			writer.line(value + suffix);
+			if (jEnum.getEnumType() == JEnum.EnumType.STRING) {
+				writer.line(value.getName() + " = \"" + StringEscapeUtils.escapeEcmaScript(value.getSerializedValue()) + "\"" + suffix);
+			} else {
+				writer.line(value.getName() + suffix);
+			}
 			count++;
 		}
 		writer.indentOut();
 		writer.line("}");
 		// enum already has index -> name and name -> index, but we will emit index -> enum constant and name -> enum constant
 		writer.line("export const " + name + "_values : jsonInterfaceGenerator.EnumReverseLookup<" + name + "> = {};");
-		int count2 = 0;
-		for (String value : values) {
-			writer.line(name + "_values[" + count2 + "] = " + name + "." + value + ";");
-			writer.line(name + "_values[\"" + value + "\"] = " + name + "." + value + ";");
-			count2++;
+		for (JEnum.EnumDeclaration value : values) {
+			writer.line(name + "_values[" + value.getNumericValue() + "] = " + name + "." + value.getName() + ";");
+			writer.line(name + "_values[\"" + StringEscapeUtils.escapeEcmaScript(value.getSerializedValue()) + "\"] = " + name + "." +
+					value.getName() + ";");
 		}
 		return null;
 	}

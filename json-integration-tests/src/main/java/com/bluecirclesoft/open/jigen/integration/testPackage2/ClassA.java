@@ -48,6 +48,8 @@ public class ClassA {
 
 	private Map prop10 = new HashMap();
 
+	private EnumB prop11;
+
 	public int getProp1() {
 		return prop1;
 	}
@@ -126,5 +128,13 @@ public class ClassA {
 
 	public void setProp10(Map prop10) {
 		this.prop10 = prop10;
+	}
+
+	public EnumB getProp11() {
+		return prop11;
+	}
+
+	public void setProp11(EnumB prop11) {
+		this.prop11 = prop11;
 	}
 }

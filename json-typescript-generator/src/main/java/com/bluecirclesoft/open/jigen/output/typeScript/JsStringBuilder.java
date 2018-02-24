@@ -19,6 +19,8 @@ package com.bluecirclesoft.open.jigen.output.typeScript;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 /**
  * <p>Build a JavaScript/TypeScript string by assembling a bunch of components, some of which may be literals, and some of which may be code
  * snippets.  Adjacent literal components will be concatenated into one large literal.
@@ -84,7 +86,7 @@ public class JsStringBuilder {
 			boolean literal = literalFlags.get(i);
 			String component = components.get(i);
 			if (literal) {
-				String escaped = component.replaceAll("\"", "\\\"");
+				String escaped = StringEscapeUtils.escapeEcmaScript(component);
 				if (lastWasLiteral) {
 					result.append(escaped);
 				} else {

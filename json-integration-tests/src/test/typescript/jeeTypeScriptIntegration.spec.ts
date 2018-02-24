@@ -16,10 +16,11 @@
 
 import * as $ from "jquery";
 import {com, jsonInterfaceGenerator} from "../../../target/generated-sources/jeeToTypeScript";
-
-declare const __karma__: any;
 import JsonOptions = jsonInterfaceGenerator.JsonOptions;
 import integration = com.bluecirclesoft.open.jigen.integration;
+
+declare const __karma__: any;
+
 
 jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
     let error = false;
@@ -63,6 +64,23 @@ jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBod
 
 // pull base URL from command line
 jsonInterfaceGenerator.init(__karma__.config.baseUrl);
+
+describe("test @JsonProperty on enums", () => {
+    it("has correct enum names", () => {
+        let val: integration.testPackage2.EnumB = integration.testPackage2.EnumB.NUMBER_ONE;
+        expect(val === integration.testPackage2.EnumB.NUMBER_ONE).toBeTruthy();
+        expect(val === integration.testPackage2.EnumB_values.NumeroUno).toBeTruthy();
+        expect(val === integration.testPackage2.EnumB_values[0]).toBeTruthy();
+        val = integration.testPackage2.EnumB.NUMBER_TWO;
+        expect(val === integration.testPackage2.EnumB.NUMBER_TWO).toBeTruthy();
+        expect(val === integration.testPackage2.EnumB_values.NumeroDos).toBeTruthy();
+        expect(val === integration.testPackage2.EnumB_values[2]).toBeTruthy();
+        val = integration.testPackage2.EnumB.NUMBER_THREE;
+        expect(val === integration.testPackage2.EnumB.NUMBER_THREE).toBeTruthy();
+        expect(val === integration.testPackage2.EnumB_values.NumeroTres).toBeTruthy();
+        expect(val === integration.testPackage2.EnumB_values[1]).toBeTruthy();
+    });
+});
 
 describe("test TestServicesString", () => {
 
