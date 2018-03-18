@@ -26,6 +26,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.Model;
 
@@ -41,7 +42,10 @@ public class JavaEEModellerTest {
 
 		JavaEEModeller modeller = new JavaEEModeller();
 
-		Model model = modeller.createModel("com.bluecirclesoft");
+		GetOpt getOpt = GetOpt.create("testPrg");
+		modeller.addOptions(getOpt);
+		getOpt.processParams("--package", "com.bluecirclesoft");
+		Model model = modeller.createModel();
 
 		Assert.assertEquals(5, sizeof(model.getEndpoints()));
 

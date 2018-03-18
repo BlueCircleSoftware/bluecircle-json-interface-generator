@@ -53,6 +53,8 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bluecirclesoft.open.getopt.GetOpt;
+import com.bluecirclesoft.open.jigen.ModelCreator;
 import com.bluecirclesoft.open.jigen.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -64,7 +66,7 @@ import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 /**
  * TODO document me
  */
-public class JavaEEModeller {
+public class JavaEEModeller implements ModelCreator {
 
 	private static final Logger logger = LoggerFactory.getLogger(JavaEEModeller.class);
 
@@ -91,9 +93,11 @@ public class JavaEEModeller {
 		annotationHttpMethodMap.put(PUT.class, HttpMethod.PUT);
 	}
 
+	private String packageNamesString;
+
 	private Model model;
 
-	public Model createModel(String... packageNames) {
+	private Model createModel(String... packageNames) {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
@@ -326,7 +330,30 @@ public class JavaEEModeller {
 		return result;
 	}
 
-	public Model getModel() {
+	@Override
+	public void addOptions(GetOpt options) {
+		options.addParam("<package(s)>", "The java package(s) to search, as a comma-separated list", true, (s) -> packageNamesString = s)
+				.addLongOpt("package");
+	}
+
+	@Override
+	public Model createModel() {
+		createModel(packageNamesString.split("[, \t]"));
 		return model;
+	}
+
+	@Override
+	public void validateOptions(GetOpt options, List<String> errors) {
+		if (StringUtils.isBlank(packageNamesString)) {
+			errors.add("Package name to process is required.");
+		}
+	}
+
+	public String getPackageNamesString() {
+		return packageNamesString;
+	}
+
+	public void setPackageNamesString(String packageNamesString) {
+		this.packageNamesString = packageNamesString;
 	}
 }

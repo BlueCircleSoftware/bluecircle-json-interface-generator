@@ -166,35 +166,35 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.indentOut();
 		writer.line("}");
 
-		String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm"));
-		declLine = "export class " + immutableInterfaceType + " {";
-		writer.line(declLine);
-		writer.indentIn();
-		String typeVars = "";
-		if (!intf.getTypeVariables().isEmpty()) {
-			StringBuilder typeVarsBuilder = new StringBuilder();
-			typeVarsBuilder.append('<');
-			boolean needsComma = false;
-			for (JTypeVariable var : intf.getTypeVariables()) {
-				if (needsComma) {
-					typeVarsBuilder.append(',');
-				} else {
-					needsComma = true;
-				}
-				typeVarsBuilder.append(var.getName());
-			}
-			typeVarsBuilder.append('>');
-			typeVars = typeVarsBuilder.toString();
-		}
-		if (intf.getNewObjectJson() != null) {
-			writer.line("static make" + typeVars + "() : " + interfaceLabel + typeVars + " { ");
-			writer.indentIn();
-			writer.line("return " + intf.getNewObjectJson() + ";");
-			writer.indentOut();
-			writer.line("}");
-		}
-
 		if (produceImmutable) {
+			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm"));
+			declLine = "export class " + immutableInterfaceType + " {";
+			writer.line(declLine);
+			writer.indentIn();
+			String typeVars = "";
+			if (!intf.getTypeVariables().isEmpty()) {
+				StringBuilder typeVarsBuilder = new StringBuilder();
+				typeVarsBuilder.append('<');
+				boolean needsComma = false;
+				for (JTypeVariable var : intf.getTypeVariables()) {
+					if (needsComma) {
+						typeVarsBuilder.append(',');
+					} else {
+						needsComma = true;
+					}
+					typeVarsBuilder.append(var.getName());
+				}
+				typeVarsBuilder.append('>');
+				typeVars = typeVarsBuilder.toString();
+			}
+			if (intf.getNewObjectJson() != null) {
+				writer.line("static make" + typeVars + "() : " + interfaceLabel + typeVars + " { ");
+				writer.indentIn();
+				writer.line("return " + intf.getNewObjectJson() + ";");
+				writer.indentOut();
+				writer.line("}");
+			}
+
 			String usinterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.USAGE, null));
 			writer.line("private $base : jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">;");
 			writer.line("public constructor(base: jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">) {");

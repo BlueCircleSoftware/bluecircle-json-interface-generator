@@ -16,10 +16,9 @@
 
 package com.bluecirclesoft.open.jigen.jeeReader;
 
-import java.io.File;
 import java.io.IOException;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.model.Model;
@@ -34,35 +33,30 @@ public final class Main {
 	}
 
 	public static void main(String[] args) throws IOException {
-		Options options = new Options();
-		GetOpt getOpt = GetOpt.createFromReceptacle(options, Main.class);
+
+		JavaEEModeller modeller = new JavaEEModeller();
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer();
+
+		GetOpt getOpt = GetOpt.create("jigen");
+		modeller.addOptions(getOpt);
+		outputTypeScript.addOptions(getOpt);
 		getOpt.processParams(args);
 
-		StringBuilder errors = new StringBuilder();
-		if (StringUtils.isBlank(options.getPackageName())) {
-			errors.append("Package name to process is required.\n");
-		}
-		if (StringUtils.isBlank(options.getUrlPrefix())) {
-			errors.append("URL prefix is required.\n");
-		}
-		if (StringUtils.isBlank(options.getOutputFile())) {
-			errors.append("Output file is required.\n");
-		}
-		if (errors.length() > 0) {
-			getOpt.usage(errors);
+		List<String> errors = new ArrayList<>();
+		modeller.validateOptions(getOpt, errors);
+		outputTypeScript.validateOptions(getOpt, errors);
+		if (errors.size() > 0) {
+			StringBuilder builder = new StringBuilder();
+			for (String err : errors) {
+				builder.append("ERROR: ").append(err).append("\n");
+			}
+			getOpt.usage(builder);
 			System.err.println(errors.toString());
 			System.exit(1);
 		}
 
-		JavaEEModeller modeller = new JavaEEModeller();
-		String[] packages = options.getPackageName().split("[, \t]");
-		Model model = modeller.createModel(packages);
-
-
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File(options.getOutputFile()));
-		outputTypeScript.setProduceImmutables(!options.isNoImmutables());
+		Model model = modeller.createModel();
 		outputTypeScript.output(model);
-
 	}
 
 }

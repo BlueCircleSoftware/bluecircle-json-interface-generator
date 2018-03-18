@@ -16,7 +16,6 @@
 
 package com.bluecirclesoft.open.jigen.integration;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
@@ -73,10 +72,12 @@ public class JEEToTypeScriptTest {
 
 		// Create model
 		JavaEEModeller modeller = new JavaEEModeller();
-		Model model = modeller.createModel("com.bluecirclesoft");
+		modeller.setPackageNamesString("com.bluecirclesoft");
+		Model model = modeller.createModel();
 
 		// Create typescript
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new File("target/generated-sources/jeeToTypeScript.ts"));
+		TypeScriptProducer outputTypeScript = new TypeScriptProducer();
+		outputTypeScript.setOutputFile("target/generated-sources/jeeToTypeScript.ts");
 		outputTypeScript.output(model);
 
 		// Run test cases from test browser

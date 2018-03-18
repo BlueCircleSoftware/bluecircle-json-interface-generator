@@ -26,9 +26,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bluecirclesoft.open.getopt.GetOpt;
+import com.bluecirclesoft.open.jigen.CodeProducer;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
@@ -36,16 +39,15 @@ import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.Namespace;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
-import com.bluecirclesoft.open.jigen.output.OutputProducer;
 
 /**
  * Generate TypeScript from a REST model.
  */
-public class TypeScriptProducer implements OutputProducer {
+public class TypeScriptProducer implements CodeProducer {
 
 	private static final Logger log = LoggerFactory.getLogger(TypeScriptProducer.class);
 
-	private final File outputFile;
+	private File outputFile;
 
 	private OutputHandler writer;
 
@@ -56,6 +58,8 @@ public class TypeScriptProducer implements OutputProducer {
 	private boolean stripCommonNamespaces = false;
 
 	private boolean produceImmutables = true;
+
+	private String urlPrefix;
 
 	public boolean isProduceAccessors() {
 		return produceAccessors;
@@ -90,13 +94,32 @@ public class TypeScriptProducer implements OutputProducer {
 		log.info("Producing immutables? {}", this.produceImmutables);
 	}
 
-	public TypeScriptProducer(File outputFile) {
-		this.outputFile = outputFile;
+	public TypeScriptProducer() {
 	}
 
 	TypeScriptProducer(PrintWriter writer) {
 		outputFile = null;
 		this.writer = new OutputHandler(writer);
+	}
+
+	@Override
+	public void addOptions(GetOpt options) {
+		options.addParam("<prefix>", "The URL prefix to produce", true, this::setUrlPrefix).addLongOpt("url-prefix");
+		options.addParam("<file>", "The TypeScript file to generate (path will be created if necessary)", false, this::setOutputFile)
+				.addLongOpt("output-file");
+		options.addFlag("Strip any common leading packages from all produced classes", this::setStripCommonNamespaces)
+				.addLongOpt("strip-common-packages");
+		options.addFlag("Produce immutable classes for interfaces", this::setProduceImmutables).addLongOpt("immutables");
+	}
+
+	@Override
+	public void validateOptions(GetOpt options, List<String> errors) {
+		if (StringUtils.isBlank(urlPrefix)) {
+			errors.add("URL prefix is required.");
+		}
+		if (outputFile == null) {
+			errors.add("Output file is required.");
+		}
 	}
 
 	@Override
@@ -293,4 +316,19 @@ public class TypeScriptProducer implements OutputProducer {
 
 	}
 
+	public void setUrlPrefix(String urlPrefix) {
+		this.urlPrefix = urlPrefix;
+	}
+
+	public String getUrlPrefix() {
+		return urlPrefix;
+	}
+
+	public void setOutputFile(String outputFile) {
+		this.outputFile = new File(outputFile);
+	}
+
+	public File getOutputFile() {
+		return outputFile;
+	}
 }
