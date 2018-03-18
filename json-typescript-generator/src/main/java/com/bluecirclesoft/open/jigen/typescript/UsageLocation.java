@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.inputJackson;
-
-import com.bluecirclesoft.open.jigen.model.JType;
+package com.bluecirclesoft.open.jigen.typescript;
 
 /**
- * TODO document me
+ * Enum to notate whether a produced type string is to be used at a type definition, or a type usage (reference)
  */
-interface TypeReadingVisitor<Type extends JType> {
-
-	Type getResult();
+public enum UsageLocation {
+	DEFINITION,
+	USAGE
 }

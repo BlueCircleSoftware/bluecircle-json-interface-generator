@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.output.typeScript;
+package com.bluecirclesoft.open.jigen.typescript;
 
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
@@ -35,17 +35,38 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
 /**
  * TODO document me
  */
-class TypeUsageProducer implements JTypeVisitor<String> {
+public class TypeVariableProducer implements JTypeVisitor<String> {
+
+	private final UsageLocation location;
 
 	private final String immutableSuffix;
 
-	public TypeUsageProducer(String immutableSuffix) {
+	public TypeVariableProducer(UsageLocation location, String immutableSuffix) {
+		this.location = location;
 		this.immutableSuffix = immutableSuffix;
 	}
 
 	@Override
 	public String visit(JObject jObject) {
-		return jObject.getReference() + (immutableSuffix != null ? immutableSuffix : "");
+		StringBuilder sb = new StringBuilder();
+		sb.append(jObject.getName());
+		if (immutableSuffix != null) {
+			sb.append(immutableSuffix);
+		}
+		if (!jObject.getTypeVariables().isEmpty()) {
+			sb.append("<");
+			boolean needsComma = false;
+			for (JTypeVariable var : jObject.getTypeVariables()) {
+				if (needsComma) {
+					sb.append(", ");
+				} else {
+					needsComma = true;
+				}
+				sb.append(var.accept(this));
+			}
+			sb.append(">");
+		}
+		return sb.toString();
 	}
 
 	@Override
@@ -55,77 +76,73 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JArray jArray) {
-		return jArray.getElementType().accept(this) + "[]";
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JBoolean jBoolean) {
-		return "boolean";
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JEnum jEnum) {
-		return jEnum.getReference();
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JNumber jNumber) {
-		return "number";
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JString jString) {
-		return "string";
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JVoid jVoid) {
-		return "void";
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JSpecialization jSpecialization) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(this));
-		sb.append("<");
-		boolean needsComma = false;
-		for (JType param : jSpecialization.getParameters()) {
-			if (needsComma) {
-				sb.append(", ");
-			} else {
-				needsComma = true;
-			}
-			sb.append(param.accept(this));
-		}
-		sb.append(">");
-		return sb.toString();
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
-	public String visit(JTypeVariable jTypeVariable) {
-		return jTypeVariable.getName();
+	public String visit(JTypeVariable var) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(var.getName());
+		// if you have a type like MyType<T extends OtherType>, TypeScript only allows the extends clause when the type is being declared.
+		if (location == UsageLocation.DEFINITION) {
+			if (!var.getIntersectionBounds().isEmpty()) {
+				sb.append(" extends ");
+				boolean needsAmpersand = false;
+				for (JType bound : var.getIntersectionBounds()) {
+					if (needsAmpersand) {
+						sb.append("&");
+					} else {
+						needsAmpersand = true;
+					}
+					sb.append(bound.accept(this));
+				}
+			}
+		}
+		return sb.toString();
 	}
 
 	@Override
 	public String visit(JMap jMap) {
-		return "{[name: string]:" + jMap.getValueType().accept(this) + "}";
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JUnionType jUnionType) {
-		// get the strings for all the member types, and join them together with vertical bars
-		StringBuilder sb = new StringBuilder();
-		for (JType member : jUnionType.getMembers()) {
-			if (sb.length() > 0) {
-				sb.append(" | ");
-			}
-			sb.append(member.accept(this));
-		}
-		return sb.toString();
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public String visit(JNull jNull) {
-		return "null";
+		throw new RuntimeException("not implemented");
 	}
 }

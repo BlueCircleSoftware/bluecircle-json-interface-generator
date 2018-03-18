@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.output.typeScript;
+package com.bluecirclesoft.open.jigen.typescript;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,7 +44,7 @@ public class TypeScriptProducerTest {
 		Model model = (Model) objectOutputStream.readObject();
 		objectOutputStream.close();
 
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer(new PrintWriter(System.out));
+		Writer outputTypeScript = new Writer(new PrintWriter(System.out));
 		outputTypeScript.output(model);
 	}
 

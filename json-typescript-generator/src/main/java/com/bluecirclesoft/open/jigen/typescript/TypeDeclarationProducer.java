@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.output.typeScript;
+package com.bluecirclesoft.open.jigen.typescript;
 
 import java.util.List;
 import java.util.Map;
@@ -43,11 +43,11 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final OutputHandler writer;
 
-	private final TypeScriptProducer producer;
+	private final Writer producer;
 
 	private final boolean produceImmutable;
 
-	public TypeDeclarationProducer(TypeScriptProducer typeScriptProducer, OutputHandler writer, boolean produceImmutable) {
+	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable) {
 		this.writer = writer;
 		this.producer = typeScriptProducer;
 		this.produceImmutable = produceImmutable;

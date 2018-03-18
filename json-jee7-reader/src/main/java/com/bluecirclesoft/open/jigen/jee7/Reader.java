@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.jeeReader;
+package com.bluecirclesoft.open.jigen.jee7;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.ModelCreator;
-import com.bluecirclesoft.open.jigen.inputJackson.JacksonTypeModeller;
+import com.bluecirclesoft.open.jigen.jee7.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
@@ -66,9 +66,9 @@ import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 /**
  * TODO document me
  */
-public class JavaEEModeller implements ModelCreator {
+public class Reader implements ModelCreator {
 
-	private static final Logger logger = LoggerFactory.getLogger(JavaEEModeller.class);
+	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
 	private static class MethodInfo {
 
@@ -332,8 +332,8 @@ public class JavaEEModeller implements ModelCreator {
 
 	@Override
 	public void addOptions(GetOpt options) {
-		options.addParam("<package(s)>", "The java package(s) to search, as a comma-separated list", true, (s) -> packageNamesString = s)
-				.addLongOpt("package");
+		options.addParam("<package(s)>", "Comma-separated list of packages to recursively scan for JAX-RS annotations.", true,
+				(s) -> packageNamesString = s).addLongOpt("package");
 	}
 
 	@Override

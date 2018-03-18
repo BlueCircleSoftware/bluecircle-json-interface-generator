@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Blue Circle Software, LLC
+ * Copyright 2015 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,31 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.output.typeScript;
+package com.bluecirclesoft.open.jigen.jee7;
 
 /**
- * Enum to notate whether a produced type string is to be used at a type definition, or a type usage (reference)
+ * TODO document me
  */
-public enum UsageLocation {
-	DEFINITION,
-	USAGE
+public class Person {
+
+	private String name;
+
+	private int age;
+
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
 }

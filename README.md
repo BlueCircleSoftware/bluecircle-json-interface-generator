@@ -76,9 +76,13 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
                             <arguments>
                                 <argument>-cp</argument>
                                 <classpath/>
-                                <argument>com.bluecirclesoft.open.jigen.jeeReader.Main</argument>
+                                <argument>com.bluecirclesoft.open.jigen.Main</argument>
+                                <argument>--input</argument>
+                                <argument>jee7</argument>
                                 <argument>--package</argument>
                                 <argument>com.bluecirclesoft</argument>
+                                <argument>--output</argument>
+                                <argument>typescript</argument>
                                 <argument>--url-prefix</argument>
                                 <argument>/${project.artifactId}</argument>
                                 <argument>--output-file</argument>
@@ -91,16 +95,38 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
 
 ```
 
-## Options
+## Usage and Options
+
+### General
+
+To launch: 
+
+```
+java -cp ... com.bluecirclesoft.open.jigen.Main (--input|--output) \<processor\> \<processor arg\>... [(--input|--output) \<processor\> \<processor arg\>...]...
+```
+
+Specifies a number of "input" processors to read and create a JSON model, and "output" processors to create output from the resulting model.
+
+The "input" processors are all run first, followed by the "output" processors.
+
+To specify a processor, you can specify a json-interface-generator package, or a fully-qualified class name.  To write your own 
+processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --input or `com.bluecirclesoft.open.jigen.CodeProducer` for 
+--output.
+
+### JEE7 Reader ("--input jee7"):
 
 Option | Description
 -------|------------
---package \<packages\> | List of packages to recursively scan for JAX-RS annotations.
---url-prefix \<prefix\> | Prefix to add to all AJAX URLs (this will probably be the context-root of your application)
---output-file \<file\> | File in which to save the resulting TypeScript file
---typings-index-path \<path\> | Insert a "/// \<reference path="..." />" in the resulting output
---strip-common-packages | By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
---no-immutables | By default, immutable wrappers are generated for all interfaces. Selecting this option disables those wrappers.
+--package \<packages\> | (required) Comma-separated list of packages to recursively scan for JAX-RS annotations.
+
+### TypeScript Generator ("--output typescript"):
+
+Option | Description
+-------|------------
+--url-prefix \<prefix\> | (required) Prefix to add to all AJAX URLs (this will probably be the context-root of your application)
+--output-file \<file\> | (required) The TypeScript file to generate (path will be created if necessary)
+--strip-common-packages | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
+--immutables | Produce immutable wrappers along with interfaces.
 
 ## Making AJAX calls
 

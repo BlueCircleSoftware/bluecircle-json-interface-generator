@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.inputJackson;
+package com.bluecirclesoft.open.jigen.jee7.inputJackson;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;

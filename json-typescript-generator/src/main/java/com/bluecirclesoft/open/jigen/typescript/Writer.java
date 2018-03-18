@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.output.typeScript;
+package com.bluecirclesoft.open.jigen.typescript;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -43,9 +43,9 @@ import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 /**
  * Generate TypeScript from a REST model.
  */
-public class TypeScriptProducer implements CodeProducer {
+public class Writer implements CodeProducer {
 
-	private static final Logger log = LoggerFactory.getLogger(TypeScriptProducer.class);
+	private static final Logger log = LoggerFactory.getLogger(Writer.class);
 
 	private File outputFile;
 
@@ -94,22 +94,23 @@ public class TypeScriptProducer implements CodeProducer {
 		log.info("Producing immutables? {}", this.produceImmutables);
 	}
 
-	public TypeScriptProducer() {
+	public Writer() {
 	}
 
-	TypeScriptProducer(PrintWriter writer) {
+	Writer(PrintWriter writer) {
 		outputFile = null;
 		this.writer = new OutputHandler(writer);
 	}
 
 	@Override
 	public void addOptions(GetOpt options) {
-		options.addParam("<prefix>", "The URL prefix to produce", true, this::setUrlPrefix).addLongOpt("url-prefix");
+		options.addParam("<prefix>", "Prefix to add to all AJAX URLs (this will probably be the context-root of your application)", true,
+				this::setUrlPrefix).addLongOpt("url-prefix");
 		options.addParam("<file>", "The TypeScript file to generate (path will be created if necessary)", false, this::setOutputFile)
 				.addLongOpt("output-file");
 		options.addFlag("Strip any common leading packages from all produced classes", this::setStripCommonNamespaces)
 				.addLongOpt("strip-common-packages");
-		options.addFlag("Produce immutable classes for interfaces", this::setProduceImmutables).addLongOpt("immutables");
+		options.addFlag("Produce immutable wrappers along with interfaces", this::setProduceImmutables).addLongOpt("immutables");
 	}
 
 	@Override

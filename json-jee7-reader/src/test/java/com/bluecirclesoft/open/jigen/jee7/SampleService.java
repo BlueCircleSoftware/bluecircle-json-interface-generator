@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.jeeReader;
+package com.bluecirclesoft.open.jigen.jee7;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;

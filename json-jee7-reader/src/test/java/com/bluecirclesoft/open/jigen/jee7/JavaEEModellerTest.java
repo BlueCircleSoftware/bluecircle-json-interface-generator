@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.jeeReader;
+package com.bluecirclesoft.open.jigen.jee7;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class JavaEEModellerTest {
 
 		ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
 
-		JavaEEModeller modeller = new JavaEEModeller();
+		Reader modeller = new Reader();
 
 		GetOpt getOpt = GetOpt.create("testPrg");
 		modeller.addOptions(getOpt);
@@ -51,7 +51,7 @@ public class JavaEEModellerTest {
 
 		// test complex endpoints
 		{
-			Endpoint endpoint = model.getEndpoint("com.bluecirclesoft.open.jigen.jeeReader.ComplexService.getMapSS");
+			Endpoint endpoint = model.getEndpoint("com.bluecirclesoft.open.jigen.jee7.ComplexService.getMapSS");
 			Assert.assertEquals(0, endpoint.getParameters().size());
 			Assert.assertEquals("JMap[valueType=JString[]]", endpoint.getResponseBody().toString());
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,27 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.jeeReader;
+package com.bluecirclesoft.open.jigen;
+
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * TODO document me
  */
-public class Person {
+public class MainTest {
 
-	private String name;
-
-	private int age;
-
-
-	public String getName() {
-		return name;
+	@Test
+	public void testSplit() {
+		List<List<String>> result = Main.split("--input a --input d e --output g h i".split(" "));
+		Assert.assertEquals(3, result.size());
+		assertEquals(2, result.get(0).size());
+		assertEquals(3, result.get(1).size());
+		assertEquals(4, result.get(2).size());
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public int getAge() {
-		return age;
-	}
-
-	public void setAge(int age) {
-		this.age = age;
-	}
 }

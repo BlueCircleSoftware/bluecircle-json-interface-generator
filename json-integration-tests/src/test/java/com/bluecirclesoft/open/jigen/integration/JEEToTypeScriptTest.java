@@ -31,9 +31,9 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bluecirclesoft.open.jigen.jeeReader.JavaEEModeller;
+import com.bluecirclesoft.open.jigen.jee7.Reader;
 import com.bluecirclesoft.open.jigen.model.Model;
-import com.bluecirclesoft.open.jigen.output.typeScript.TypeScriptProducer;
+import com.bluecirclesoft.open.jigen.typescript.Writer;
 
 /**
  * Test the Java EE -> TypeScript translation.
@@ -71,12 +71,12 @@ public class JEEToTypeScriptTest {
 //		doubleCheckServer(baseRestUrl);
 
 		// Create model
-		JavaEEModeller modeller = new JavaEEModeller();
+		Reader modeller = new Reader();
 		modeller.setPackageNamesString("com.bluecirclesoft");
 		Model model = modeller.createModel();
 
 		// Create typescript
-		TypeScriptProducer outputTypeScript = new TypeScriptProducer();
+		Writer outputTypeScript = new Writer();
 		outputTypeScript.setOutputFile("target/generated-sources/jeeToTypeScript.ts");
 		outputTypeScript.output(model);
 

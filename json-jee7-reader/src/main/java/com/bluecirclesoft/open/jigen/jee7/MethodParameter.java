@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.jeeReader;
+package com.bluecirclesoft.open.jigen.jee7;
 
 import java.lang.reflect.Type;
 
