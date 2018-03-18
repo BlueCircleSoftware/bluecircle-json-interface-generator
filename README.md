@@ -102,7 +102,9 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
 To launch: 
 
 ```
-java -cp ... com.bluecirclesoft.open.jigen.Main (--input|--output) \<processor\> \<processor arg\>... [(--input|--output) \<processor\> \<processor arg\>...]...
+java -cp ... com.bluecirclesoft.open.jigen.Main \
+    (--input|--output) <processor> <processor arg>... \
+    [ (--input|--output) <processor> <processor arg>... ] ...
 ```
 
 Specifies a number of "input" processors to read and create a JSON model, and "output" processors to create output from the resulting model.
