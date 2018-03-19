@@ -51,8 +51,14 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
 ```xml
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
+                <artifactId>json-jee7-reader</artifactId>
+                <version>0.13</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-typescript-generator</artifactId>
-                <version>0.8</version>
+                <version>0.13</version>
                 <scope>test</scope>
             </dependency>
 	
