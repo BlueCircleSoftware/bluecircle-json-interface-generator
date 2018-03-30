@@ -48,4 +48,13 @@ describe("jsonInterfaceGenerator", () => {
         expect(1).toEqual(1);
     });
 
+    it("join paths correctly", () => {
+        expect(jsonInterfaceGenerator.joinPath()).toEqual("");
+        expect(jsonInterfaceGenerator.joinPath("")).toEqual("");
+        expect(jsonInterfaceGenerator.joinPath("a")).toEqual("a");
+        expect(jsonInterfaceGenerator.joinPath("a", "b")).toEqual("a/b");
+        expect(jsonInterfaceGenerator.joinPath("a", "b")).toEqual("a/b");
+        expect(jsonInterfaceGenerator.joinPath("a", "b", "c")).toEqual("a/b/c");
+    });
+
 });

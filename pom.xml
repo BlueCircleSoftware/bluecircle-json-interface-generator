@@ -29,8 +29,10 @@
     <modules>
         <module>json-interface-generator-core</module>
         <module>json-jee7-reader</module>
+        <module>json-spring-reader</module>
         <module>json-typescript-generator</module>
-        <module>json-integration-tests</module>
+        <module>json-integration-tests-jee7</module>
+        <module>json-integration-tests-spring</module>
     </modules>
 
     <developers>
@@ -71,7 +73,9 @@
 
     <properties>
         <jacoco.version>0.7.9</jacoco.version>
-        <jackson.version>2.6.0</jackson.version>
+        <jackson.version>2.9.0</jackson.version>
+        <spring.version>5.0.4.RELEASE</spring.version>
+        <sl4j.version>1.5.6</sl4j.version>
     </properties>
 
     <dependencyManagement>
@@ -79,18 +83,18 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.5.6</version>
+                <version>${sl4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
-                <version>1.5.6</version>
+                <version>${sl4j.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-jdk14</artifactId>
-                <version>1.5.6</version>
+                <version>${sl4j.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -128,6 +132,37 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.3.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.arquillian</groupId>
+                <artifactId>wildfly-arquillian-container-managed</artifactId>
+                <version>2.0.2.Final</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

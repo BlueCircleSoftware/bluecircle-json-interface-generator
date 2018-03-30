@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.spring;
 
 /**
- * The HTTP methods we'll be concerned about in this project (ignoring TRACE and CONNECT for now)
+ * TODO document me
  */
-public enum HttpMethod {
-	GET,
-	HEAD,
-	POST,
-	PUT,
-	DELETE,
-	OPTIONS,
-	PATCH,
-	TRACE,
+public class SuffixInfo {
+
+	private boolean needsMethod;
+
+	private Integer count;
+
+	public SuffixInfo(boolean needsMethod, Integer count) {
+		this.needsMethod = needsMethod;
+		this.count = count;
+	}
+
+	public boolean isNeedsMethod() {
+		return needsMethod;
+	}
+
+	public Integer getCount() {
+		return count;
+	}
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integrationSpring;
+
+import java.io.Serializable;
 
 /**
- * The HTTP methods we'll be concerned about in this project (ignoring TRACE and CONNECT for now)
+ * TODO document me
  */
-public enum HttpMethod {
-	GET,
-	HEAD,
-	POST,
-	PUT,
-	DELETE,
-	OPTIONS,
-	PATCH,
-	TRACE,
+public class MyStringList implements Serializable {
+
+	private String[] list;
+
+	public String[] getList() {
+		return list;
+	}
+
+	public void setList(String[] list) {
+		this.list = list;
+	}
 }

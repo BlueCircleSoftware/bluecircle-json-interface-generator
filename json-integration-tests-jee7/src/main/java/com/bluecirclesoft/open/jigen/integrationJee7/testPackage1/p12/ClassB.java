@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integrationJee7.testPackage1.p12;
+
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage1.p11.ClassA;
 
 /**
- * The HTTP methods we'll be concerned about in this project (ignoring TRACE and CONNECT for now)
+ * TODO document me
  */
-public enum HttpMethod {
-	GET,
-	HEAD,
-	POST,
-	PUT,
-	DELETE,
-	OPTIONS,
-	PATCH,
-	TRACE,
+public class ClassB {
+
+	private ClassA a;
+
+	public ClassA getA() {
+		return a;
+	}
+
+	public void setA(ClassA a) {
+		this.a = a;
+	}
 }

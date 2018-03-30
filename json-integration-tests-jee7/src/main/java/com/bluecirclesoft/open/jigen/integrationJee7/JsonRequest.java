@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2017 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,35 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integrationJee7;
 
 /**
- * The HTTP methods we'll be concerned about in this project (ignoring TRACE and CONNECT for now)
+ * Test json request
  */
-public enum HttpMethod {
-	GET,
-	HEAD,
-	POST,
-	PUT,
-	DELETE,
-	OPTIONS,
-	PATCH,
-	TRACE,
+public class JsonRequest {
+
+	private String a;
+
+	private String b;
+
+	public String getA() {
+		return a;
+	}
+
+	public void setA(String a) {
+		this.a = a;
+	}
+
+	public String getB() {
+		return b;
+	}
+
+	public void setB(String b) {
+		this.b = b;
+	}
+
+	@Override
+	public String toString() {
+		return "JsonRequest{" + "a='" + a + '\'' + ", b='" + b + '\'' + '}';
+	}
 }

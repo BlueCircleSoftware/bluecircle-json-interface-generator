@@ -47,6 +47,33 @@ export namespace jsonInterfaceGenerator {
         success?(data: R): any;
     }
 
+    export function joinPath(...parts: string[]): string {
+        const goodParts: string[] = [];
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (part !== null && part !== undefined && part.length > 0) {
+                goodParts.push(part);
+            }
+        }
+        if (goodParts.length === 0) {
+            return "";
+        }
+        let builtPath = goodParts[0];
+        for (let i = 1; i < goodParts.length; i++) {
+            const p2 = goodParts[i];
+            const trail = builtPath.charAt(builtPath.length - 1) === "/";
+            const lead = p2.charAt(0) === "/";
+            if (trail && lead) {
+                builtPath = builtPath + p2.substring(1);
+            } else if (!trail && !lead) {
+                builtPath = builtPath + "/" + p2;
+            } else {
+                builtPath = builtPath + p2;
+            }
+        }
+        return builtPath;
+    }
+
     /**
      * Prefix to be appended to all URLs
      * TODO is this necessary since the client now installs an AJAX caller?
@@ -64,6 +91,14 @@ export namespace jsonInterfaceGenerator {
                 " jsonInterfaceGenerator.init()");
         }
         return ajaxUrlPrefix;
+    }
+
+    /**
+     * Get the prefix to be appended to all URLs
+     * @returns {string} the prefix
+     */
+    export function applyPrefix(following: string): string {
+        return joinPath(getPrefix(), following);
     }
 
     /**

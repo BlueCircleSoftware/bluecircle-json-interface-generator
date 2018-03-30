@@ -48,6 +48,7 @@ public class Endpoint implements Serializable {
 	}
 
 	public void setMethod(HttpMethod method) {
+		assert method != null;
 		this.method = method;
 	}
 
@@ -130,7 +131,8 @@ public class Endpoint implements Serializable {
 		switch (method) {
 			case POST:
 				if (hasType(sortedParams, EndpointParameter.NetworkType.FORM) && isBodyParam) {
-					return new ValidEndpointResponse(false, "Can't have a @FormParam parameter and body parameter on POST requests");
+					return new ValidEndpointResponse(false,
+							"Can't have both a form parameter parameter and body parameter on POST " + "requests");
 				}
 				if (isMultipleBodyParam) {
 					return new ValidEndpointResponse(false, "Can't have multiple body parameters on POST requests");
@@ -141,7 +143,7 @@ public class Endpoint implements Serializable {
 					return new ValidEndpointResponse(false, "Can't have a body parameter on GET requests");
 				}
 				if (hasType(sortedParams, EndpointParameter.NetworkType.FORM)) {
-					return new ValidEndpointResponse(false, "Can't have a @FormParam parameter on GET requests");
+					return new ValidEndpointResponse(false, "Can't have a form parameter on GET requests");
 				}
 				break;
 		}
