@@ -46,12 +46,12 @@ import com.bluecirclesoft.open.jigen.typescript.Writer;
  * <p></p>
  * Define some test services, deploy them in WildFly, and try to invoke them through the generated TypeScript.
  */
-@RunWith(Arquillian.class)
+//@RunWith(Arquillian.class)
 public class SpringToTypeScriptTest {
 
 	private static final Logger log = LoggerFactory.getLogger(SpringToTypeScriptTest.class);
 
-	@Deployment(testable = false)
+//	@Deployment(testable = false)
 	public static WebArchive createDeployment() {
 		try {
 			log.info("Creating Spring deployment");
@@ -81,8 +81,8 @@ public class SpringToTypeScriptTest {
 		return result.toArray(new File[0]);
 	}
 
-	@Test
-	@RunAsClient
+//	@Test
+//	@RunAsClient
 	public void runTest(@ArquillianResource URL baseUrl) throws IOException {
 		// We've deployed our services to Arquillian at this point
 		// Generate the TypeScript, and run the Jasmine tests

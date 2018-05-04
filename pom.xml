@@ -33,6 +33,7 @@
         <module>json-typescript-generator</module>
         <module>json-integration-tests-jee7</module>
         <module>json-integration-tests-spring</module>
+        <module>json-generator-allin1</module>
     </modules>
 
     <developers>
