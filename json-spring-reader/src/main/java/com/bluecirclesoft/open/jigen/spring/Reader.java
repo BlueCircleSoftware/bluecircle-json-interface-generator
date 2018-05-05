@@ -43,13 +43,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.ModelCreator;
+import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
-import com.bluecirclesoft.open.jigen.spring.inputJackson.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.spring.springmodel.AnnotationInstance;
 import com.bluecirclesoft.open.jigen.spring.springmodel.GlobalAnnotationMap;
 

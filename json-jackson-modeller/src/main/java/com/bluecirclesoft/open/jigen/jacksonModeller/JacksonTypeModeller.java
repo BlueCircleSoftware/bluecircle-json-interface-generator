@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.jee7.inputJackson;
+package com.bluecirclesoft.open.jigen.jacksonModeller;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -136,6 +136,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	public JacksonTypeModeller() {
 		// clear list of created types (for debugging)
 		JType.createdTypes.clear();
+	}
+
+	public static boolean isFundamentalType(Class<?> returnType) {
+		return FUNDAMENTAL_TYPES.containsKey(returnType);
 	}
 
 	/**

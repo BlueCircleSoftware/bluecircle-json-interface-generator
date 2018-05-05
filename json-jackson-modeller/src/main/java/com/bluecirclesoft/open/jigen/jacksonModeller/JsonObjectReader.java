@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bluecirclesoft.open.jigen.spring.inputJackson;
+package com.bluecirclesoft.open.jigen.jacksonModeller;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -136,7 +136,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	}
 
 	/**
-	 * Jackson event - non-POJO property encountered (see {@link JsonObjectFormatVisitor#property(java.lang.String, com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable, com.fasterxml.jackson.databind.JavaType)}
+	 * Jackson event - non-POJO property encountered (see {@link JsonObjectFormatVisitor#property(String, com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable, com.fasterxml.jackson.databind.JavaType)}
 	 * <p>
 	 * TODO implement
 	 */
@@ -157,7 +157,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	}
 
 	/**
-	 * Jackson event - non-POJO property encountered (see {@link JsonObjectFormatVisitor#property(java.lang.String, com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable, com.fasterxml.jackson.databind.JavaType)}
+	 * Jackson event - non-POJO property encountered (see {@link JsonObjectFormatVisitor#property(String, com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable, com.fasterxml.jackson.databind.JavaType)}
 	 * <p>
 	 * TODO implement
 	 */

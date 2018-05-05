@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.ModelCreator;
-import com.bluecirclesoft.open.jigen.jee7.inputJackson.JacksonTypeModeller;
+import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;

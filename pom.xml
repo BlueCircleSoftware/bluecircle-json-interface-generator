@@ -28,6 +28,7 @@
 
     <modules>
         <module>json-interface-generator-core</module>
+        <module>json-jackson-modeller</module>
         <module>json-jee7-reader</module>
         <module>json-spring-reader</module>
         <module>json-typescript-generator</module>

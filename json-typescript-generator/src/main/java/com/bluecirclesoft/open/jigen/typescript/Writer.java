@@ -304,7 +304,7 @@ public class Writer implements CodeProducer {
 
 	private void start() throws IOException {
 		if (outputFile != null) {
-			File outputDir = outputFile.getParentFile();
+			File outputDir = outputFile.getAbsoluteFile().getParentFile();
 			if (!outputDir.exists()) {
 				if (!outputDir.mkdirs()) {
 					throw new RuntimeException("Could not create folder " + outputDir.getAbsolutePath());
