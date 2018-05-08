@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
 import com.bluecirclesoft.open.jigen.model.JBoolean;
@@ -131,11 +132,13 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	 */
 	private final Map<Type, List<Consumer<JType>>> typeFixups = new HashMap<>();
 
+	private final ClassOverrideHandler classOverrides;
 
 	/**
 	 * Create a modeller.
 	 */
-	public JacksonTypeModeller() {
+	public JacksonTypeModeller(ClassOverrideHandler classOverrides) {
+		this.classOverrides = classOverrides;
 		// clear list of created types (for debugging)
 		JType.createdTypes.clear();
 	}
@@ -313,14 +316,20 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				addFixup(cl.getComponentType(), result::setElementType);
 				queueType(cl.getComponentType());
 				return result;
-			} else if (FUNDAMENTAL_TYPES.containsKey(type)) {
-				// built-in type: int -> number, etc
-				logger.debug("is fundamental type");
-				return FUNDAMENTAL_TYPES.get(type).get();
 			} else {
-				// everything else -> interface
-				logger.debug("is user-defined class");
-				return handleUserDefinedClass((Class) type);
+				if (classOverrides.containsKey(cl)) {
+					// substitute class.  If the user created a cycle, sorry.
+					Class classOverride = classOverrides.get(cl);
+					return handleType(classOverride);
+				} else if (FUNDAMENTAL_TYPES.containsKey(type)) {
+					// built-in type: int -> number, etc
+					logger.debug("is fundamental type");
+					return FUNDAMENTAL_TYPES.get(type).get();
+				} else {
+					// everything else -> interface
+					logger.debug("is user-defined class");
+					return handleUserDefinedClass((Class) type);
+				}
 			}
 		} else {
 			throw new RuntimeException("Can't handle " + type);
@@ -349,7 +358,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private JType handleUserDefinedClass(Class type) {
 
-		// Run a Jackson JsonFormatVisitor over our class, let it process all the object properties, and rteurn the resulting JType.
+		// Run a Jackson JsonFormatVisitor over our class, let it process all the object properties, and return the resulting JType.
 		TypeReadingVisitor<?> reader;
 		try {
 			ClassReader wrapper = new ClassReader();

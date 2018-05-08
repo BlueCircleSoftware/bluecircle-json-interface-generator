@@ -42,7 +42,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.bluecirclesoft.open.getopt.GetOpt;
+import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
+import com.bluecirclesoft.open.jigen.Regexes;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -101,11 +103,14 @@ public class Reader implements ModelCreator {
 
 	private String defaultContentType;
 
+	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
+
 	private Model model;
 
 	private final GlobalAnnotationMap annotationMap = new GlobalAnnotationMap();
 
 	private Model createModel(String... packageNames) {
+
 		annotationMap.ingestAnnotations(packageNames);
 
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
@@ -211,6 +216,7 @@ public class Reader implements ModelCreator {
 
 		List<MethodParameter> parameters = new ArrayList<>();
 
+		boolean usedMyOneGuess = false;
 		for (Parameter p : method.getParameters()) {
 			MethodParameter mp = new MethodParameter();
 			boolean hasName = p.isNamePresent();
@@ -218,10 +224,21 @@ public class Reader implements ModelCreator {
 			mp.setType(p.getParameterizedType());
 			if (p.isAnnotationPresent(PathVariable.class)) {
 				PathVariable pathParam = p.getAnnotation(PathVariable.class);
-				if (!hasName && isValidJavaIdentifier(pathParam.value())) {
-					mp.setCodeName(pathParam.value());
+				String pp = pathParam.value();
+				// Spring will auto-determine the path parameter based on ??
+				if (StringUtils.isBlank(pp)) {
+					if (usedMyOneGuess) {
+						// TODO I don't want to guess more than once since I don't understand Spring's logic yet
+						pp = "/* cannot auto-determine */";
+					} else {
+						pp = determinePathVariable(springRequestInfo.path);
+						usedMyOneGuess = true;
+					}
 				}
-				mp.setNetworkName(pathParam.value());
+				if (!hasName && isValidJavaIdentifier(pp)) {
+					mp.setCodeName(pp);
+				}
+				mp.setNetworkName(pp);
 				mp.setNetworkType(EndpointParameter.NetworkType.PATH);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(RequestParam.class)) {
@@ -246,10 +263,10 @@ public class Reader implements ModelCreator {
 
 		JType outType;
 		if (methodInfo.producer) {
-			JacksonTypeModeller modeller = new JacksonTypeModeller();
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
 			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
-			JacksonTypeModeller modeller = new JacksonTypeModeller();
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
 			outType = modeller.readOneType(model, String.class);
 		}
 
@@ -266,7 +283,7 @@ public class Reader implements ModelCreator {
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(methodPath);
 			for (MethodParameter pathParam : parameters) {
-				JacksonTypeModeller modeller = new JacksonTypeModeller();
+				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
 								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
@@ -282,6 +299,19 @@ public class Reader implements ModelCreator {
 				}
 				model.removeEndpoint(endpoint);
 			}
+		}
+	}
+
+	private String determinePathVariable(String path) {
+
+		int start = path.indexOf("{");
+		int end = path.indexOf("}", start);
+		if (start < 0) {
+			return "";
+		} else if (end < 0) {
+			return path.substring(start + 1);
+		} else {
+			return path.substring(start + 1, end);
 		}
 	}
 
@@ -468,11 +498,13 @@ public class Reader implements ModelCreator {
 		options.addParam("<string>",
 				"Default content type for Spring requests (should mirror ContentNegotiationConfigurer" + ".defaultContentType() if used)",
 				false, (s) -> defaultContentType = s).addLongOpt("default-content-type");
+		options.addParam("class[,class]*", "Treat classes as separate JSON types (syntax: class=realClass,...", false,
+				(s) -> classOverrideHandler.ingestOverrides(s)).addLongOpt("override");
 	}
 
 	@Override
 	public Model createModel() {
-		createModel(packageNamesString.split("[, \t]"));
+		createModel(Regexes.COMMA_SEPARATOR.split(packageNamesString));
 		return model;
 	}
 

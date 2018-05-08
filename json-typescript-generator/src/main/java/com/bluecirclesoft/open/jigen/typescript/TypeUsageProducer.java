@@ -40,13 +40,43 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	private final String immutableSuffix;
 
+	private final boolean isSpecializing;
+
 	public TypeUsageProducer(String immutableSuffix) {
+		this(immutableSuffix, false);
+	}
+
+	public TypeUsageProducer(String immutableSuffix, boolean isSpecializing) {
 		this.immutableSuffix = immutableSuffix;
+		this.isSpecializing = isSpecializing;
 	}
 
 	@Override
 	public String visit(JObject jObject) {
-		return jObject.getReference() + (immutableSuffix != null ? immutableSuffix : "");
+		String refStr = jObject.getReference() + (immutableSuffix != null ? immutableSuffix : "");
+		if (isSpecializing) {
+			return refStr;
+		} else {
+			if (jObject.getTypeVariables().isEmpty()) {
+				return refStr;
+			} else {
+				// outputting an object that has type parameters, but is not specialized - we need to put a bunch of <any>s
+				StringBuilder sb = new StringBuilder();
+				sb.append(refStr);
+				sb.append("<");
+				boolean needsComma = false;
+				for (JTypeVariable tv : jObject.getTypeVariables()) {
+					if (needsComma) {
+						sb.append(", ");
+					} else {
+						needsComma = true;
+					}
+					sb.append("any");
+				}
+				sb.append(">");
+				return sb.toString();
+			}
+		}
 	}
 
 	@Override
@@ -87,7 +117,7 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JSpecialization jSpecialization) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(this));
+		sb.append(jSpecialization.getBase().accept(new TypeUsageProducer(immutableSuffix, true)));
 		sb.append("<");
 		boolean needsComma = false;
 		for (JType param : jSpecialization.getParameters()) {

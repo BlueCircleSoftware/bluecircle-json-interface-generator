@@ -54,7 +54,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.getopt.GetOpt;
+import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
+import com.bluecirclesoft.open.jigen.Regexes;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -96,6 +98,8 @@ public class Reader implements ModelCreator {
 	private String packageNamesString;
 
 	private Model model;
+
+	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
 
 	private Model createModel(String... packageNames) {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
@@ -265,10 +269,10 @@ public class Reader implements ModelCreator {
 
 		JType outType;
 		if (methodInfo.producer) {
-			JacksonTypeModeller modeller = new JacksonTypeModeller();
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
 			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
-			JacksonTypeModeller modeller = new JacksonTypeModeller();
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
 			outType = modeller.readOneType(model, String.class);
 		}
 
@@ -286,7 +290,7 @@ public class Reader implements ModelCreator {
 			endpoint.setPathTemplate(
 					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
 			for (MethodParameter pathParam : parameters) {
-				JacksonTypeModeller modeller = new JacksonTypeModeller();
+				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
 								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
@@ -332,13 +336,15 @@ public class Reader implements ModelCreator {
 
 	@Override
 	public void addOptions(GetOpt options) {
-		options.addParam("<package(s)>", "Comma-separated list of packages to recursively scan for JAX-RS annotations.", true,
+		options.addParam("package(s)", "Comma-separated list of packages to recursively scan for JAX-RS annotations.", true,
 				(s) -> packageNamesString = s).addLongOpt("package");
+		options.addParam("class[,class]*", "Treat classes as separate JSON types (syntax: class=realClass,...", false,
+				(s) -> classOverrideHandler.ingestOverrides(s)).addLongOpt("override");
 	}
 
 	@Override
 	public Model createModel() {
-		createModel(packageNamesString.split("[, \t]"));
+		createModel(Regexes.COMMA_SEPARATOR.split(packageNamesString));
 		return model;
 	}
 

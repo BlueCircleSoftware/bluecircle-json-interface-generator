@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.bluecirclesoft.open.jigen.Regexes;
+
 /**
  * This class represents a TypeScript namespace. It may contain other namespaces, or declarations of other types
  */
@@ -108,7 +110,7 @@ public class Namespace implements Serializable {
 			if (thing instanceof JToplevelType) {
 				JToplevelType tlType = (JToplevelType) thing;
 				String name = tlType.getName();
-				String[] brokenName = name.split("\\.");
+				String[] brokenName = Regexes.DOT.split(name);
 				String finalName = brokenName[brokenName.length - 1];
 				Namespace containingName = top;
 				for (int i = 0; i < brokenName.length - 1; i++) {
@@ -121,7 +123,7 @@ public class Namespace implements Serializable {
 
 		for (Endpoint endpoint : model.getEndpoints()) {
 			String name = endpoint.getId();
-			String[] brokenName = name.split("\\.");
+			String[] brokenName = Regexes.DOT.split(name);
 			String finalName = brokenName[brokenName.length - 1];
 			Namespace containingName = top;
 			for (int i = 0; i < brokenName.length - 1; i++) {

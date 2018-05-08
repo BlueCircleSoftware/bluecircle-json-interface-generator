@@ -19,7 +19,11 @@ package com.bluecirclesoft.open.jigen.typescript;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.text.translate.AggregateTranslator;
+import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
+import org.apache.commons.lang3.text.translate.EntityArrays;
+import org.apache.commons.lang3.text.translate.JavaUnicodeEscaper;
+import org.apache.commons.lang3.text.translate.LookupTranslator;
 
 /**
  * <p>Build a JavaScript/TypeScript string by assembling a bunch of components, some of which may be literals, and some of which may be code
@@ -70,6 +74,11 @@ public class JsStringBuilder {
 		components.add(s);
 	}
 
+	public static final CharSequenceTranslator ESCAPE_ECMASCRIPT =
+			new AggregateTranslator(new LookupTranslator(new String[][]{{"\"", "\\\""}, {"\\", "\\\\"}}),
+					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()), JavaUnicodeEscaper.outsideOf(32, 127));
+
+
 	/**
 	 * Get the resulting string. If no components were added, it returns a representation of the empty string.
 	 *
@@ -86,12 +95,12 @@ public class JsStringBuilder {
 			boolean literal = literalFlags.get(i);
 			String component = components.get(i);
 			if (literal) {
-				String escaped = StringEscapeUtils.escapeEcmaScript(component);
+				String escaped = ESCAPE_ECMASCRIPT.translate(component);
 				if (lastWasLiteral) {
 					result.append(escaped);
 				} else {
 					if (i > 0) {
-						result.append('+');
+						result.append(" + ");
 					}
 					result.append('"');
 					result.append(escaped);
@@ -101,7 +110,7 @@ public class JsStringBuilder {
 					result.append('"');
 				}
 				if (i > 0) {
-					result.append('+');
+					result.append(" + ");
 				}
 				result.append(component);
 			}

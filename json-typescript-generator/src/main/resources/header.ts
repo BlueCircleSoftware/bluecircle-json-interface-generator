@@ -111,13 +111,11 @@ export namespace jsonInterfaceGenerator {
      */
     export let callAjax: AjaxInvoker;
 
-    export let logDebug: boolean = false;
+    export let debugLogger: (...args: any[]) => void;
 
-    function debug(...args: any[]) {
-        if (logDebug) {
-            console.log.apply(null, args);
-        }
-    }
+    // set default debug logger to none
+    debugLogger = () => {
+    };
 
     export function init(prefix: string) {
         ajaxUrlPrefix = prefix;
@@ -140,16 +138,14 @@ export namespace jsonInterfaceGenerator {
     /**
      * Thing that collects changes - may be a ChangeRoot, which has a list of versions of the tree
      */
-    export abstract class ChangeCollector<T> {
-
-        private differentiator: T | undefined = undefined;
+    export abstract class ChangeCollector {
 
         public abstract get(key: string | number): any;
 
         public abstract set(key: string | number, val: any): void;
     }
 
-    export abstract class DirectWrapper<T> extends ChangeCollector<T> {
+    export abstract class DirectWrapper<T> extends ChangeCollector {
 
         public abstract getObj(write: WriteOption): T;
     }
@@ -260,14 +256,12 @@ export namespace jsonInterfaceGenerator {
         }
     }
 
-    export class OLeafAcc<DataType, WrapperType> extends ChangeCollector<DataType> {
+    export class OLeafAcc<DataType> extends ChangeCollector {
         private parent: ObjectWrapper<DataType>;
-        private myIndex: keyof DataType;
 
-        public constructor(parent: ObjectWrapper<DataType>, myIndex: keyof DataType) {
+        public constructor(parent: ObjectWrapper<DataType>) {
             super();
             this.parent = parent;
-            this.myIndex = myIndex;
         }
 
         public get<K extends keyof DataType>(key: K): DataType[K] {

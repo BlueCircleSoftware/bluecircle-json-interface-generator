@@ -51,13 +51,13 @@ public class Writer implements CodeProducer {
 
 	private OutputHandler writer;
 
-	private boolean produceAccessors = true;
+	private boolean produceAccessors = false;
 
-	private boolean produceAccessorFunctionals = true;
+	private boolean produceAccessorFunctionals = false;
 
 	private boolean stripCommonNamespaces = false;
 
-	private boolean produceImmutables = true;
+	private boolean produceImmutables = false;
 
 	private String urlPrefix;
 
@@ -157,7 +157,6 @@ public class Writer implements CodeProducer {
 
 	private void writeEndpoint(Endpoint endpoint) {
 		final String name = endpoint.getId();
-		//			writer.line("// Processing " + endpoint);
 
 		// create parameter list for function declaration
 		StringBuilder parameterList = new StringBuilder();
@@ -220,7 +219,8 @@ public class Writer implements CodeProducer {
 				break;
 		}
 
-		writer.line("jsonInterfaceGenerator.callAjax(" + url.get() + ", '" + endpoint.getMethod().name() + "', submitData, " + isBodyParam +
+		writer.line(
+				"jsonInterfaceGenerator.callAjax(" + url.get() + ", \"" + endpoint.getMethod().name() + "\", submitData, " + isBodyParam +
 				", options);");
 		writer.indentOut();
 		writer.line("}");

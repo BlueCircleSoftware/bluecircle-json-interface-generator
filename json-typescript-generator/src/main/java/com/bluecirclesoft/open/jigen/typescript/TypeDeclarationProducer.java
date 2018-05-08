@@ -212,9 +212,9 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer);
 				prop.getValue().getType().accept(accessorProducer);
 			}
+			writer.indentOut();
+			writer.line("}");
 		}
-		writer.indentOut();
-		writer.line("}");
 	}
 
 }
