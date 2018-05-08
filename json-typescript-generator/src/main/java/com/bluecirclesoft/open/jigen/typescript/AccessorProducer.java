@@ -177,7 +177,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JSpecialization jSpecialization) {
-		TypeUsageProducer tup = new TypeUsageProducer(null);
+		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES);
 		StringBuilder sb = new StringBuilder();
 		sb.append(jSpecialization.getBase().accept(tup));
 		sb.append("<");

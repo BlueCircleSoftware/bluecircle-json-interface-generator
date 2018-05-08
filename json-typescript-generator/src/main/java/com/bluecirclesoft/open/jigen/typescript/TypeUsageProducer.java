@@ -40,13 +40,18 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	private final String immutableSuffix;
 
-	private final boolean isSpecializing;
+	private final WillBeSpecialized isSpecializing;
 
-	public TypeUsageProducer(String immutableSuffix) {
-		this(immutableSuffix, false);
+	public enum WillBeSpecialized {
+		YES,
+		NO
 	}
 
-	public TypeUsageProducer(String immutableSuffix, boolean isSpecializing) {
+	public TypeUsageProducer(String immutableSuffix) {
+		this(immutableSuffix, WillBeSpecialized.NO);
+	}
+
+	public TypeUsageProducer(String immutableSuffix, WillBeSpecialized isSpecializing) {
 		this.immutableSuffix = immutableSuffix;
 		this.isSpecializing = isSpecializing;
 	}
@@ -54,18 +59,22 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JObject jObject) {
 		String refStr = jObject.getReference() + (immutableSuffix != null ? immutableSuffix : "");
-		if (isSpecializing) {
+		if (isSpecializing == WillBeSpecialized.YES) {
+			// produced as part of a JSpecialization, which will output its own type parameters
 			return refStr;
 		} else {
 			if (jObject.getTypeVariables().isEmpty()) {
+				// not a specialization, but no type parameters
 				return refStr;
 			} else {
-				// outputting an object that has type parameters, but is not specialized - we need to put a bunch of <any>s
+				// not specializing, no type parameters.  TypeScript will require type parameters, so we need to put
+				// the Java equivalent for the type parameters, which is 'any'
 				StringBuilder sb = new StringBuilder();
 				sb.append(refStr);
 				sb.append("<");
 				boolean needsComma = false;
-				for (JTypeVariable tv : jObject.getTypeVariables()) {
+				int count = jObject.getTypeVariables().size();
+				for (int i = 0; i < count; i++) {
 					if (needsComma) {
 						sb.append(", ");
 					} else {
@@ -117,7 +126,7 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JSpecialization jSpecialization) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(new TypeUsageProducer(immutableSuffix, true)));
+		sb.append(jSpecialization.getBase().accept(new TypeUsageProducer(immutableSuffix, WillBeSpecialized.YES)));
 		sb.append("<");
 		boolean needsComma = false;
 		for (JType param : jSpecialization.getParameters()) {
