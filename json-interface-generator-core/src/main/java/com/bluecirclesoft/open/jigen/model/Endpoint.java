@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -148,13 +147,14 @@ public class Endpoint implements Serializable {
 				}
 				break;
 		}
-		List<EndpointParameter> parameters1 = getParameters();
-		for (int i = 0; i < parameters1.size(); i++) {
-			EndpointParameter param = parameters1.get(i);
-			if (StringUtils.isBlank(param.getNetworkName())) {
-				return new ValidEndpointResponse(false, "No network name for parameter " + i);
-			}
-		}
+		// TODO figure out exactly why this logic is bugged
+//		List<EndpointParameter> parameters1 = getParameters();
+//		for (int i = 0; i < parameters1.size(); i++) {
+//			EndpointParameter param = parameters1.get(i);
+//			if (StringUtils.isBlank(param.getNetworkName())) {
+//				return new ValidEndpointResponse(false, "No network name for parameter " + i);
+//			}
+//		}
 		return new ValidEndpointResponse(true);
 	}
 }
