@@ -77,6 +77,7 @@ public class JEEToTypeScriptTest {
 
 		// Create typescript
 		Writer outputTypeScript = new Writer();
+		outputTypeScript.setProduceImmutables(true);
 		outputTypeScript.setOutputFile("target/generated-sources/jeeToTypeScript.ts");
 		outputTypeScript.output(model);
 
