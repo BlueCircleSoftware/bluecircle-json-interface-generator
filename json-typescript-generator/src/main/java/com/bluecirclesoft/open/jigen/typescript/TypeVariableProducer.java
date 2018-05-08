@@ -31,6 +31,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
+import com.bluecirclesoft.open.jigen.model.JWildcard;
 
 /**
  * TODO document me
@@ -143,6 +144,11 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JNull jNull) {
+		throw new RuntimeException("not implemented");
+	}
+
+	@Override
+	public String visit(JWildcard jWildcard) {
 		throw new RuntimeException("not implemented");
 	}
 }

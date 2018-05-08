@@ -121,6 +121,15 @@ public class TestServicesString {
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
+	@PostMapping(path = "/doubleUpPostPNoVar/{x}", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Accept=*/*")
+	public @ResponseBody
+	MyStringList doubleUpPostPNoVar(String x) {
+		log.info("Method: {}", CallerFinder.getMyName());
+		log.info("x = {}", x);
+		setCORSHeaders();
+		return makeList("\"" + x + x + "\"", 1);
+	}
+
 	@GetMapping(path = "/doubleArrGetQ", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Accept=*/*")
 	public @ResponseBody
 	MyStringList doubleArrGetQ(@RequestParam("x") String x) {

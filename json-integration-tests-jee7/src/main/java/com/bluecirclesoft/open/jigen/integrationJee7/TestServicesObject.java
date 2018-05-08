@@ -179,4 +179,33 @@ public class TestServicesObject {
 		result.setList(l);
 		return result;
 	}
+
+	@GET
+	@Path("/getGenericListOfAny")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public GenericList<?> getGenericListOfAny() {
+		GenericList<Integer> result = new GenericList<>();
+		List<Integer> l = new ArrayList<>();
+		l.add(1);
+		l.add(3);
+		l.add(5);
+		result.setList(l);
+		return result;
+	}
+
+	@GET
+	@Path("/getGenericListOfAnyNumber")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public GenericList<? extends Number> getGenericListOfAnyNumber() {
+		GenericList<Integer> result = new GenericList<>();
+		List<Integer> l = new ArrayList<>();
+		l.add(1);
+		l.add(3);
+		l.add(5);
+		result.setList(l);
+		return result;
+	}
+
 }

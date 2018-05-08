@@ -31,6 +31,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
+import com.bluecirclesoft.open.jigen.model.JWildcard;
 
 /**
  * TODO document me
@@ -127,5 +128,23 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JNull jNull) {
 		return "null";
+	}
+
+	@Override
+	public String visit(JWildcard jWildcard) {
+		// TypeScript doesn't have the concept of wildcard types, or of lower bounds. So I'll just convert the upper bounds and leave
+		// the rest, on the theory that it's better than nothing
+		if (jWildcard.getUpperBounds().isEmpty()) {
+			return "any";
+		} else {
+			StringBuilder sb = new StringBuilder();
+			for (JType bound : jWildcard.getUpperBounds()) {
+				if (sb.length() > 0) {
+					sb.append(" & ");
+				}
+				sb.append(bound.accept(this));
+			}
+			return sb.toString();
+		}
 	}
 }

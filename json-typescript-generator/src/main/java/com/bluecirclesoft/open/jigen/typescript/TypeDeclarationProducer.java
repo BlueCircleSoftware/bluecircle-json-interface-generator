@@ -35,6 +35,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
+import com.bluecirclesoft.open.jigen.model.JWildcard;
 
 /**
  * TODO document me
@@ -147,6 +148,11 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	@Override
 	public Integer visit(JNull jNull) {
+		return null;
+	}
+
+	@Override
+	public Integer visit(JWildcard jWildcard) {
 		return null;
 	}
 

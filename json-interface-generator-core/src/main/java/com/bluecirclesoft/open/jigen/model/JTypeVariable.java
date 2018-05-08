@@ -16,13 +16,13 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
- * TODO document me
+ * This type is for a named type variable
  */
 public class JTypeVariable extends JType {
 

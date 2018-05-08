@@ -34,6 +34,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
+import com.bluecirclesoft.open.jigen.model.JWildcard;
 
 /**
  * TODO document me
@@ -233,6 +234,12 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	@Override
 	public Object visit(JNull jNull) {
 		primitiveAccessor(jNull.accept(new TypeUsageProducer(null)));
+		return null;
+	}
+
+	@Override
+	public Object visit(JWildcard jWildcard) {
+		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null)));
 		return null;
 	}
 }

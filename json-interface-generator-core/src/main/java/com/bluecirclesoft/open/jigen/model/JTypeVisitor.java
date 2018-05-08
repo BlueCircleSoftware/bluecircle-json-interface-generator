@@ -46,4 +46,6 @@ public interface JTypeVisitor<ReturnType> {
 	ReturnType visit(JUnionType jUnionType);
 
 	ReturnType visit(JNull jNull);
+
+	ReturnType visit(JWildcard jWildcard);
 }

@@ -19,6 +19,7 @@ package com.bluecirclesoft.open.jigen.jacksonModeller;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -46,6 +47,7 @@ import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JVoid;
+import com.bluecirclesoft.open.jigen.model.JWildcard;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.PropertyEnumerator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -276,6 +278,29 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				}
 				return jSpecialization;
 			}
+		} else if (type instanceof WildcardType) {
+			// Case 3: wildcard type
+			// This is for the case of a generic type specialization, where the variables have been specified (e.g. List<Integer>)
+			logger.debug("is WildcardType");
+			WildcardType pt = (WildcardType) type;
+			JWildcard jWildcard = new JWildcard();
+			Type[] upperBounds = pt.getUpperBounds();
+			for (int i = 0; i < upperBounds.length; i++) {
+				Type upper = upperBounds[i];
+				jWildcard.getUpperBounds().add(null);
+				final int idx = i;
+				addFixup(upper, (f) -> jWildcard.getUpperBounds().set(idx, f));
+				queueType(upper);
+			}
+			Type[] lowerBounds = pt.getLowerBounds();
+			for (int i = 0; i < lowerBounds.length; i++) {
+				Type lower = lowerBounds[i];
+				jWildcard.getLowerBounds().add(null);
+				final int idx = i;
+				addFixup(lower, (f) -> jWildcard.getLowerBounds().set(idx, f));
+				queueType(lower);
+			}
+			return jWildcard;
 		} else if (type instanceof Class) {
 			// Case 3: class (non-generic, plain vanilla)
 			logger.debug("is Class");
