@@ -19,7 +19,7 @@
     <parent>
         <artifactId>json-interface-generator</artifactId>
         <groupId>com.bluecirclesoft.open</groupId>
-        <version>0.18</version>
+        <version>0.19-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
