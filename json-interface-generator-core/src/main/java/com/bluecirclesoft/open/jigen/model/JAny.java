@@ -38,4 +38,23 @@ public class JAny extends JType {
 		return false;
 	}
 
+	/**
+	 * Value could possibly be 'null'
+	 *
+	 * @return yes or no
+	 */
+	@Override
+	public boolean canBeNull() {
+		return true;
+	}
+
+	/**
+	 * Value could possibly be 'undefined'
+	 *
+	 * @return yes or no
+	 */
+	@Override
+	public boolean canBeUndefined() {
+		return true;
+	}
 }

@@ -54,4 +54,24 @@ public class JUnionType extends JType {
 		}
 		return newType;
 	}
+
+	@Override
+	public boolean canBeNull() {
+		for (JType member : members) {
+			if (member.canBeNull()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean canBeUndefined() {
+		for (JType member : members) {
+			if (member.canBeUndefined()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

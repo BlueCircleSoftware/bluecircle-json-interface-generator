@@ -52,13 +52,13 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-jee7-reader</artifactId>
-                <version>0.13</version>
+                <version>0.17</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-typescript-generator</artifactId>
-                <version>0.13</version>
+                <version>0.17</version>
                 <scope>test</scope>
             </dependency>
 	
@@ -126,7 +126,9 @@ processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --i
 Option | Description
 -------|------------
 --package \<packages\> | (required) Comma-separated list of packages to recursively scan for JAX-RS annotations.
-
+--override \<overrides\> | (syntax: class=realClass,...) When encountering 'class', substitute 'realClass' while building the model.
+--string-enums | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued.
+ 
 ### TypeScript Generator ("--output typescript"):
 
 Option | Description
@@ -135,7 +137,7 @@ Option | Description
 --output-file \<file\> | (required) The TypeScript file to generate (path will be created if necessary)
 --strip-common-packages | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
 --immutables | Produce immutable wrappers along with interfaces.
-
+--null-is-undefined | Treat nullable fields as also undefined, and mark them optional in interface definitions.
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with

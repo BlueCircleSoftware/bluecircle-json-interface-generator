@@ -67,12 +67,9 @@ public class JEnum extends JToplevelType {
 
 	private String name;
 
-	private EnumType enumType = EnumType.NUMERIC;
+	private final EnumType enumType;
 
 	private final List<EnumDeclaration> values = new ArrayList<>();
-
-	public JEnum() {
-	}
 
 	public JEnum(String name, EnumType enumType, List<EnumDeclaration> values) {
 		this.name = name;

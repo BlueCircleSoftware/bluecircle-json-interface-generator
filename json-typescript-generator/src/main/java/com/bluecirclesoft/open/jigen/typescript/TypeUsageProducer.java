@@ -42,18 +42,21 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	private final WillBeSpecialized isSpecializing;
 
+	private final boolean treatNullAsUndefined;
+
 	public enum WillBeSpecialized {
 		YES,
 		NO
 	}
 
-	public TypeUsageProducer(String immutableSuffix) {
-		this(immutableSuffix, WillBeSpecialized.NO);
+	public TypeUsageProducer(String immutableSuffix, boolean treatNullAsUndefined) {
+		this(immutableSuffix, WillBeSpecialized.NO, treatNullAsUndefined);
 	}
 
-	public TypeUsageProducer(String immutableSuffix, WillBeSpecialized isSpecializing) {
+	public TypeUsageProducer(String immutableSuffix, WillBeSpecialized isSpecializing, boolean treatNullAsUndefined) {
 		this.immutableSuffix = immutableSuffix;
 		this.isSpecializing = isSpecializing;
+		this.treatNullAsUndefined = treatNullAsUndefined;
 	}
 
 	@Override
@@ -126,7 +129,7 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JSpecialization jSpecialization) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(new TypeUsageProducer(immutableSuffix, WillBeSpecialized.YES)));
+		sb.append(jSpecialization.getBase().accept(new TypeUsageProducer(immutableSuffix, WillBeSpecialized.YES, treatNullAsUndefined)));
 		sb.append("<");
 		boolean needsComma = false;
 		for (JType param : jSpecialization.getParameters()) {
@@ -166,7 +169,11 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JNull jNull) {
-		return "null";
+		if (treatNullAsUndefined) {
+			return "null | undefined";
+		} else {
+			return "null";
+		}
 	}
 
 	@Override

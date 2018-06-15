@@ -40,4 +40,12 @@ abstract public class JType implements Serializable {
 	public boolean isConstructible() {
 		return false;
 	}
+
+	public boolean canBeNull() {
+		return false;
+	}
+
+	public boolean canBeUndefined() {
+		return false;
+	}
 }

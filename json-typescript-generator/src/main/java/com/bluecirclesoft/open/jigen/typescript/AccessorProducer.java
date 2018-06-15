@@ -47,9 +47,12 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	private final OutputHandler writer;
 
-	public AccessorProducer(String name, OutputHandler writer) {
+	private final boolean treatNullAsUndefined;
+
+	public AccessorProducer(String name, OutputHandler writer, boolean treatNullAsUndefined) {
 		this.name = name;
 		this.writer = writer;
+		this.treatNullAsUndefined = treatNullAsUndefined;
 	}
 
 	private void primitiveAccessor(String type) {
@@ -124,15 +127,15 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JArray jArray) {
-		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null));
+		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null, treatNullAsUndefined));
 		if (jArray.getElementType().needsWrapping()) {
 			if (jArray.getElementType() instanceof JTypeVariable) {
 				// TODO skipping this for now - the immutable wrapper wants to auto-create objects all the way down, but we have a type
 				// variable here, so there's no good way to implement that.  Holding off for now, until I understand a good use case
-				log.info("Cannot create immutable wrapper for array of type {}", new TypeUsageProducer(null).visit(jArray));
+				log.info("Cannot create immutable wrapper for array of type {}", new TypeUsageProducer(null, treatNullAsUndefined).visit(jArray));
 			} else if (!jArray.getElementType().isConstructible()) {
 			} else {
-				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm");
+				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm", treatNullAsUndefined);
 				String wrapperName = jArray.getElementType().accept(typeUsageProducer);
 				objectArrayAccessor(interfaceName, wrapperName);
 			}
@@ -177,7 +180,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JSpecialization jSpecialization) {
-		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES);
+		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined);
 		StringBuilder sb = new StringBuilder();
 		sb.append(jSpecialization.getBase().accept(tup));
 		sb.append("<");
@@ -205,7 +208,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JMap jMap) {
-		primitiveAccessor("{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null)) + "}");
+		primitiveAccessor("{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null, treatNullAsUndefined)) + "}");
 		return null;
 
 	}
@@ -214,7 +217,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	public Object visit(JUnionType jUnionType) {
 		if (jUnionType.needsWrapping()) {
 			JUnionType stripped = jUnionType.getStripped();
-			String typeString = stripped.accept(new TypeUsageProducer(null));
+			String typeString = stripped.accept(new TypeUsageProducer(null, treatNullAsUndefined));
 			if (stripped.getMembers().size() == 1) {
 				return stripped.getMembers().get(0).accept(this);
 			} else {
@@ -225,7 +228,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 				}
 			}
 		} else {
-			String typeString = jUnionType.accept(new TypeUsageProducer(null));
+			String typeString = jUnionType.accept(new TypeUsageProducer(null, treatNullAsUndefined));
 			primitiveAccessor(typeString);
 		}
 		return null;
@@ -233,13 +236,13 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JNull jNull) {
-		primitiveAccessor(jNull.accept(new TypeUsageProducer(null)));
+		primitiveAccessor(jNull.accept(new TypeUsageProducer(null, treatNullAsUndefined)));
 		return null;
 	}
 
 	@Override
 	public Object visit(JWildcard jWildcard) {
-		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null)));
+		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null, treatNullAsUndefined)));
 		return null;
 	}
 }

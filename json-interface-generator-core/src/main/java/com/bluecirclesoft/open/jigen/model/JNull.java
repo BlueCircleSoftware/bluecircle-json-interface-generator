@@ -30,4 +30,9 @@ public class JNull extends JType {
 	public boolean needsWrapping() {
 		return false;
 	}
+
+	@Override
+	public boolean canBeNull() {
+		return true;
+	}
 }

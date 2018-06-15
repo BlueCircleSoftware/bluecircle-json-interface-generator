@@ -31,6 +31,7 @@ import com.bluecirclesoft.open.jigen.model.JNumber;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
+import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
@@ -48,11 +49,14 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final boolean produceImmutable;
 
-	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable) {
-		this.writer = writer;
-		this.producer = typeScriptProducer;
-		this.produceImmutable = produceImmutable;
-	}
+	private final boolean treatNullAsUndefined;
+
+    public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable, boolean treatNullAsUndefined) {
+        this.writer = writer;
+        this.producer = typeScriptProducer;
+        this.produceImmutable = produceImmutable;
+        this.treatNullAsUndefined = treatNullAsUndefined;
+    }
 
 	@Override
 	public Integer visit(JObject jObject) {
@@ -164,10 +168,21 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		String declLine = "export interface " + definterfaceType + " {";
 		writer.line(declLine);
 		writer.indentIn();
-		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null);
+
+		// if we pass true here for treatNullAsUndefined, then we might get what seems like an extra
+		// 'undefined' specification for nullable fields, like this:
+		//    doubleA?: string | null | undefined;
+		// where doubleA is specified as undefined by both the question mark and the type union. But
+		// if we don't, it can't propagate down to type parameters, etc.  So I'm okay with it.
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined);
 		for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
-			String typeString = prop.getValue().getType().accept(typeUsageProducer);
-			writer.line(prop.getKey() + ": " + typeString + ";");
+            String makeOptional = "";
+            JType type = prop.getValue().getType();
+            if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
+                makeOptional = "?";
+            }
+			String typeString = type.accept(typeUsageProducer);
+            writer.line(prop.getKey() + makeOptional + ": " + typeString + ";");
 		}
 		writer.indentOut();
 		writer.line("}");
@@ -209,7 +224,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
-				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer);
+				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined);
 				prop.getValue().getType().accept(accessorProducer);
 			}
 			writer.indentOut();

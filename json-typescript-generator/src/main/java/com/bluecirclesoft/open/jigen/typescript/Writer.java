@@ -59,6 +59,8 @@ public class Writer implements CodeProducer {
 
 	private boolean produceImmutables = false;
 
+	private boolean treatNullAsUndefined = false;
+
 	private String urlPrefix;
 
 	public boolean isProduceAccessors() {
@@ -94,6 +96,14 @@ public class Writer implements CodeProducer {
 		log.info("Producing immutables? {}", this.produceImmutables);
 	}
 
+	public boolean isTreatNullAsUndefined() {
+		return treatNullAsUndefined;
+	}
+
+	public void setTreatNullAsUndefined(boolean treatNullAsUndefined) {
+		this.treatNullAsUndefined = treatNullAsUndefined;
+	}
+
 	public Writer() {
 	}
 
@@ -111,6 +121,8 @@ public class Writer implements CodeProducer {
 		options.addFlag("Strip any common leading packages from all produced classes", this::setStripCommonNamespaces)
 				.addLongOpt("strip-common-packages");
 		options.addFlag("Produce immutable wrappers along with interfaces", this::setProduceImmutables).addLongOpt("immutables");
+		options.addFlag("Treat nullable fields as also undefined, and mark them optional in interface definitions",
+				this::setTreatNullAsUndefined).addLongOpt("null-is-undefined");
 	}
 
 	@Override
@@ -165,7 +177,7 @@ public class Writer implements CodeProducer {
 			addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
 		}
 		addParameter(parameterList, needsComma, "options",
-				"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer(null)) + ">");
+				"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer(null, treatNullAsUndefined)) + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
 		writer.indentIn();
 
@@ -266,8 +278,8 @@ public class Writer implements CodeProducer {
 		writer.line("};");
 	}
 
-	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
-		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null)));
+	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
+		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null, treatNullAsUndefined)));
 	}
 
 	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
@@ -289,7 +301,7 @@ public class Writer implements CodeProducer {
 			writer.indentIn();
 		}
 		for (JType type : namespace.getDeclarations()) {
-			type.accept(new TypeDeclarationProducer(this, writer, produceImmutables));
+			type.accept(new TypeDeclarationProducer(this, writer, produceImmutables, treatNullAsUndefined));
 		}
 		outputEndpoints(namespace);
 		for (Namespace subNamespace : namespace.getNamespaces()) {

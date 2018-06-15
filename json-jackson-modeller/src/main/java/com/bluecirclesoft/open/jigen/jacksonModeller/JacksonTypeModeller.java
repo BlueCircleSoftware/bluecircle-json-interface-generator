@@ -134,11 +134,14 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private final ClassOverrideHandler classOverrides;
 
+	private final JEnum.EnumType defaultEnumType;
+
 	/**
 	 * Create a modeller.
 	 */
-	public JacksonTypeModeller(ClassOverrideHandler classOverrides) {
+	public JacksonTypeModeller(ClassOverrideHandler classOverrides, JEnum.EnumType defaultEnumType) {
 		this.classOverrides = classOverrides;
+		this.defaultEnumType = defaultEnumType;
 		// clear list of created types (for debugging)
 		JType.createdTypes.clear();
 	}
@@ -481,7 +484,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 	}
 
-	private static JEnum buildEnum(Class<Enum<?>> rawClass) {
+	private JEnum buildEnum(Class<Enum<?>> rawClass) {
 		try {
 			List<JEnum.EnumDeclaration> entries = new ArrayList<>();
 			Enum<?>[] constants = rawClass.getEnumConstants();
@@ -507,7 +510,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				}
 				entries.add(new JEnum.EnumDeclaration(enumConstant.name(), enumConstant.ordinal(), enumConstantValue));
 			}
-			return new JEnum(rawClass.getName(), JEnum.EnumType.NUMERIC, entries);
+			return new JEnum(rawClass.getName(), defaultEnumType, entries);
 		} catch (NoSuchFieldException e) {
 			throw new RuntimeException(e);
 		}

@@ -19,7 +19,7 @@ package com.bluecirclesoft.open.jigen.model;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * TODO document me
+ * Void - synonymous with 'undefined'
  */
 public class JVoid extends JType {
 
@@ -36,5 +36,15 @@ public class JVoid extends JType {
 	@Override
 	public boolean needsWrapping() {
 		return false;
+	}
+
+	@Override
+	public boolean canBeNull() {
+		return false;
+	}
+
+	@Override
+	public boolean canBeUndefined() {
+		return true;
 	}
 }

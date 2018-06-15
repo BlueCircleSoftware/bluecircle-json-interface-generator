@@ -61,6 +61,7 @@ import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
+import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
@@ -100,6 +101,8 @@ public class Reader implements ModelCreator {
 	private Model model;
 
 	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
+
+	private JEnum.EnumType defaultEnumType = JEnum.EnumType.NUMERIC;
 
 	private Model createModel(String... packageNames) {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
@@ -269,10 +272,10 @@ public class Reader implements ModelCreator {
 
 		JType outType;
 		if (methodInfo.producer) {
-			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType);
 			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
-			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType);
 			outType = modeller.readOneType(model, String.class);
 		}
 
@@ -290,7 +293,7 @@ public class Reader implements ModelCreator {
 			endpoint.setPathTemplate(
 					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
 			for (MethodParameter pathParam : parameters) {
-				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler);
+				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType);
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
 								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
@@ -338,8 +341,9 @@ public class Reader implements ModelCreator {
 	public void addOptions(GetOpt options) {
 		options.addParam("package(s)", "Comma-separated list of packages to recursively scan for JAX-RS annotations.", true,
 				(s) -> packageNamesString = s).addLongOpt("package");
-		options.addParam("class[,class]*", "Treat classes as separate JSON types (syntax: class=realClass,...", false,
+		options.addParam("class[,class]*", "When encountering 'class', substitute 'realClass' while building the model (syntax: class=realClass,...)", false,
 				(s) -> classOverrideHandler.ingestOverrides(s)).addLongOpt("override");
+		options.addFlag("By default, produce string enums", (s) -> this.defaultEnumType = JEnum.EnumType.STRING).addLongOpt("string-enums");
 	}
 
 	@Override
