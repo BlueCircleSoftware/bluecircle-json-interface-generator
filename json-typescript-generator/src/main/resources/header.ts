@@ -138,26 +138,26 @@ export namespace jsonInterfaceGenerator {
     /**
      * Thing that collects changes - may be a ChangeRoot, which has a list of versions of the tree
      */
-    export abstract class ChangeCollector {
+    export abstract class ChangeCollector<Key> {
 
-        public abstract get(key: string | number): any;
+        public abstract get(key: Key): any;
 
-        public abstract set(key: string | number, val: any): void;
+        public abstract set(key: Key, val: any): void;
     }
 
-    export abstract class DirectWrapper<T> extends ChangeCollector {
+    export abstract class DirectWrapper<Obj> extends ChangeCollector<keyof Obj> {
 
-        public abstract getObj(write: WriteOption): T;
+        public abstract getObj(write: WriteOption): Obj;
     }
 
     /**
      * A "change root" - contains a list of changes to an object/array
      */
-    export class ChangeRoot<T> extends DirectWrapper<T> {
-        private l: T[] = [];
-        private readonly factory: () => T;
+    export class ChangeRoot<Obj> extends DirectWrapper<Obj> {
+        private l: Obj[] = [];
+        private readonly factory: () => Obj;
 
-        public constructor(initial: T | (() => T)) {
+        public constructor(initial: Obj | (() => Obj)) {
             super();
             if (typeof initial === "function") {
                 this.factory = initial;
@@ -166,7 +166,7 @@ export namespace jsonInterfaceGenerator {
             }
         }
 
-        public getHistory(index: number): T {
+        public getHistory(index: number): Obj {
             return this.l[index];
         }
 
@@ -174,12 +174,12 @@ export namespace jsonInterfaceGenerator {
             return this.l.length;
         }
 
-        public getCurrent(): T {
+        public getCurrent(): Obj {
             return this.getObj(WriteOption.READ_FILL);
         }
 
-        public getObj(write: WriteOption): T {
-            let cur: T;
+        public getObj(write: WriteOption): Obj {
+            let cur: Obj;
             switch (write) {
                 case WriteOption.WRITE:
                     if (this.l.length === 0) {
@@ -187,11 +187,11 @@ export namespace jsonInterfaceGenerator {
                     } else {
                         cur = this.l[this.l.length - 1];
                     }
-                    let nxt: T;
+                    let nxt: Obj;
                     if (typeof cur === "object") {
                         nxt = (Object as any).assign({}, cur);
                     } else {
-                        nxt = (cur as any[]).slice() as any as T;
+                        nxt = (cur as any[]).slice() as any as Obj;
                     }
                     this.l.push(nxt);
                     return nxt;
@@ -208,11 +208,11 @@ export namespace jsonInterfaceGenerator {
             }
         }
 
-        public get<K extends keyof T>(key: K): T[K] {
+        public get<K extends keyof Obj>(key: K): Obj[K] {
             return this.getObj(WriteOption.READ_FILL)[key];
         }
 
-        public set<K extends keyof T>(key: K, val: T[K]): void {
+        public set<K extends keyof Obj>(key: K, val: Obj[K]): void {
             this.getObj(WriteOption.WRITE)[key] = val;
         }
     }
@@ -256,7 +256,7 @@ export namespace jsonInterfaceGenerator {
         }
     }
 
-    export class OLeafAcc<DataType> extends ChangeCollector {
+    export class OLeafAcc<DataType> extends ChangeCollector<keyof DataType> {
         private parent: ObjectWrapper<DataType>;
 
         public constructor(parent: ObjectWrapper<DataType>) {
@@ -273,7 +273,7 @@ export namespace jsonInterfaceGenerator {
         }
     }
 
-    export class ArrayWrapper<T> extends DirectWrapper<T> {
+    export class ArrayWrapper<T> extends DirectWrapper<T[]> {
         private parent: DirectWrapper<any>;
         private readonly myIndex: string | number;
         private readonly factory: () => T[];
@@ -285,7 +285,7 @@ export namespace jsonInterfaceGenerator {
             this.factory = factory;
         }
 
-        public getObj(write: WriteOption): T {
+        public getObj(write: WriteOption): T[] {
             const parentObj = this.parent.getObj(write);
             let myObj = parentObj[this.myIndex];
 
