@@ -56,11 +56,6 @@ public class SpringModellerTest {
 			Assert.assertEquals(0, endpoint.getParameters().size());
 			Assert.assertEquals("JMap[valueType=JString[]]", endpoint.getResponseBody().toString());
 		}
-
-		// Save model here, so it can be used in the typescript test
-		ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream("SpringModellerTest.model.dat"));
-		objectOutputStream.writeObject(model);
-		objectOutputStream.close();
 	}
 
 	private int sizeof(Iterable<?> iterable) {

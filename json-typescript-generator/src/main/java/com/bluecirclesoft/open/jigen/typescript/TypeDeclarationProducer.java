@@ -51,12 +51,13 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final boolean treatNullAsUndefined;
 
-    public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable, boolean treatNullAsUndefined) {
-        this.writer = writer;
-        this.producer = typeScriptProducer;
-        this.produceImmutable = produceImmutable;
-        this.treatNullAsUndefined = treatNullAsUndefined;
-    }
+	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable,
+	                               boolean treatNullAsUndefined) {
+		this.writer = writer;
+		this.producer = typeScriptProducer;
+		this.produceImmutable = produceImmutable;
+		this.treatNullAsUndefined = treatNullAsUndefined;
+	}
 
 	@Override
 	public Integer visit(JObject jObject) {
@@ -176,18 +177,18 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		// if we don't, it can't propagate down to type parameters, etc.  So I'm okay with it.
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined);
 		for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
-            String makeOptional = "";
-            JType type = prop.getValue().getType();
-            if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
-                makeOptional = "?";
-            }
+			String makeOptional = "";
+			JType type = prop.getValue().getType();
+			if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
+				makeOptional = "?";
+			}
 			String typeString = type.accept(typeUsageProducer);
-            writer.line(prop.getKey() + makeOptional + ": " + typeString + ";");
+			writer.line(prop.getKey() + makeOptional + ": " + typeString + ";");
 		}
 		writer.indentOut();
 		writer.line("}");
 
-		if (produceImmutable) {
+		if (produceImmutable && canBeImmutable(intf)) {
 			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm"));
 			declLine = "export class " + immutableInterfaceType + " {";
 			writer.line(declLine);
@@ -230,6 +231,15 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 		}
+	}
+
+	private boolean canBeImmutable(JObject intf) {
+		// cannot deal with type variables correctly
+		if (!intf.getTypeVariables().isEmpty()) {
+			return false;
+		}
+
+		return true;
 	}
 
 }

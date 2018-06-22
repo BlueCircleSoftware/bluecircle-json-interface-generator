@@ -16,9 +16,11 @@
 
 package com.bluecirclesoft.open.jigen.integrationJee7;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+import org.apache.commons.io.FileUtils;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -26,6 +28,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -68,7 +71,6 @@ public class JEEToTypeScriptTest {
 
 		String baseRestUrl = (baseUrl + "rest").replace("127.0.0.1", "localhost");
 		log.info("Using base REST url of " + baseRestUrl);
-//		doubleCheckServer(baseRestUrl);
 
 		// Create model
 		Reader modeller = new Reader();
@@ -80,6 +82,11 @@ public class JEEToTypeScriptTest {
 		outputTypeScript.setProduceImmutables(true);
 		outputTypeScript.setOutputFile("target/generated-sources/jeeToTypeScript.ts");
 		outputTypeScript.output(model);
+
+		String generatedTs = FileUtils.readFileToString(new File("target/generated-sources/jeeToTypeScript.ts"));
+
+		Assert.assertTrue("Incorrect type parameter conversion: Generic1", generatedTs.contains("Generic1<Ty extends ABase>"));
+		Assert.assertTrue("Incorrect type parameter conversion: Generic2", generatedTs.contains("Generic2<Ty extends BBase>"));
 
 		// Run test cases from test browser
 		TestHelper.system("npm install");

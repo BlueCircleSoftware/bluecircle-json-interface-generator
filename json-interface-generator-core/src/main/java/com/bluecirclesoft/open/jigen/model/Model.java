@@ -34,7 +34,7 @@ public class Model implements Serializable {
 
 	private static final Logger log = LoggerFactory.getLogger(Model.class);
 
-	private final Map<String, JType> interfaces = new HashMap<>();
+	private final Map<Type, JType> interfaces = new HashMap<>();
 
 	private final Map<String, Endpoint> endpoints = new TreeMap<>();
 
@@ -50,7 +50,7 @@ public class Model implements Serializable {
 		if (jType == null) {
 			throw new RuntimeException("Failed to translate type " + type);
 		}
-		interfaces.put(type.toString(), jType);
+		interfaces.put(type, jType);
 	}
 
 
@@ -76,11 +76,11 @@ public class Model implements Serializable {
 	}
 
 	public boolean hasType(Type type) {
-		return interfaces.containsKey(type.toString());
+		return interfaces.containsKey(type);
 	}
 
 	public JType getType(Type key) {
-		return interfaces.get(key.toString());
+		return interfaces.get(key);
 	}
 
 	public Iterable<Endpoint> getEndpoints() {

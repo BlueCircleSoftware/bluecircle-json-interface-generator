@@ -30,9 +30,6 @@ public class JTypeVariable extends JType {
 
 	private List<JType> intersectionBounds = new ArrayList<>();
 
-	public JTypeVariable() {
-	}
-
 	public JTypeVariable(String name) {
 		this.name = name;
 	}
