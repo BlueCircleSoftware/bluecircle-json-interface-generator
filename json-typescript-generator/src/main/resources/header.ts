@@ -145,7 +145,7 @@ export namespace jsonInterfaceGenerator {
         public abstract set(key: Key, val: any): void;
     }
 
-    export abstract class DirectWrapper<Obj> extends ChangeCollector<keyof Obj> {
+    export abstract class DirectWrapper<Obj, K = keyof Obj> extends ChangeCollector<K> {
 
         public abstract getObj(write: WriteOption): Obj;
     }
@@ -273,7 +273,7 @@ export namespace jsonInterfaceGenerator {
         }
     }
 
-    export class ArrayWrapper<T> extends DirectWrapper<T[]> {
+    export class ArrayWrapper<T> extends DirectWrapper<T[], number> {
         private parent: DirectWrapper<any>;
         private readonly myIndex: string | number;
         private readonly factory: () => T[];
