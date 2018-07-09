@@ -274,11 +274,11 @@ export namespace jsonInterfaceGenerator {
     }
 
     export class ArrayWrapper<T> extends DirectWrapper<T[], number> {
-        private parent: DirectWrapper<any>;
+        private parent: DirectWrapper<any, string | number>;
         private readonly myIndex: string | number;
         private readonly factory: () => T[];
 
-        public constructor(parent: DirectWrapper<any>, myIndex: string | number, factory: () => T[]) {
+        public constructor(parent: DirectWrapper<any, string | number>, myIndex: string | number, factory: () => T[]) {
             super();
             this.parent = parent;
             this.myIndex = myIndex;
