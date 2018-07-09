@@ -73,7 +73,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 		writer.indentIn();
 		writer.line(
 				"return new " + type + "$Imm(new jsonInterfaceGenerator.ObjectWrapper<" + type + ">(this.$base, \"" + name + "\", " + type +
-						"$Imm.make));");
+						".make));");
 		writer.indentOut();
 		writer.line("}");
 	}
@@ -100,7 +100,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 		writer.indentIn();
 		writer.line("let wrapperLeaf = new jsonInterfaceGenerator.ObjectWrapper<" + intfType + ">(parent, index, () => {");
 		writer.indentIn();
-		writer.line("return " + wrapperType + ".make();");
+		writer.line("return " + intfType + ".make();");
 		writer.indentOut();
 		writer.line("});");
 		writer.line("return new " + wrapperType + "(wrapperLeaf);");

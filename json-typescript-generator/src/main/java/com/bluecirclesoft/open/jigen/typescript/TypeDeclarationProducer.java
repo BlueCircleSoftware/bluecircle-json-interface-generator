@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
@@ -176,7 +177,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		// where doubleA is specified as undefined by both the question mark and the type union. But
 		// if we don't, it can't propagate down to type parameters, etc.  So I'm okay with it.
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined);
-		for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
+		for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
 			String makeOptional = "";
 			JType type = prop.getValue().getType();
 			if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
@@ -188,34 +189,51 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.indentOut();
 		writer.line("}");
 
+		String typeVars = "";
+		if (!intf.getTypeVariables().isEmpty()) {
+			StringBuilder typeVarsBuilder = new StringBuilder();
+			typeVarsBuilder.append('<');
+			boolean needsComma = false;
+			for (JTypeVariable var : intf.getTypeVariables()) {
+				if (needsComma) {
+					typeVarsBuilder.append(',');
+				} else {
+					needsComma = true;
+				}
+				typeVarsBuilder.append(var.getName());
+			}
+			typeVarsBuilder.append('>');
+			typeVars = typeVarsBuilder.toString();
+		}
+
+		if (StringUtils.isNotBlank(intf.getNewObjectJson())) {
+
+			// Copy type variables from definition
+			String makeTypeVars;
+			int anglePos = definterfaceType.indexOf('<');
+			if (anglePos >= 0) {
+				makeTypeVars = definterfaceType.substring(anglePos);
+			} else {
+				makeTypeVars = "";
+			}
+
+			String nsLine = "export namespace " + interfaceLabel + " {";
+			writer.line(nsLine);
+			writer.indentIn();
+			writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " { ");
+			writer.indentIn();
+			writer.line("return " + intf.getNewObjectJson() + ";");
+			writer.indentOut();
+			writer.line("}");
+			writer.indentOut();
+			writer.line("}");
+		}
+
 		if (produceImmutable && canBeImmutable(intf)) {
 			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm"));
 			declLine = "export class " + immutableInterfaceType + " {";
 			writer.line(declLine);
 			writer.indentIn();
-			String typeVars = "";
-			if (!intf.getTypeVariables().isEmpty()) {
-				StringBuilder typeVarsBuilder = new StringBuilder();
-				typeVarsBuilder.append('<');
-				boolean needsComma = false;
-				for (JTypeVariable var : intf.getTypeVariables()) {
-					if (needsComma) {
-						typeVarsBuilder.append(',');
-					} else {
-						needsComma = true;
-					}
-					typeVarsBuilder.append(var.getName());
-				}
-				typeVarsBuilder.append('>');
-				typeVars = typeVarsBuilder.toString();
-			}
-			if (intf.getNewObjectJson() != null) {
-				writer.line("static make" + typeVars + "() : " + interfaceLabel + typeVars + " { ");
-				writer.indentIn();
-				writer.line("return " + intf.getNewObjectJson() + ";");
-				writer.indentOut();
-				writer.line("}");
-			}
 
 			String usinterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.USAGE, null));
 			writer.line("private $base : jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">;");
@@ -224,7 +242,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line("this.$base = base;");
 			writer.indentOut();
 			writer.line("}");
-			for (Map.Entry<String, JObject.Field> prop : intf.getFields().entrySet()) {
+			for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
 				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined);
 				prop.getValue().getType().accept(accessorProducer);
 			}
@@ -238,7 +256,6 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		if (!intf.getTypeVariables().isEmpty()) {
 			return false;
 		}
-
 		return true;
 	}
 

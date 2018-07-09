@@ -20,13 +20,17 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.jigen.model.JObject;
+import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +67,44 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			jacksonTypeModeller.queueType(clazz.getTypeParameters()[i]);
 			jacksonTypeModeller.addFixup(clazz.getTypeParameters()[i],
 					jType -> jObject.getTypeVariables().set(finalI, (JTypeVariable) jType));
+		}
+		jacksonTypeModeller.addFixup(clazz, jType -> doubleCheckEmptyJson((JObject) jType, clazz),
+				JacksonTypeModeller.MODEL_REVIEW_PRIORITY);
+	}
+
+	/**
+	 * Sometimes the generated JSON for an empty object is illegal in the generated model (nullability at least, maybe more in the future).
+	 * After the final model is constructed, re-validate the object, and remove it if it isn't valid anymore.
+	 *
+	 * @param jType the type
+	 */
+	private void doubleCheckEmptyJson(JObject jType, Class<?> clazz) {
+		String newObjectJson = jType.getNewObjectJson();
+		if (newObjectJson != null) {
+			try {
+				ObjectMapper mapper = new ObjectMapper();
+				HashMap<String, Object> map = mapper.readValue(newObjectJson, new TypeReference<HashMap<String, Object>>() {
+				});
+				for (Map.Entry<String, JObject.Field> fieldEntry : jType.getFieldEntries()) {
+					JObject.Field field = fieldEntry.getValue();
+					if (field == null) {
+						log.warn("INTERNAL ERROR: field type is undefined, playing it safe");
+						jType.setNewObjectJson(null);
+						return;
+					}
+					JType fieldType = field.getType();
+					boolean canBeNull = fieldType.canBeNull();
+					boolean canBeUndefined = fieldType.canBeUndefined();
+					String name = field.getName();
+					Object o = map.get(name);
+					if (!canBeNull && !canBeUndefined && o == null) {
+						jType.setNewObjectJson(null);
+						return;
+					}
+				}
+			} catch (Exception e) {
+				log.error("Couldn't read generated new-object JSON for class " + jType.getName(), e);
+			}
 		}
 	}
 

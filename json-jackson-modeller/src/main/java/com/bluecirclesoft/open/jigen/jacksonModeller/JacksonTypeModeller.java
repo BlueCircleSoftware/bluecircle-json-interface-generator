@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -88,6 +89,48 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat;
  */
 public class JacksonTypeModeller implements PropertyEnumerator {
 
+	private static class FixupQueueItem implements Comparable<FixupQueueItem> {
+
+		private final Type type;
+
+		private final int priority;
+
+		private final Consumer<JType> fixup;
+
+		public FixupQueueItem(Type type, int priority, Consumer<JType> fixup) {
+			this.type = type;
+			this.priority = priority;
+			this.fixup = fixup;
+		}
+
+		@Override
+		public int compareTo(FixupQueueItem o) {
+			return Integer.compare(getPriority(), o.getPriority());
+		}
+
+		Consumer<JType> getFixup() {
+			return fixup;
+		}
+
+		int getPriority() {
+			return priority;
+		}
+
+		public Type getType() {
+			return type;
+		}
+	}
+
+	/**
+	 * First pass of fixups - linking fields to their fully-defined types
+	 */
+	public static final int FIELD_FIXUP_PRIORITY = 1;
+
+	/**
+	 * Second pass of fixups - reviewing the model after it is fully defined
+	 */
+	public static final int MODEL_REVIEW_PRIORITY = 2;
+
 	private static final Logger logger = LoggerFactory.getLogger(JacksonTypeModeller.class);
 
 	/**
@@ -130,7 +173,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	/**
 	 * List of fixups to run after ingesting.
 	 */
-	private final Map<Type, List<Consumer<JType>>> typeFixups = new HashMap<>();
+	private final PriorityQueue<FixupQueueItem> typeFixups = new PriorityQueue<>();
 
 	private final ClassOverrideHandler classOverrides;
 
@@ -153,12 +196,22 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	/**
 	 * Add a fixup for a given type
 	 *
+	 * @param type     the type
+	 * @param fixup    the fixup to apply
+	 * @param priority the priority with which to run the fixup
+	 */
+	void addFixup(Type type, Consumer<JType> fixup, int priority) {
+		typeFixups.add(new FixupQueueItem(type, priority, fixup));
+	}
+
+	/**
+	 * Add a fixup for a given type (field fixup priority)
+	 *
 	 * @param type  the type
 	 * @param fixup the fixup to apply
 	 */
 	void addFixup(Type type, Consumer<JType> fixup) {
-		List<Consumer<JType>> list = typeFixups.computeIfAbsent(type, k -> new ArrayList<>());
-		list.add(fixup);
+		addFixup(type, fixup, FIELD_FIXUP_PRIORITY);
 	}
 
 	/**
@@ -194,12 +247,8 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			model.addType(type, handleType(type));
 		}
 		// apply fixups
-		for (Map.Entry<Type, List<Consumer<JType>>> fixup : typeFixups.entrySet()) {
-			JType jTYpe = model.getType(fixup.getKey());
-			for (Consumer<JType> processor : fixup.getValue()) {
-				processor.accept(jTYpe);
-			}
-		}
+		applyFixups(model, typeFixups);
+
 		logger.debug("Done");
 
 		// double-check that all our types wound up in the model
@@ -216,6 +265,16 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			result.add(model.getType(type));
 		}
 		return result;
+	}
+
+	private void applyFixups(Model model, PriorityQueue<FixupQueueItem> typeCleanups) {
+		while (!typeCleanups.isEmpty()) {
+			FixupQueueItem fixup = typeCleanups.poll();
+			if (fixup != null) {
+				JType jType = model.getType(fixup.getType());
+				fixup.getFixup().accept(jType);
+			}
+		}
 	}
 
 	/**

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -83,8 +84,8 @@ public class JObject extends JToplevelType {
 		this.typeVariables = typeVariables;
 	}
 
-	public Map<String, Field> getFields() {
-		return fields;
+	public Set<Map.Entry<String, Field>> getFieldEntries() {
+		return fields.entrySet();
 	}
 
 	/**

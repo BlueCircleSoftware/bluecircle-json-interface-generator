@@ -27,4 +27,12 @@ public class Service {
 		return new Generic2<>();
 	}
 
+	@GET
+	@Path("/getRequiredNull")
+	@Consumes("application/json")
+	@Produces("application/json")
+	public RequiredNull getRequiredNull() {
+		return new RequiredNull();
+	}
+
 }
