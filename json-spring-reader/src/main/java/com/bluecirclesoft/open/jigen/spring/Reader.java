@@ -112,6 +112,8 @@ public class Reader implements ModelCreator {
 
 	private final GlobalAnnotationMap annotationMap = new GlobalAnnotationMap();
 
+	private String[] packageNames;
+
 	private Model createModel(String... packageNames) {
 
 		annotationMap.ingestAnnotations(packageNames);
@@ -266,10 +268,10 @@ public class Reader implements ModelCreator {
 
 		JType outType;
 		if (methodInfo.producer) {
-			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType);
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
 			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
-			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType);
+			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
 			outType = modeller.readOneType(model, String.class);
 		}
 
@@ -286,7 +288,7 @@ public class Reader implements ModelCreator {
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(methodPath);
 			for (MethodParameter pathParam : parameters) {
-				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType);
+				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
 								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
@@ -508,7 +510,8 @@ public class Reader implements ModelCreator {
 
 	@Override
 	public Model createModel() {
-		createModel(Regexes.COMMA_SEPARATOR.split(packageNamesString));
+		packageNames = Regexes.COMMA_SEPARATOR.split(packageNamesString);
+		createModel(packageNames);
 		return model;
 	}
 

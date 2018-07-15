@@ -22,11 +22,13 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -34,6 +36,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,16 +181,35 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	 */
 	private final PriorityQueue<FixupQueueItem> typeFixups = new PriorityQueue<>();
 
+	private final Reflections subclassFinder;
+
 	private final ClassOverrideHandler classOverrides;
+
+	private final boolean includeSubclasses;
+
+	private final String[] packagesToScan;
 
 	private final JEnum.EnumType defaultEnumType;
 
 	/**
 	 * Create a modeller.
 	 */
-	public JacksonTypeModeller(ClassOverrideHandler classOverrides, JEnum.EnumType defaultEnumType) {
+	public JacksonTypeModeller(ClassOverrideHandler classOverrides, JEnum.EnumType defaultEnumType, boolean includeSubclasses,
+	                           String[] packagesToScan) {
 		this.classOverrides = classOverrides;
 		this.defaultEnumType = defaultEnumType;
+		this.includeSubclasses = includeSubclasses;
+		this.packagesToScan = packagesToScan;
+
+		if (includeSubclasses) {
+			Set<URL> urls = new HashSet<>();
+			for (String p : packagesToScan) {
+				urls.addAll(ClasspathHelper.forPackage(p));
+			}
+			subclassFinder = new Reflections(new ConfigurationBuilder().setUrls(urls).setScanners(new SubTypesScanner()));
+		} else {
+			subclassFinder = null;
+		}
 		// clear list of created types (for debugging)
 		JType.createdTypes.clear();
 	}
@@ -390,11 +415,20 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				} else {
 					// everything else -> interface
 					logger.debug("is user-defined class");
+					if (includeSubclasses) {
+						enqueueSubclasses((Class) type);
+					}
 					return handleUserDefinedClass((Class) type);
 				}
 			}
 		} else {
 			throw new RuntimeException("Can't handle " + type);
+		}
+	}
+
+	private void enqueueSubclasses(Class<?> type) {
+		for (Object cl : subclassFinder.getSubTypesOf(type)) {
+			queueType(type);
 		}
 	}
 
