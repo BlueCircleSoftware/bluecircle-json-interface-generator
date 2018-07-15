@@ -6,7 +6,10 @@ pom.xml.next
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
-*.iml
-.idea/
+/.idea/workspace.xml
+/.idea/usage.statistics.xml
+/.idea/tasks.xml
+/.idea/libraries/
+/.idea/*.local.xml
 node_modules/
 velocity.log
