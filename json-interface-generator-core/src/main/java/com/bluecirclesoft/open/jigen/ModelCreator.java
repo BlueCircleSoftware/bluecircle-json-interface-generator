@@ -18,29 +18,12 @@ package com.bluecirclesoft.open.jigen;
 
 import java.util.List;
 
-import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.model.Model;
 
 /**
  * Interface for something that creates a {@link com.bluecirclesoft.open.jigen.model.Model}
  */
-public interface ModelCreator {
-
-	/**
-	 * Add necessary command-line options for this creator to the command-line processor. It is expected that the command-line option
-	 * handlers will call setters on {@code this}
-	 *
-	 * @param options the processor object
-	 */
-	void addOptions(GetOpt options);
-
-	/**
-	 * Validate whatever values were obtained from the command line.
-	 *
-	 * @param options the options object
-	 * @param errors  a list of errors to add this object's specific errors to.
-	 */
-	void validateOptions(GetOpt options, List<String> errors);
+public interface ModelCreator<T> extends ConfigurableProcessor<T> {
 
 	/**
 	 * Create the model.

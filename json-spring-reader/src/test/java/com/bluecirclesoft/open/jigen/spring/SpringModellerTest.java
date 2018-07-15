@@ -16,20 +16,18 @@
 
 package com.bluecirclesoft.open.jigen.spring;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.Model;
-import com.bluecirclesoft.open.jigen.spring.Reader;
 
 /**
  * TODO document me
@@ -43,9 +41,14 @@ public class SpringModellerTest {
 
 		Reader modeller = new Reader();
 
-		GetOpt getOpt = GetOpt.create("testPrg");
-		modeller.addOptions(getOpt);
-		getOpt.processParams("--package", "com.bluecirclesoft");
+		Options options = new Options();
+		List<String> plist = new ArrayList<>();
+		plist.add("com.bluecirclesoft");
+		options.setPackages(plist);
+
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
 		Model model = modeller.createModel();
 
 		Assert.assertEquals(5, sizeof(model.getEndpoints()));

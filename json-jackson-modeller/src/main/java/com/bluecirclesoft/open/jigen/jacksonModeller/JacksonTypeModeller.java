@@ -196,6 +196,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	 */
 	public JacksonTypeModeller(ClassOverrideHandler classOverrides, JEnum.EnumType defaultEnumType, boolean includeSubclasses,
 	                           String[] packagesToScan) {
+		assert defaultEnumType != null;
+		assert packagesToScan != null;
+		assert packagesToScan.length > 0;
+
 		this.classOverrides = classOverrides;
 		this.defaultEnumType = defaultEnumType;
 		this.includeSubclasses = includeSubclasses;

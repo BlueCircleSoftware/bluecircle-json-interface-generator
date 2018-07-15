@@ -19,25 +19,24 @@ package com.bluecirclesoft.open.jigen.integrationSpring;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.spring.Options;
 import com.bluecirclesoft.open.jigen.spring.Reader;
 import com.bluecirclesoft.open.jigen.typescript.Writer;
 
@@ -51,7 +50,7 @@ public class SpringToTypeScriptTest {
 
 	private static final Logger log = LoggerFactory.getLogger(SpringToTypeScriptTest.class);
 
-//	@Deployment(testable = false)
+	//	@Deployment(testable = false)
 	public static WebArchive createDeployment() {
 		try {
 			log.info("Creating Spring deployment");
@@ -81,7 +80,7 @@ public class SpringToTypeScriptTest {
 		return result.toArray(new File[0]);
 	}
 
-//	@Test
+	//	@Test
 //	@RunAsClient
 	public void runTest(@ArquillianResource URL baseUrl) throws IOException {
 		// We've deployed our services to Arquillian at this point
@@ -93,18 +92,34 @@ public class SpringToTypeScriptTest {
 
 		// Create model
 		Reader modeller = new Reader();
-		modeller.setPackageNamesString("com.bluecirclesoft");
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(makeInputOptions("com.bluecirclesoft"), errors);
+		Assert.assertEquals(0, errors.size());
 		Model model = modeller.createModel();
 
 		// Create typescript
 		Writer outputTypeScript = new Writer();
-		outputTypeScript.setOutputFile("target/generated-sources/springToTypeScript.ts");
+		errors = new ArrayList<>();
+		outputTypeScript.acceptOptions(makeOutputOptions("target/generated-sources/springToTypeScript.ts"), errors);
+		Assert.assertEquals(0, errors.size());
 		outputTypeScript.output(model);
 
 		// Run test cases from test browser
 		TestHelper.system("npm install");
 		TestHelper.system("../node_modules/.bin/webpack");
 		TestHelper.system("../node_modules/.bin/karma start --baseUrl " + baseRestUrl);
+	}
+
+	private com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
+		com.bluecirclesoft.open.jigen.typescript.Options options = new com.bluecirclesoft.open.jigen.typescript.Options();
+		options.setOutputFile(s);
+		return options;
+	}
+
+	private Options makeInputOptions(String p) {
+		Options options = new Options();
+		options.setPackages(Collections.singletonList(p));
+		return options;
 	}
 
 	private void doubleCheckServer(String baseRestUrl) {

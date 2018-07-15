@@ -53,10 +53,8 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
-import com.bluecirclesoft.open.jigen.Regexes;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -69,7 +67,7 @@ import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 /**
  * TODO document me
  */
-public class Reader implements ModelCreator {
+public class Reader implements ModelCreator<Options> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
@@ -96,11 +94,9 @@ public class Reader implements ModelCreator {
 		annotationHttpMethodMap.put(PUT.class, HttpMethod.PUT);
 	}
 
-	private String packageNamesString;
+	private Options options;
 
 	private Model model;
-
-	private String[] packageNames;
 
 	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
 
@@ -339,21 +335,18 @@ public class Reader implements ModelCreator {
 	}
 
 	@Override
-	public void addOptions(GetOpt options) {
-		options.addParam("package(s)", "Comma-separated list of packages to recursively scan for JAX-RS annotations.", true,
-				(s) -> packageNamesString = s).addLongOpt("package");
-		options.addParam("class[,class]*",
-				"When encountering 'class', substitute 'realClass' while building the model (syntax: class=realClass,...)", false,
-				(s) -> classOverrideHandler.ingestOverrides(s)).addLongOpt("override");
-		options.addFlag("By default, produce string enums", (s) -> this.defaultEnumType = JEnum.EnumType.STRING).addLongOpt("string-enums");
+	public Class<Options> getOptionsClass() {
+		return Options.class;
 	}
 
 	@Override
 	public Model createModel() {
 		try {
-			packageNames = Regexes.COMMA_SEPARATOR.split(packageNamesString);
-			this.modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
-			createModel(packageNames);
+			defaultEnumType = options.isDefaultStringEnums() ? JEnum.EnumType.STRING : JEnum.EnumType.NUMERIC;
+			String[] packArr = options.getPackages().toArray(new String[0]);
+			classOverrideHandler.ingestOverrides(options.getClassSubstitutions());
+			this.modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packArr);
+			createModel(packArr);
 			return model;
 		} catch (Throwable t) {
 			logger.error("Caught exception creating model: ", t);
@@ -362,17 +355,10 @@ public class Reader implements ModelCreator {
 	}
 
 	@Override
-	public void validateOptions(GetOpt options, List<String> errors) {
-		if (StringUtils.isBlank(packageNamesString)) {
+	public void acceptOptions(Options options, List<String> errors) {
+		this.options = options;
+		if (options.getPackages() == null || options.getPackages().isEmpty()) {
 			errors.add("Package name to process is required.");
 		}
-	}
-
-	public String getPackageNamesString() {
-		return packageNamesString;
-	}
-
-	public void setPackageNamesString(String packageNamesString) {
-		this.packageNamesString = packageNamesString;
 	}
 }

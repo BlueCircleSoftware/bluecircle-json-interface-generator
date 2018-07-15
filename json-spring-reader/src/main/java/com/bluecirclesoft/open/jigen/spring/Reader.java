@@ -41,10 +41,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
-import com.bluecirclesoft.open.jigen.Regexes;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -59,7 +57,7 @@ import com.bluecirclesoft.open.jigen.spring.springmodel.GlobalAnnotationMap;
 /**
  * TODO document me
  */
-public class Reader implements ModelCreator {
+public class Reader implements ModelCreator<Options> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
@@ -100,9 +98,7 @@ public class Reader implements ModelCreator {
 		jsonnableMethods.add(HttpMethod.DELETE);
 	}
 
-	private String packageNamesString;
-
-	private String defaultContentType;
+	private Options options;
 
 	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
 
@@ -115,6 +111,9 @@ public class Reader implements ModelCreator {
 	private String[] packageNames;
 
 	private Model createModel(String... packageNames) {
+
+		assert packageNames != null;
+		assert packageNames.length > 0;
 
 		annotationMap.ingestAnnotations(packageNames);
 
@@ -428,7 +427,7 @@ public class Reader implements ModelCreator {
 				producesTest.accept(result, contentType);
 			}
 		} else {
-			producesTest.accept(result, defaultContentType);
+			producesTest.accept(result, options.getDefaultContentType());
 		}
 
 		BiConsumer<SpringRequestInfo, String> consumesTest = (result1, contentType) -> {
@@ -447,7 +446,7 @@ public class Reader implements ModelCreator {
 				consumesTest.accept(result, contentType);
 			}
 		} else {
-			consumesTest.accept(result, defaultContentType);
+			consumesTest.accept(result, options.getDefaultContentType());
 		}
 
 		if (StringUtils.isBlank(path)) {
@@ -497,36 +496,32 @@ public class Reader implements ModelCreator {
 	}
 
 	@Override
-	public void addOptions(GetOpt options) {
-		options.addParam("<package(s)>", "Comma-separated list of packages to recursively scan for Spring annotations", true,
-				(s) -> packageNamesString = s).addLongOpt("package");
-		options.addParam("<string>",
-				"Default content type for Spring requests (should mirror ContentNegotiationConfigurer" + ".defaultContentType() if used)",
-				false, (s) -> defaultContentType = s).addLongOpt("default-content-type");
-		options.addParam("class[,class]*", "Treat classes as separate JSON types (syntax: class=realClass,...", false,
-				(s) -> classOverrideHandler.ingestOverrides(s)).addLongOpt("override");
-		options.addFlag("By default, produce string enums", (s) -> this.defaultEnumType = JEnum.EnumType.STRING).addLongOpt("string-enums");
-	}
-
-	@Override
 	public Model createModel() {
-		packageNames = Regexes.COMMA_SEPARATOR.split(packageNamesString);
-		createModel(packageNames);
+		assert options != null;
+		assert options.getPackages() != null;
+
+		createModel(options.getPackages().toArray(new String[0]));
 		return model;
 	}
 
 	@Override
-	public void validateOptions(GetOpt options, List<String> errors) {
-		if (StringUtils.isBlank(packageNamesString)) {
+	public Class<Options> getOptionsClass() {
+		return Options.class;
+	}
+
+	@Override
+	public void acceptOptions(Options options, List<String> errors) {
+		this.options = options;
+		classOverrideHandler.ingestOverrides(options.getClassSubstitutions());
+		if (options.getPackages() == null || options.getPackages().isEmpty()) {
 			errors.add("Package name to process is required.");
+		} else {
+			if (options.isDefaultStringEnums()) {
+				defaultEnumType = JEnum.EnumType.STRING;
+			} else {
+				defaultEnumType = JEnum.EnumType.NUMERIC;
+			}
+			packageNames = options.getPackages().toArray(new String[0]);
 		}
-	}
-
-	public String getPackageNamesString() {
-		return packageNamesString;
-	}
-
-	public void setPackageNamesString(String packageNamesString) {
-		this.packageNamesString = packageNamesString;
 	}
 }

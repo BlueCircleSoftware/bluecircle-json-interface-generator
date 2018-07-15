@@ -16,27 +16,36 @@
 
 package com.bluecirclesoft.open.jigen;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
-import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * TODO document me
  */
 public final class Main {
 
+	private static final String JIG_COMMON_PACKAGE = "com.bluecirclesoft.open.jigen.";
+
+
 	private Main() {
 	}
 
 	private static void usage() {
 		System.err.println("Usage:");
-		System.err.println(
-				"  jigen (--input|--output) <processor> <processor arg>... [(--input|--output) <processor> <processor arg>...]...");
-		System.err.println("  --process <processor> instantiate a processor to process the model, passing arguments as necessary.");
+		System.err.println("  jigen (--input|--output) <processor> [(--input|--output) <processor>]... [--config <config file>]");
+		System.err.println("");
+		System.err.println("  (--input|--output) <processor> instantiate a processor to process the model, \n" +
+				"                                 passing arguments as necessary.");
+		System.err.println("");
+		System.err.println("  --config <config file>         specify config file (default ./jig-config.json)");
 		System.err.println("");
 		System.err.println("You will typically want an input processor, and an output processor");
 	}
@@ -80,38 +89,98 @@ public final class Main {
 		List<List<String>> argList = split(args);
 		Model model = null;
 
+		List<ModelCreator> modellers = new ArrayList<>();
+		List<CodeProducer> producers = new ArrayList<>();
+
+		File configFile = null;
+
 		for (List<String> processorArgs : argList) {
-			if (Objects.equals(processorArgs.get(0), "--input")) {
+			String argSpecifier = processorArgs.get(0);
+			if (Objects.equals(argSpecifier, "--input")) {
 				String processorName = processorArgs.get(1);
 				Object o = findClass(processorName, "Reader");
 				ModelCreator modeller = (ModelCreator) o;
-
-				GetOpt getOpt = GetOpt.create("jigen");
-				modeller.addOptions(getOpt);
-				getOpt.processParams(processorArgs.subList(2, processorArgs.size()));
-
-				List<String> errors = new ArrayList<>();
-				modeller.validateOptions(getOpt, errors);
-				handleErrors(getOpt, errors);
-				model = modeller.createModel();
-			}
-		}
-
-		for (List<String> processorArgs : argList) {
-			if (Objects.equals(processorArgs.get(0), "--output")) {
+				modellers.add(modeller);
+			} else if (Objects.equals(argSpecifier, "--output")) {
 				String processorName = processorArgs.get(1);
 				Object o = findClass(processorName, "Writer");
 				CodeProducer producer = (CodeProducer) o;
-
-				GetOpt getOpt = GetOpt.create("jigen");
-				producer.addOptions(getOpt);
-				getOpt.processParams(processorArgs.subList(2, processorArgs.size()));
-
-				List<String> errors = new ArrayList<>();
-				producer.validateOptions(getOpt, errors);
-				handleErrors(getOpt, errors);
-				producer.output(model);
+				producers.add(producer);
+			} else if (Objects.equals(argSpecifier, "--config")) {
+				configFile = new File(processorArgs.get(1));
+			} else {
+				System.err.println("Unknown argument: " + argSpecifier);
+				usage();
+				System.exit(1);
 			}
+		}
+
+		// if user didn't specify a config file, check for default (or just go without config)
+		if (configFile == null) {
+			configFile = new File("./jig-config.json");
+			if (!configFile.canRead()) {
+				configFile = null;
+			}
+		} else {
+			if (!configFile.canRead()) {
+				System.err.println("Specified config file " + configFile.getAbsolutePath() + " cannot be read.");
+				usage();
+				System.exit(1);
+			}
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		Map<String, Object> config = null;
+		if (configFile != null) {
+			config = mapper.readValue(configFile, Map.class);
+		}
+
+		// check arguments
+		List<String> errors = new ArrayList<>();
+		for (ModelCreator modeller : modellers) {
+			configureOneProcessor(mapper, config, errors, modeller);
+		}
+		for (CodeProducer producer : producers) {
+			configureOneProcessor(mapper, config, errors, producer);
+		}
+
+		handleErrors(errors);
+
+		// apply processors
+		for (ModelCreator modeller : modellers) {
+			model = modeller.createModel();
+		}
+		for (CodeProducer producer : producers) {
+			producer.output(model);
+		}
+	}
+
+	private static void configureOneProcessor(ObjectMapper mapper, Map<String, Object> config, List<String> errors,
+	                                          ConfigurableProcessor processor) {
+		String label = findConfigLabel(processor.getClass().getName());
+		Class<?> optionsClass = processor.getOptionsClass();
+		Object configMap = null;
+		if (config != null) {
+			configMap = config.get(label);
+		}
+		if (configMap == null) {
+			configMap = new HashMap<String, Object>();
+		}
+		Object configObj = mapper.convertValue(configMap, optionsClass);
+
+		processor.acceptOptions(configObj, errors);
+	}
+
+	private static String findConfigLabel(String name) {
+		if (name.startsWith(JIG_COMMON_PACKAGE)) {
+			// strip the JIG_COMMON_PACKAGE leader, and the .Reader or .Writer trailer
+			String remainder1 = name.substring(JIG_COMMON_PACKAGE.length());
+			int dotPos = remainder1.indexOf('.');
+			String remainder2 = remainder1.substring(0, dotPos);
+			return remainder2;
+		} else {
+			return name;
 		}
 	}
 
@@ -121,19 +190,19 @@ public final class Main {
 		if (processorName.indexOf(".") > 0) {
 			creatorClass = Class.forName(processorName);
 		} else {
-			creatorClass = Class.forName("com.bluecirclesoft.open.jigen." + processorName + "." + className);
+			creatorClass = Class.forName(JIG_COMMON_PACKAGE + processorName + "." + className);
 		}
 		return creatorClass.newInstance();
 	}
 
-	private static void handleErrors(GetOpt getOpt, List<String> errors) {
+	private static void handleErrors(List<String> errors) {
 		if (errors.size() > 0) {
 			StringBuilder builder = new StringBuilder();
 			for (String err : errors) {
 				builder.append("ERROR: ").append(err).append("\n");
 			}
-			getOpt.usage(builder);
-			System.err.println(errors.toString());
+			System.err.println(builder.toString());
+			usage();
 			System.exit(1);
 		}
 	}

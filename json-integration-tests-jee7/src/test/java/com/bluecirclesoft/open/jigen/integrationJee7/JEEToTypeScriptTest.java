@@ -19,6 +19,9 @@ package com.bluecirclesoft.open.jigen.integrationJee7;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -34,6 +37,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bluecirclesoft.open.jigen.jee7.Options;
 import com.bluecirclesoft.open.jigen.jee7.Reader;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.typescript.Writer;
@@ -74,13 +78,15 @@ public class JEEToTypeScriptTest {
 
 		// Create model
 		Reader modeller = new Reader();
-		modeller.setPackageNamesString("com.bluecirclesoft");
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(makeInputOptions("com.bluecirclesoft"), errors);
+		Assert.assertEquals(0, errors.size());
 		Model model = modeller.createModel();
 
 		// Create typescript
 		Writer outputTypeScript = new Writer();
-		outputTypeScript.setProduceImmutables(true);
-		outputTypeScript.setOutputFile("target/generated-sources/jeeToTypeScript.ts");
+		outputTypeScript.acceptOptions(makeOutputOptions("target/generated-sources/jeeToTypeScript.ts"), errors);
+		Assert.assertEquals(0, errors.size());
 		outputTypeScript.output(model);
 
 		String generatedTs = FileUtils.readFileToString(new File("target/generated-sources/jeeToTypeScript.ts"));
@@ -92,6 +98,19 @@ public class JEEToTypeScriptTest {
 		TestHelper.system("npm install");
 		TestHelper.system("../node_modules/.bin/webpack");
 		TestHelper.system("../node_modules/.bin/karma start --baseUrl " + baseRestUrl);
+	}
+
+	private com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
+		com.bluecirclesoft.open.jigen.typescript.Options options = new com.bluecirclesoft.open.jigen.typescript.Options();
+		options.setProduceImmutables(true);
+		options.setOutputFile(s);
+		return options;
+	}
+
+	private Options makeInputOptions(String p) {
+		Options options = new Options();
+		options.setPackages(Collections.singletonList(p));
+		return options;
 	}
 
 	private void doubleCheckServer(String baseRestUrl) {

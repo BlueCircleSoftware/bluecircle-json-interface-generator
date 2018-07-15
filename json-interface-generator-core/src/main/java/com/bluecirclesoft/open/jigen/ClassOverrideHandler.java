@@ -17,6 +17,7 @@
 package com.bluecirclesoft.open.jigen;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -28,18 +29,11 @@ public class ClassOverrideHandler {
 
 	private Map<Class, Class> overrideClasses = new HashMap<>();
 
-	public void ingestOverrides(String classOverrides) {
+	public void ingestOverrides(List<ClassSubstitution> substitutionList) {
 		try {
-			for (String override : Regexes.COMMA_SEPARATOR.split(classOverrides)) {
-				String[] cl = Regexes.EQUALS_SEPARATOR.split(override);
-				if (cl.length == 0) {
-					continue;
-				}
-				if (cl.length != 2) {
-					throw new RuntimeException("Bad override spec " + override + " in " + classOverrides);
-				}
-				Class fromClass = Class.forName(cl[0]);
-				Class toClass = Class.forName(cl[1]);
+			for (ClassSubstitution override : substitutionList) {
+				Class fromClass = Class.forName(override.getIfSeen());
+				Class toClass = Class.forName(override.getReplaceWith());
 				if (overrideClasses.containsKey(fromClass)) {
 					log.warn("Duplicate class override: {}", fromClass);
 				}

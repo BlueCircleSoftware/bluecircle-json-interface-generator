@@ -85,14 +85,8 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
                                 <argument>com.bluecirclesoft.open.jigen.Main</argument>
                                 <argument>--input</argument>
                                 <argument>jee7</argument>
-                                <argument>--package</argument>
-                                <argument>com.bluecirclesoft</argument>
                                 <argument>--output</argument>
                                 <argument>typescript</argument>
-                                <argument>--url-prefix</argument>
-                                <argument>/${project.artifactId}</argument>
-                                <argument>--output-file</argument>
-                                <argument>${basedir}/target/generated-typescript/propmgmt-interface.ts</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -121,23 +115,57 @@ To specify a processor, you can specify a json-interface-generator package, or a
 processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --input or `com.bluecirclesoft.open.jigen.CodeProducer` for 
 --output.
 
+
+### Configuration
+
+Configuration is done through a JSON file. By default, this file is "jig-config.json" in the current directory, but the file can be 
+overridden by the --config option. The file has the format:
+
+```javascript
+{
+    "procesorClass1": {
+        ...options...
+    },
+    "procesorClass2": {
+        ...options...
+    },
+    ...
+}
+```
+
+The processor class is either a fully qualified class name, or for builtin processors, an abbreviated spec based on the input/output name
+ (for example, "jee7")
+
+Example:
+```javascript
+{
+  "jee7": {
+    "packages": [
+      "com.bluecirclesoft"
+    ]
+  },
+  "typescript": {
+    "outputFile": "myOutputFile.ts"
+  }
+}
+```
 ### JEE7 Reader ("--input jee7"):
 
 Option | Description
 -------|------------
---package \<packages\> | (required) Comma-separated list of packages to recursively scan for JAX-RS annotations.
---override \<overrides\> | (syntax: class=realClass,...) When encountering 'class', substitute 'realClass' while building the model.
---string-enums | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued.
+packages | (required) Array of packages to recursively scan for JAX-RS annotations.
+classSubstitutions | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model.
+defaultStringEnums | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)
+includeSubclasses |  When modelling a class, also model its subclasses (default: true)
  
 ### TypeScript Generator ("--output typescript"):
 
 Option | Description
 -------|------------
---url-prefix \<prefix\> | (required) Prefix to add to all AJAX URLs (this will probably be the context-root of your application)
---output-file \<file\> | (required) The TypeScript file to generate (path will be created if necessary)
---strip-common-packages | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
---immutables | Produce immutable wrappers along with interfaces.
---null-is-undefined | Treat nullable fields as also undefined, and mark them optional in interface definitions.
+outputFile | (required) The TypeScript file to generate (path will be created if necessary)
+stripCommonPackages | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
+produceImmutables | Produce immutable wrappers along with interfaces (default: false)
+nullIsUndefined | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with

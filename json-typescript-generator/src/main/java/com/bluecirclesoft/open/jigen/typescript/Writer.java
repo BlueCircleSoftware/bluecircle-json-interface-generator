@@ -30,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bluecirclesoft.open.getopt.GetOpt;
 import com.bluecirclesoft.open.jigen.CodeProducer;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -43,33 +42,15 @@ import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 /**
  * Generate TypeScript from a REST model.
  */
-public class Writer implements CodeProducer {
+public class Writer implements CodeProducer<Options> {
 
 	private static final Logger log = LoggerFactory.getLogger(Writer.class);
 
-	private File outputFile;
-
 	private OutputHandler writer;
-
-	private boolean produceAccessors = false;
 
 	private boolean produceAccessorFunctionals = false;
 
-	private boolean stripCommonNamespaces = false;
-
-	private boolean produceImmutables = false;
-
-	private boolean treatNullAsUndefined = false;
-
-	private String urlPrefix;
-
-	public boolean isProduceAccessors() {
-		return produceAccessors;
-	}
-
-	public void setProduceAccessors(boolean produceAccessors) {
-		this.produceAccessors = produceAccessors;
-	}
+	private Options options;
 
 	public boolean isProduceAccessorFunctionals() {
 		return produceAccessorFunctionals;
@@ -80,64 +61,40 @@ public class Writer implements CodeProducer {
 	}
 
 	public boolean isStripCommonNamespaces() {
-		return stripCommonNamespaces;
-	}
-
-	public void setStripCommonNamespaces(boolean stripCommonNamespaces) {
-		this.stripCommonNamespaces = stripCommonNamespaces;
+		return options.isStripCommonPackages();
 	}
 
 	public boolean isProduceImmutables() {
-		return produceImmutables;
-	}
-
-	public void setProduceImmutables(boolean produceImmutables) {
-		this.produceImmutables = produceImmutables;
-		log.info("Producing immutables? {}", this.produceImmutables);
+		return options.isProduceImmutables();
 	}
 
 	public boolean isTreatNullAsUndefined() {
-		return treatNullAsUndefined;
-	}
-
-	public void setTreatNullAsUndefined(boolean treatNullAsUndefined) {
-		this.treatNullAsUndefined = treatNullAsUndefined;
+		return options.isNullIsUndefined();
 	}
 
 	public Writer() {
 	}
 
 	Writer(PrintWriter writer) {
-		outputFile = null;
 		this.writer = new OutputHandler(writer);
 	}
 
 	@Override
-	public void addOptions(GetOpt options) {
-		options.addParam("<prefix>", "Prefix to add to all AJAX URLs (this will probably be the context-root of your application)", true,
-				this::setUrlPrefix).addLongOpt("url-prefix");
-		options.addParam("<file>", "The TypeScript file to generate (path will be created if necessary)", false, this::setOutputFile)
-				.addLongOpt("output-file");
-		options.addFlag("Strip any common leading packages from all produced classes", this::setStripCommonNamespaces)
-				.addLongOpt("strip-common-packages");
-		options.addFlag("Produce immutable wrappers along with interfaces", this::setProduceImmutables).addLongOpt("immutables");
-		options.addFlag("Treat nullable fields as also undefined, and mark them optional in interface definitions",
-				this::setTreatNullAsUndefined).addLongOpt("null-is-undefined");
+	public Class<Options> getOptionsClass() {
+		return Options.class;
 	}
 
 	@Override
-	public void validateOptions(GetOpt options, List<String> errors) {
-		if (StringUtils.isBlank(urlPrefix)) {
-			errors.add("URL prefix is required.");
-		}
-		if (outputFile == null) {
+	public void acceptOptions(Options options, List<String> errors) {
+		this.options = options;
+		if (options.getOutputFile() == null) {
 			errors.add("Output file is required.");
 		}
 	}
 
 	@Override
 	public void output(Model model) throws IOException {
-		Namespace ns = Namespace.namespacifyModel(model, stripCommonNamespaces);
+		Namespace ns = Namespace.namespacifyModel(model, isStripCommonNamespaces());
 		start();
 		try {
 			outputNamespace(ns);
@@ -146,7 +103,7 @@ public class Writer implements CodeProducer {
 		} finally {
 			if (writer != null) {
 				writer.flush();
-				if (writer != null && outputFile != null) {
+				if (writer != null && getOutputFile() != null) {
 					writer.close();
 				}
 			}
@@ -176,8 +133,8 @@ public class Writer implements CodeProducer {
 		for (EndpointParameter parameter : endpoint.getParameters()) {
 			addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
 		}
-		addParameter(parameterList, needsComma, "options",
-				"jsonInterfaceGenerator" + ".JsonOptions<" + endpoint.getResponseBody().accept(new TypeUsageProducer(null, treatNullAsUndefined)) + ">");
+		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" +
+				endpoint.getResponseBody().accept(new TypeUsageProducer(null, isTreatNullAsUndefined())) + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
 		writer.indentIn();
 
@@ -233,7 +190,7 @@ public class Writer implements CodeProducer {
 
 		writer.line(
 				"jsonInterfaceGenerator.callAjax(" + url.get() + ", \"" + endpoint.getMethod().name() + "\", submitData, " + isBodyParam +
-				", options);");
+						", options);");
 		writer.indentOut();
 		writer.line("}");
 	}
@@ -279,7 +236,7 @@ public class Writer implements CodeProducer {
 	}
 
 	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
-		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null, treatNullAsUndefined)));
+		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null, isTreatNullAsUndefined())));
 	}
 
 	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
@@ -301,7 +258,7 @@ public class Writer implements CodeProducer {
 			writer.indentIn();
 		}
 		for (JType type : namespace.getDeclarations()) {
-			type.accept(new TypeDeclarationProducer(this, writer, produceImmutables, treatNullAsUndefined));
+			type.accept(new TypeDeclarationProducer(this, writer, isProduceImmutables(), isTreatNullAsUndefined()));
 		}
 		outputEndpoints(namespace);
 		for (Namespace subNamespace : namespace.getNamespaces()) {
@@ -315,33 +272,21 @@ public class Writer implements CodeProducer {
 	}
 
 	private void start() throws IOException {
-		if (outputFile != null) {
-			File outputDir = outputFile.getAbsoluteFile().getParentFile();
+		if (getOutputFile() != null) {
+			File outputDir = getOutputFile().getAbsoluteFile().getParentFile();
 			if (!outputDir.exists()) {
 				if (!outputDir.mkdirs()) {
 					throw new RuntimeException("Could not create folder " + outputDir.getAbsolutePath());
 				}
 			}
-			writer = new OutputHandler(new PrintWriter(new FileWriter(outputFile)));
+			writer = new OutputHandler(new PrintWriter(new FileWriter(getOutputFile())));
 		}
 		writer.writeResource("/header.ts");
 		writer.line();
 
 	}
 
-	public void setUrlPrefix(String urlPrefix) {
-		this.urlPrefix = urlPrefix;
-	}
-
-	public String getUrlPrefix() {
-		return urlPrefix;
-	}
-
-	public void setOutputFile(String outputFile) {
-		this.outputFile = new File(outputFile);
-	}
-
 	public File getOutputFile() {
-		return outputFile;
+		return new File(options.getOutputFile());
 	}
 }
