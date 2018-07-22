@@ -19,13 +19,11 @@ package com.bluecirclesoft.open.jigen;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import com.bluecirclesoft.open.jigen.model.Model;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * TODO document me
@@ -40,53 +38,14 @@ public final class Main {
 
 	private static void usage() {
 		System.err.println("Usage:");
-		System.err.println("  jigen (--input|--output) <processor> [(--input|--output) <processor>]... [--config <config file>]");
+		System.err.println("  jigen [--config <config file>]");
 		System.err.println("");
-		System.err.println("  (--input|--output) <processor> instantiate a processor to process the model, \n" +
-				"                                 passing arguments as necessary.");
+		System.err.println("  --config <config file>         specify config file (default ./jig-config.yaml)");
 		System.err.println("");
-		System.err.println("  --config <config file>         specify config file (default ./jig-config.json)");
-		System.err.println("");
-		System.err.println("You will typically want an input processor, and an output processor");
-	}
-
-	/**
-	 * Take a command-line argument list, and convert it into a list of processor-specific arg lines
-	 *
-	 * @param args the arguments
-	 * @return a list of lists, each list beginning with the specified processor
-	 */
-	static List<List<String>> split(String... args) {
-		List<String> current = null;
-		List<List<String>> result = new ArrayList<>();
-		for (String arg : args) {
-			switch (arg) {
-				case "--input":
-				case "--output":
-					if (current != null) {
-						result.add(current);
-					}
-					current = new ArrayList<>();
-					current.add(arg);
-					break;
-				default:
-					if (current == null) {
-						System.err.println("Must specify a processor with --input or --output");
-						System.exit(1);
-					}
-					current.add(arg);
-					break;
-			}
-		}
-		if (current != null) {
-			result.add(current);
-		}
-		return result;
 	}
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
 
-		List<List<String>> argList = split(args);
 		Model model = null;
 
 		List<ModelCreator> modellers = new ArrayList<>();
@@ -94,20 +53,10 @@ public final class Main {
 
 		File configFile = null;
 
-		for (List<String> processorArgs : argList) {
-			String argSpecifier = processorArgs.get(0);
-			if (Objects.equals(argSpecifier, "--input")) {
-				String processorName = processorArgs.get(1);
-				Object o = findClass(processorName, "Reader");
-				ModelCreator modeller = (ModelCreator) o;
-				modellers.add(modeller);
-			} else if (Objects.equals(argSpecifier, "--output")) {
-				String processorName = processorArgs.get(1);
-				Object o = findClass(processorName, "Writer");
-				CodeProducer producer = (CodeProducer) o;
-				producers.add(producer);
-			} else if (Objects.equals(argSpecifier, "--config")) {
-				configFile = new File(processorArgs.get(1));
+		if (args.length > 0) {
+			String argSpecifier = args[0];
+			if (Objects.equals(argSpecifier, "--config")) {
+				configFile = new File(args[1]);
 			} else {
 				System.err.println("Unknown argument: " + argSpecifier);
 				usage();
@@ -117,32 +66,41 @@ public final class Main {
 
 		// if user didn't specify a config file, check for default (or just go without config)
 		if (configFile == null) {
-			configFile = new File("./jig-config.json");
-			if (!configFile.canRead()) {
-				configFile = null;
-			}
-		} else {
-			if (!configFile.canRead()) {
-				System.err.println("Specified config file " + configFile.getAbsolutePath() + " cannot be read.");
-				usage();
-				System.exit(1);
-			}
+			configFile = new File("./jig-config.yaml");
+		}
+		if (!configFile.canRead()) {
+			System.err.println("Config file " + configFile.getAbsolutePath() + " cannot be read.");
+			usage();
+			System.exit(1);
 		}
 
-		ObjectMapper mapper = new ObjectMapper();
-
-		Map<String, Object> config = null;
-		if (configFile != null) {
-			config = mapper.readValue(configFile, Map.class);
-		}
+		ConfigurationReader config = new ConfigurationReader();
+		config.read(configFile);
 
 		// check arguments
 		List<String> errors = new ArrayList<>();
-		for (ModelCreator modeller : modellers) {
-			configureOneProcessor(mapper, config, errors, modeller);
+		for (Map.Entry<String, Object> reader : config.getReaderEntries().entrySet()) {
+			String processorName = reader.getKey();
+			Object o = findClass(processorName, "Reader");
+			ModelCreator modeller = (ModelCreator) o;
+			modellers.add(modeller);
+			config.configureOneProcessor(errors, modeller, "readers", reader.getKey());
 		}
-		for (CodeProducer producer : producers) {
-			configureOneProcessor(mapper, config, errors, producer);
+
+		if (modellers.size() == 0) {
+			errors.add("No readers specified in config");
+		}
+
+		for (Map.Entry<String, Object> reader : config.getWriterEntries().entrySet()) {
+			String processorName = reader.getKey();
+			Object o = findClass(processorName, "Writer");
+			CodeProducer producer = (CodeProducer) o;
+			producers.add(producer);
+			config.configureOneProcessor(errors, producer, "writers", reader.getKey());
+		}
+
+		if (producers.size() == 0) {
+			errors.add("No writers specified in config");
 		}
 
 		handleErrors(errors);
@@ -156,21 +114,6 @@ public final class Main {
 		}
 	}
 
-	private static void configureOneProcessor(ObjectMapper mapper, Map<String, Object> config, List<String> errors,
-	                                          ConfigurableProcessor processor) {
-		String label = findConfigLabel(processor.getClass().getName());
-		Class<?> optionsClass = processor.getOptionsClass();
-		Object configMap = null;
-		if (config != null) {
-			configMap = config.get(label);
-		}
-		if (configMap == null) {
-			configMap = new HashMap<String, Object>();
-		}
-		Object configObj = mapper.convertValue(configMap, optionsClass);
-
-		processor.acceptOptions(configObj, errors);
-	}
 
 	private static String findConfigLabel(String name) {
 		if (name.startsWith(JIG_COMMON_PACKAGE)) {

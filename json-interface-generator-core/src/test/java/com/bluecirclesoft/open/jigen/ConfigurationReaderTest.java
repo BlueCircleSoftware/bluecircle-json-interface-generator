@@ -1,0 +1,39 @@
+package com.bluecirclesoft.open.jigen;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+/**
+ * TODO document me
+ */
+public class ConfigurationReaderTest {
+
+	@Test
+	public void read() throws IOException {
+		InputStream yamlFile = ConfigurationReaderTest.class.getResourceAsStream("ConfigTest1.yaml");
+		assert yamlFile != null;
+		ConfigurationReader configurationReader = new ConfigurationReader();
+		configurationReader.read(yamlFile);
+		Map<String, Object> result1 = configurationReader.getMap();
+		Assert.assertTrue(result1.containsKey("readers"));
+		Assert.assertTrue(result1.containsKey("writers"));
+
+		Map<String, Object> readers = configurationReader.getReaderEntries();
+		Assert.assertTrue(readers.containsKey("jee7"));
+
+		List<String> errors = new ArrayList<>();
+		Jee7Processor jee7Processor = new Jee7Processor();
+		configurationReader.configureOneProcessor(errors, jee7Processor, "readers", "jee7");
+		Jee7Options options = jee7Processor.getOptions();
+
+		Assert.assertEquals(1, options.getPackages().size());
+		Assert.assertEquals("com.bluecirclesoft", options.getPackages().get(0));
+		Assert.assertEquals(true, options.isDefaultStringEnums());
+	}
+}

@@ -1,0 +1,7 @@
+readers:
+  jee7:
+    packages: [ "com.bluecirclesoft" ]
+    defaultStringEnums: true
+writers:
+  typescript:
+    outputFile: ./target/generated-typescript/propmgmt-interface.ts

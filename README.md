@@ -83,10 +83,6 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
                                 <argument>-cp</argument>
                                 <classpath/>
                                 <argument>com.bluecirclesoft.open.jigen.Main</argument>
-                                <argument>--input</argument>
-                                <argument>jee7</argument>
-                                <argument>--output</argument>
-                                <argument>typescript</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -103,11 +99,13 @@ To launch:
 
 ```
 java -cp ... com.bluecirclesoft.open.jigen.Main \
-    (--input|--output) <processor> <processor arg>... \
-    [ (--input|--output) <processor> <processor arg>... ] ...
+    [ --config <config file> ]
 ```
 
-Specifies a number of "input" processors to read and create a JSON model, and "output" processors to create output from the resulting model.
+Specifies a config file with a number of "input" processors to read and create a JSON model, and "output" processors to create output from 
+the resulting model.
+
+If the config file is not specified, the file defaults to ```./jig-config.yaml```
 
 The "input" processors are all run first, followed by the "output" processors.
 
@@ -121,51 +119,48 @@ processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --i
 Configuration is done through a JSON file. By default, this file is "jig-config.json" in the current directory, but the file can be 
 overridden by the --config option. The file has the format:
 
-```javascript
-{
-    "procesorClass1": {
-        ...options...
-    },
-    "procesorClass2": {
-        ...options...
-    },
-    ...
-}
+```yaml
+readers:
+  procesorClass1:
+    ...options...
+  ...
+writers:
+  procesorClass2:
+    ...options...
+  ...
 ```
 
 The processor class is either a fully qualified class name, or for builtin processors, an abbreviated spec based on the input/output name
  (for example, "jee7")
 
 Example:
-```javascript
-{
-  "jee7": {
-    "packages": [
-      "com.bluecirclesoft"
-    ]
-  },
-  "typescript": {
-    "outputFile": "myOutputFile.ts"
-  }
-}
+```yaml
+readers:
+  jee7:
+    packages:
+      - com.bluecirclesoft
+writers:
+  typescript:
+    outputFile: "./target/myOutput.ts"
 ```
-### JEE7 Reader ("--input jee7"):
 
-Option | Description
--------|------------
-packages | (required) Array of packages to recursively scan for JAX-RS annotations.
-classSubstitutions | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model.
-defaultStringEnums | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)
-includeSubclasses |  When modelling a class, also model its subclasses (default: true)
+### JEE7 Reader ("readers.jee7"):
+
+Option | Type | Description
+-------|------|------------
+packages | List\<String>| (required) Array of packages to recursively scan for JAX-RS annotations.
+classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model.
+defaultStringEnums | boolean | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)
+includeSubclasses | boolean | When modelling a class, also model its subclasses (default: true)
  
-### TypeScript Generator ("--output typescript"):
+### TypeScript Generator ("writers.typescript"):
 
-Option | Description
--------|------------
-outputFile | (required) The TypeScript file to generate (path will be created if necessary)
-stripCommonPackages | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
-produceImmutables | Produce immutable wrappers along with interfaces (default: false)
-nullIsUndefined | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
+Option | Type | Description
+-------|------|------------
+outputFile | String | (required) The TypeScript file to generate (path will be created if necessary)
+stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
+produceImmutables | boolean | Produce immutable wrappers along with interfaces (default: false)
+nullIsUndefined | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with
