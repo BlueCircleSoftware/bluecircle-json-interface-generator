@@ -17,6 +17,7 @@ package com.bluecirclesoft.open.jigen.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -142,7 +143,22 @@ public class Namespace implements Serializable {
 			top.setContainingNamespace(null);
 		}
 
+		// Sort namespaces for stability of output
+		top.sort();
+
 		return top;
+	}
+
+	/**
+	 * Sort all my sub-elements
+	 */
+	private void sort() {
+		namespaces.sort(Comparator.comparing(Namespace::getName));
+		endpoints.sort(Comparator.comparing(Endpoint::getId));
+		declarations.sort(Comparator.comparing(JToplevelType::getName));
+		for (Namespace subNamespace : namespaces) {
+			subNamespace.sort();
+		}
 	}
 
 	private void addEndpoint(Endpoint endpoint) {

@@ -18,10 +18,11 @@ package com.bluecirclesoft.open.jigen.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -59,7 +60,8 @@ public class JObject extends JToplevelType {
 
 	private List<JTypeVariable> typeVariables = new ArrayList<>();
 
-	private final LinkedHashMap<String, Field> fields = new LinkedHashMap<>();
+	// sort for stability of output
+	private final SortedMap<String, Field> fields = new TreeMap<>();
 
 	private String newObjectJson;
 

@@ -20,13 +20,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import com.bluecirclesoft.open.jigen.CodeProducer;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
+import com.bluecirclesoft.open.jigen.model.JToplevelType;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.Namespace;
@@ -257,6 +259,10 @@ public class Writer implements CodeProducer<Options> {
 			writer.line("export namespace " + namespace.getName() + " {");
 			writer.indentIn();
 		}
+
+		// sort namespaces for stability of output
+		List<? extends JToplevelType> declarations = toList(namespace.getDeclarations());
+		declarations.sort(Comparator.comparing(JToplevelType::getName));
 		for (JType type : namespace.getDeclarations()) {
 			type.accept(new TypeDeclarationProducer(this, writer, isProduceImmutables(), isTreatNullAsUndefined()));
 		}
@@ -269,6 +275,14 @@ public class Writer implements CodeProducer<Options> {
 			writer.line("}");
 		}
 
+	}
+
+	private List<JToplevelType> toList(Iterable<? extends JToplevelType> declarations) {
+		List<JToplevelType> result = new ArrayList<>();
+		for (JToplevelType i : declarations) {
+			result.add(i);
+		}
+		return result;
 	}
 
 	private void start() throws IOException {
