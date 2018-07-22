@@ -4,6 +4,16 @@ A utility to read your Java JAX-RS methods, and generate TypeScript interfaces a
 
 *THIS IS A WORK IN PROGRESS* - So far, this has only been used internally. Bugs, comments, suggestions? Please tell us!
 
+## Version
+
+```xml
+	<dependency>
+		<groupId>com.bluecirclesoft.open</groupId>
+		<artifactId>json-interface-generator</artifactId>
+		<version>0.20</version>
+	</dependency>
+```
+
 ## What does it do?
 
 It takes Java JAX-RS code like this:
@@ -52,13 +62,13 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-jee7-reader</artifactId>
-                <version>0.18</version>
+                <version>0.20</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-typescript-generator</artifactId>
-                <version>0.18</version>
+                <version>0.20</version>
                 <scope>test</scope>
             </dependency>
 	
@@ -116,7 +126,7 @@ processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --i
 
 ### Configuration
 
-Configuration is done through a JSON file. By default, this file is "jig-config.json" in the current directory, but the file can be 
+Configuration is done through a YAML file. By default, this file is "jig-config.yaml" in the current directory, but the file can be 
 overridden by the --config option. The file has the format:
 
 ```yaml
