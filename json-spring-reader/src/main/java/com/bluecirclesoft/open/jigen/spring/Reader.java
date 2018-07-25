@@ -267,10 +267,12 @@ public class Reader implements ModelCreator<Options> {
 
 		JType outType;
 		if (methodInfo.producer) {
-			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
+			JacksonTypeModeller modeller =
+					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
 			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
-			JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
+			JacksonTypeModeller modeller =
+					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
 			outType = modeller.readOneType(model, String.class);
 		}
 
@@ -287,7 +289,8 @@ public class Reader implements ModelCreator<Options> {
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(methodPath);
 			for (MethodParameter pathParam : parameters) {
-				JacksonTypeModeller modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, true, packageNames);
+				JacksonTypeModeller modeller =
+						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
 								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));

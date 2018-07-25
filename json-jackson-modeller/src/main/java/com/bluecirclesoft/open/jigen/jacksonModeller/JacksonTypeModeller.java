@@ -22,13 +22,11 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -37,9 +35,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,6 +176,8 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	 */
 	private final PriorityQueue<FixupQueueItem> typeFixups = new PriorityQueue<>();
 
+	private static final ReflectionsCache reflectionsCache = new ReflectionsCache();
+
 	private final Reflections subclassFinder;
 
 	private final ClassOverrideHandler classOverrides;
@@ -206,11 +203,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		this.packagesToScan = packagesToScan;
 
 		if (includeSubclasses) {
-			Set<URL> urls = new HashSet<>();
-			for (String p : packagesToScan) {
-				urls.addAll(ClasspathHelper.forPackage(p));
-			}
-			subclassFinder = new Reflections(new ConfigurationBuilder().setUrls(urls).setScanners(new SubTypesScanner()));
+			subclassFinder = reflectionsCache.getReflections(packagesToScan);
 		} else {
 			subclassFinder = null;
 		}
@@ -431,8 +424,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	}
 
 	private void enqueueSubclasses(Class<?> type) {
-		for (Object cl : subclassFinder.getSubTypesOf(type)) {
-			queueType(type);
+		if (subclassFinder != null) {
+			for (Object cl : subclassFinder.getSubTypesOf(type)) {
+				queueType(type);
+			}
 		}
 	}
 
