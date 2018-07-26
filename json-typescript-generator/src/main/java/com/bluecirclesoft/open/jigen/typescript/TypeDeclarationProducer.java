@@ -206,8 +206,15 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			typeVars = typeVarsBuilder.toString();
 		}
 
-		if (StringUtils.isNotBlank(intf.getNewObjectJson())) {
-
+		boolean hasMakeFunction = StringUtils.isNotBlank(intf.getNewObjectJson());
+		boolean hasCastFunction = intf.getTypeDiscriminatorField() != null;
+		boolean needsNamespace = hasMakeFunction || hasCastFunction;
+		if (needsNamespace) {
+			String nsLine = "export namespace " + interfaceLabel + " {";
+			writer.line(nsLine);
+			writer.indentIn();
+		}
+		if (hasMakeFunction) {
 			// Copy type variables from definition
 			String makeTypeVars;
 			int anglePos = definterfaceType.indexOf('<');
@@ -217,14 +224,21 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 				makeTypeVars = "";
 			}
 
-			String nsLine = "export namespace " + interfaceLabel + " {";
-			writer.line(nsLine);
-			writer.indentIn();
-			writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " { ");
+			writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " {");
 			writer.indentIn();
 			writer.line("return " + intf.getNewObjectJson() + ";");
 			writer.indentOut();
 			writer.line("}");
+		}
+		if (hasCastFunction) {
+			writer.line("export function is" + interfaceLabel + "(obj: any): obj is " + interfaceLabel + " {");
+			writer.indentIn();
+			writer.line("return typeof obj === \"object\" && obj[\"" + intf.getTypeDiscriminatorField() + "\"] === \"" +
+					intf.getTypeDiscriminatorValue() + "\";");
+			writer.indentOut();
+			writer.line("}");
+		}
+		if (needsNamespace) {
 			writer.indentOut();
 			writer.line("}");
 		}

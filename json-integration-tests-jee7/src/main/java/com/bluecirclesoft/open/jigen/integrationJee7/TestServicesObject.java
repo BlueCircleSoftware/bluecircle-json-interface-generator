@@ -42,6 +42,10 @@ import com.bluecirclesoft.open.jigen.integrationJee7.testPackage1.p11.ClassA;
 import com.bluecirclesoft.open.jigen.integrationJee7.testPackage1.p12.ClassB;
 import com.bluecirclesoft.open.jigen.integrationJee7.testPackage1.p12.ClassC;
 import com.bluecirclesoft.open.jigen.integrationJee7.testPackage2.EnumA;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Sub1;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Sub2;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Sub3;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Super;
 
 /**
  * Test services that consume/produce objects
@@ -204,6 +208,20 @@ public class TestServicesObject {
 		l.add(1);
 		l.add(3);
 		l.add(5);
+		result.setList(l);
+		return result;
+	}
+
+	@GET
+	@Path("/getGenericListOfSupers")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public GenericList<Super> getGenericListSupers() {
+		GenericList<Super> result = new GenericList<>();
+		List<Super> l = new ArrayList<>();
+		l.add(new Sub1());
+		l.add(new Sub2());
+		l.add(new Sub3());
 		result.setList(l);
 		return result;
 	}

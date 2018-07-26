@@ -425,8 +425,11 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private void enqueueSubclasses(Class<?> type) {
 		if (subclassFinder != null) {
-			for (Object cl : subclassFinder.getSubTypesOf(type)) {
-				queueType(type);
+			if (type != Object.class) {
+				Set<Class<?>> subtypes = subclassFinder.getSubTypesOf((Class<Object>) type);
+				for (Class<?> cl : subtypes) {
+					queueType(cl);
+				}
 			}
 		}
 	}

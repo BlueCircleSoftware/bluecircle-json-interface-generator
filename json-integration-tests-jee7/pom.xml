@@ -84,6 +84,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.bluecirclesoft.open</groupId>
+            <artifactId>json-interface-generator-annotations</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.zeroturnaround</groupId>
             <artifactId>zt-exec</artifactId>
             <version>1.9</version>

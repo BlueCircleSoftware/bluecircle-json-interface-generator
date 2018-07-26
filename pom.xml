@@ -27,6 +27,7 @@
     </description>
 
     <modules>
+        <module>json-interface-generator-annotations</module>
         <module>json-interface-generator-core</module>
         <module>json-jackson-modeller</module>
         <module>json-jee7-reader</module>
@@ -171,6 +172,11 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
                 <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bluecirclesoft.open</groupId>
+                <artifactId>json-interface-generator-annotations</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

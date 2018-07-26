@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/json-integration-tests-jee7/json-integration-tests-jee7.iml" filepath="$PROJECT_DIR$/json-integration-tests-jee7/json-integration-tests-jee7.iml" />
       <module fileurl="file://$PROJECT_DIR$/json-integration-tests-spring/json-integration-tests-spring.iml" filepath="$PROJECT_DIR$/json-integration-tests-spring/json-integration-tests-spring.iml" />
       <module fileurl="file://$PROJECT_DIR$/json-interface-generator.iml" filepath="$PROJECT_DIR$/json-interface-generator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/json-interface-generator-annotations/json-interface-generator-annotations.iml" filepath="$PROJECT_DIR$/json-interface-generator-annotations/json-interface-generator-annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/json-interface-generator-core/json-interface-generator-core.iml" filepath="$PROJECT_DIR$/json-interface-generator-core/json-interface-generator-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/json-jackson-modeller/json-jackson-modeller.iml" filepath="$PROJECT_DIR$/json-jackson-modeller/json-jackson-modeller.iml" />
       <module fileurl="file://$PROJECT_DIR$/json-jee7-reader/json-jee7-reader.iml" filepath="$PROJECT_DIR$/json-jee7-reader/json-jee7-reader.iml" />

@@ -26,6 +26,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bluecirclesoft.open.jigen.annotations.DiscriminatedBy;
+import com.bluecirclesoft.open.jigen.annotations.TypeDiscriminator;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
@@ -33,6 +35,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
@@ -57,7 +60,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	JsonObjectReader(JacksonTypeModeller jacksonTypeModeller, Class<?> clazz) {
 		this.jacksonTypeModeller = jacksonTypeModeller;
 		// make a stub type for this class
-		jObject = new JObject(clazz.getName());
+		jObject = new JObject(clazz.getName(), clazz);
 		// create a new instance, if possible
 		jObject.setNewObjectJson(createEmptyJsonFor(clazz));
 		// read through the type parameters, and see if we need to queue up any other classes for reading
@@ -124,9 +127,33 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		}
 		try {
 			ObjectMapper mapper = new ObjectMapper();
+			// sort for output stability
+			mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 			return mapper.writeValueAsString(newInstance);
 		} catch (JsonProcessingException e) {
 			log.warn("Error creating JSON for new " + clazz.getName() + "()", e);
+			return null;
+		}
+	}
+
+	/**
+	 * New up an instance of the class, and convert it to JSON
+	 *
+	 * @param clazz the class to consider
+	 * @return a JSON string, or {@code null} if the JSON could not be produced.
+	 */
+	private static String getTypeDiscriminatorValueFor(Class<?> clazz, BeanProperty property) {
+		Object newInstance;
+		try {
+			newInstance = clazz.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			log.warn("Error instantiating class " + clazz.getName(), e);
+			return null;
+		}
+		try {
+			return (String) property.getMember().getValue(newInstance);
+		} catch (Exception e) {
+			log.warn("Error retrieving value of type discriminator", e);
 			return null;
 		}
 	}
@@ -160,6 +187,15 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 		// declare property now
 		jObject.declareProperty(name);
+		if (annotatedThing.isAnnotationPresent(TypeDiscriminator.class)) {
+			TypeDiscriminator discriminator = annotatedThing.getAnnotation(TypeDiscriminator.class);
+			jObject.setTypeDiscriminatorField(name);
+			if (discriminator.discriminatedBy() == DiscriminatedBy.CLASS_NAME) {
+				jObject.setTypeDiscriminatorValue(jObject.getSourceClass().getName());
+			} else {
+				jObject.setTypeDiscriminatorValue(getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty));
+			}
+		}
 		// actually define property at fixup time
 		jacksonTypeModeller.addFixup(type, jType -> jObject.makeProperty(name, jType, required));
 		// queue this property's type for processing

@@ -65,8 +65,15 @@ public class JObject extends JToplevelType {
 
 	private String newObjectJson;
 
-	public JObject(String name) {
+	private String typeDiscriminatorField;
+
+	private String typeDiscriminatorValue;
+
+	private Class<?> sourceClass;
+
+	public JObject(String name, Class<?> sourceClass) {
 		this.name = name;
+		this.sourceClass = sourceClass;
 		JType.createdTypes.add(this);
 	}
 
@@ -145,5 +152,29 @@ public class JObject extends JToplevelType {
 	@Override
 	public boolean isConstructible() {
 		return newObjectJson != null;
+	}
+
+	public String getTypeDiscriminatorField() {
+		return typeDiscriminatorField;
+	}
+
+	public void setTypeDiscriminatorField(String typeDiscriminatorField) {
+		this.typeDiscriminatorField = typeDiscriminatorField;
+	}
+
+	public String getTypeDiscriminatorValue() {
+		return typeDiscriminatorValue;
+	}
+
+	public void setTypeDiscriminatorValue(String typeDiscriminatorValue) {
+		this.typeDiscriminatorValue = typeDiscriminatorValue;
+	}
+
+	public Class<?> getSourceClass() {
+		return sourceClass;
+	}
+
+	public void setSourceClass(Class<?> sourceClass) {
+		this.sourceClass = sourceClass;
 	}
 }
