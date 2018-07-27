@@ -127,7 +127,7 @@ public class TestServicesObject {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public com.bluecirclesoft.open.jigen.integrationJee7.testPackage2.ClassB getClassB() {
-		log.info("Inside getClassC");
+		log.info("Inside getClassB");
 		setCORSHeaders();
 
 		com.bluecirclesoft.open.jigen.integrationJee7.testPackage2.ClassA a1 =
@@ -212,11 +212,20 @@ public class TestServicesObject {
 		return result;
 	}
 
+	@OPTIONS
+	@Path("/getGenericListOfSupers")
+	public String getGenericListSupersOptions() {
+		setCORSHeaders();
+		return "";
+	}
+
 	@GET
 	@Path("/getGenericListOfSupers")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public GenericList<Super> getGenericListSupers() {
+		log.info("Inside getGenericListSupers");
+		setCORSHeaders();
 		GenericList<Super> result = new GenericList<>();
 		List<Super> l = new ArrayList<>();
 		l.add(new Sub1());

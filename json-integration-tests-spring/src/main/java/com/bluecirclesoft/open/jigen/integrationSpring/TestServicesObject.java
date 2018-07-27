@@ -114,7 +114,7 @@ public class TestServicesObject {
 	@GetMapping(path = "/getClassB", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody
 	com.bluecirclesoft.open.jigen.integrationSpring.testPackage2.ClassB getClassB() {
-		log.info("Inside getClassC");
+		log.info("Inside getClassB");
 		setCORSHeaders();
 
 		com.bluecirclesoft.open.jigen.integrationSpring.testPackage2.ClassA a1 =
@@ -160,6 +160,7 @@ public class TestServicesObject {
 	@GetMapping(path = "/getGenericListOfInt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody
 	GenericList<Integer> getGenericListOfInt() {
+		log.info("Inside getGenericListOfInt");
 		GenericList<Integer> result = new GenericList<>();
 		List<Integer> l = new ArrayList<>();
 		l.add(1);

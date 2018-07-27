@@ -285,16 +285,20 @@ describe("test TestServicesObject", () => {
     });
 
     // TODO figure out why this isn't working, and re-enable
-    // it("can handle subclasses", () => {
-    //     let result: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super> | undefined;
-    //     integrationJee7.TestServicesObject.getGenericListSupers(simpleHandler((s: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super>) => {
-    //         result = ck(s);
-    //     }));
-    //
-    //     expect(integrationJee7.testPackage3.Sub1.isSub1(ck(ck(result).list)[0])).toBeTruthy();
-    //     expect(integrationJee7.testPackage3.Sub2.isSub2(ck(ck(result).list)[1])).toBeTruthy();
-    //     expect(integrationJee7.testPackage3.Sub3.isSub3(ck(ck(result).list)[2])).toBeTruthy();
-    // })
+    it("can handle subclasses", () => {
+        console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/getGenericListSupers");
+        let result: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super> | undefined;
+
+        integrationJee7.TestServicesObject.getGenericListSupers(
+            simpleHandler(
+                (s: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super>) => {
+                    result = ck(s);
+                }));
+
+        expect(integrationJee7.testPackage3.Sub1.isSub1(ck(ck(result).list)[0])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub2.isSub2(ck(ck(result).list)[1])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub3.isSub3(ck(ck(result).list)[2])).toBeTruthy();
+    })
 });
 
 describe("test TestAllCombosTwoParameters", () => {

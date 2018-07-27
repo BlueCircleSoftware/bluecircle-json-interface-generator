@@ -21,7 +21,7 @@ module.exports = {
     output: {
         filename: 'target/bundle.js'
     }, // Enable sourcemaps for debugging webpack's output.
-    devtool: "source-map",
+    devtool: "inline-source-map",
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx', '']
     },
