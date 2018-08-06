@@ -10,7 +10,7 @@ A utility to read your Java JAX-RS methods, and generate TypeScript interfaces a
 	<dependency>
 		<groupId>com.bluecirclesoft.open</groupId>
 		<artifactId>json-interface-generator</artifactId>
-		<version>0.20</version>
+		<version>0.22</version>
 	</dependency>
 ```
 
@@ -62,7 +62,7 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-jee7-reader</artifactId>
-                <version>0.20</version>
+                <version>0.22</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
