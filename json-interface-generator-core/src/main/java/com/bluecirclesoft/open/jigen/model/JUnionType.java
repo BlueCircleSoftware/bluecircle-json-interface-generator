@@ -37,7 +37,7 @@ public class JUnionType extends JType {
 
 	@Override
 	public boolean needsWrapping() {
-		for (JType member : members) {
+		for (JType member : getMembers()) {
 			if (member.needsWrapping()) {
 				return true;
 			}
@@ -45,19 +45,23 @@ public class JUnionType extends JType {
 		return false;
 	}
 
-	public JUnionType getStripped() {
+	public JType getStripped() {
 		JUnionType newType = new JUnionType();
-		for (JType member : members) {
+		for (JType member : getMembers()) {
 			if (!(member instanceof JNull)) {
 				newType.getMembers().add(member);
 			}
 		}
-		return newType;
+		if (newType.getMembers().size() == 1) {
+			return newType.getMembers().get(0);
+		} else {
+			return newType;
+		}
 	}
 
 	@Override
 	public boolean canBeNull() {
-		for (JType member : members) {
+		for (JType member : getMembers()) {
 			if (member.canBeNull()) {
 				return true;
 			}
@@ -67,11 +71,30 @@ public class JUnionType extends JType {
 
 	@Override
 	public boolean canBeUndefined() {
-		for (JType member : members) {
+		for (JType member : getMembers()) {
 			if (member.canBeUndefined()) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public boolean hasTypeVariables() {
+		for (JType member : getMembers()) {
+			if (member.hasTypeVariables()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public List<JTypeVariable> getTypeVariables() {
+		List<JTypeVariable> result = new ArrayList<>();
+		for (JType member : getMembers()) {
+			result.addAll(member.getTypeVariables());
+		}
+		return result;
 	}
 }

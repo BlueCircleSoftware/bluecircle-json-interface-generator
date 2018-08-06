@@ -16,8 +16,12 @@
 
 package com.bluecirclesoft.open.jigen.typescript;
 
+import java.util.ArrayDeque;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,12 +56,15 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final boolean treatNullAsUndefined;
 
-	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable,
-	                               boolean treatNullAsUndefined) {
+	private final boolean useUnknown;
+
+	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable, boolean treatNullAsUndefined,
+	                               boolean useUnknown) {
 		this.writer = writer;
 		this.producer = typeScriptProducer;
 		this.produceImmutable = produceImmutable;
 		this.treatNullAsUndefined = treatNullAsUndefined;
+		this.useUnknown = useUnknown;
 	}
 
 	@Override
@@ -165,10 +172,24 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private void makeInterfaceDeclaration(JObject intf) {
 		String interfaceLabel = intf.getName();
-		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null));
+		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null, useUnknown));
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined, useUnknown);
 		writer.line();
-		String declLine = "export interface " + definterfaceType + " {";
-		writer.line(declLine);
+		StringBuilder declLine = new StringBuilder("export interface " + definterfaceType);
+		if (intf.getSuperclasses().size() > 0) {
+			declLine.append(" extends ");
+			boolean needsComma = false;
+			for (Map.Entry<String, JObject> entry : intf.getSuperclasses().entrySet()) {
+				if (needsComma) {
+					declLine.append(", ");
+				} else {
+					needsComma = true;
+				}
+				declLine.append(typeUsageProducer.visit(entry.getValue()));
+			}
+		}
+		declLine.append(" {");
+		writer.line(declLine.toString());
 		writer.indentIn();
 
 		// if we pass true here for treatNullAsUndefined, then we might get what seems like an extra
@@ -176,14 +197,33 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		//    doubleA?: string | null | undefined;
 		// where doubleA is specified as undefined by both the question mark and the type union. But
 		// if we don't, it can't propagate down to type parameters, etc.  So I'm okay with it.
-		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined);
 		for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
 			String makeOptional = "";
-			JType type = prop.getValue().getType();
-			if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
-				makeOptional = "?";
+			String typeString;
+			if (Objects.equals(intf.getTypeDiscriminatorField(), prop.getKey())) {
+				// is type discriminator - type will be the values
+				Set<String> values = collectTypeValues(intf);
+				StringBuilder typeBuilder = new StringBuilder();
+				boolean needsOr = false;
+				for (String value : values) {
+					if (needsOr) {
+						typeBuilder.append(" | ");
+					} else {
+						needsOr = true;
+					}
+					typeBuilder.append('"');
+					typeBuilder.append(value);
+					typeBuilder.append('"');
+				}
+				typeString = typeBuilder.toString();
+			} else {
+				// otherwise normal field
+				JType type = prop.getValue().getType();
+				if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
+					makeOptional = "?";
+				}
+				typeString = type.accept(typeUsageProducer);
 			}
-			String typeString = type.accept(typeUsageProducer);
 			writer.line(prop.getKey() + makeOptional + ": " + typeString + ";");
 		}
 		writer.indentOut();
@@ -231,7 +271,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line("}");
 		}
 		if (hasCastFunction) {
-			writer.line("export function is" + interfaceLabel + "(obj: any): obj is " + interfaceLabel + " {");
+			writer.line("export function isInstance(obj: any): obj is " + interfaceLabel + " {");
 			writer.indentIn();
 			writer.line("return typeof obj === \"object\" && obj[\"" + intf.getTypeDiscriminatorField() + "\"] === \"" +
 					intf.getTypeDiscriminatorValue() + "\";");
@@ -243,21 +283,22 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line("}");
 		}
 
-		if (produceImmutable && canBeImmutable(intf)) {
-			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm"));
-			declLine = "export class " + immutableInterfaceType + " {";
-			writer.line(declLine);
+		if (produceImmutable) {
+			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm", useUnknown));
+			declLine = new StringBuilder("export class " + immutableInterfaceType + " {");
+			writer.line(declLine.toString());
 			writer.indentIn();
 
-			String usinterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.USAGE, null));
-			writer.line("private $base : jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">;");
-			writer.line("public constructor(base: jsonInterfaceGenerator.DirectWrapper<" + usinterfaceType + ">) {");
+			String usinterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.USAGE, null, useUnknown));
+			writer.line("private _delegate: jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">;");
+			writer.line("public constructor(base: jsonInterfaceGenerator.ChangeRoot<jsonInterfaceGenerator.UnknownType>, path?: " +
+					"jsonInterfaceGenerator" + ".SelectorList) {");
 			writer.indentIn();
-			writer.line("this.$base = base;");
+			writer.line("this._delegate = new jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">(base, path);");
 			writer.indentOut();
 			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
-				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined);
+				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined, useUnknown);
 				prop.getValue().getType().accept(accessorProducer);
 			}
 			writer.indentOut();
@@ -265,12 +306,25 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 	}
 
-	private boolean canBeImmutable(JObject intf) {
-		// cannot deal with type variables correctly
-		if (!intf.getTypeVariables().isEmpty()) {
-			return false;
+	private Set<String> collectTypeValues(JObject intf) {
+		ArrayDeque<JObject> queue = new ArrayDeque<>();
+		Set<String> result = new LinkedHashSet<>();
+		queue.add(intf);
+		while (!queue.isEmpty()) {
+			JObject obj = queue.pollFirst();
+			if (obj == null) {
+				throw new RuntimeException("Internal error: null subclass in subtree of" + obj);
+			}
+			String type = obj.getTypeDiscriminatorValue();
+			if (StringUtils.isBlank(type)) {
+				throw new RuntimeException("Type discriminator value is null in " + obj);
+			}
+			if (result.contains(type)) {
+				throw new RuntimeException("Duplicate type discriminator in subtree of " + intf);
+			}
+			result.add(type);
+			queue.addAll(obj.getSubclasses().values());
 		}
-		return true;
+		return result;
 	}
-
 }

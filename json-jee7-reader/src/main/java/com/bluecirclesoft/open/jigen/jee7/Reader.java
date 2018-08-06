@@ -123,8 +123,6 @@ public class Reader implements ModelCreator<Options> {
 			}
 		}
 
-		model = new Model();
-
 		for (MethodInfo method : annotatedMethods.values()) {
 			try {
 				readMethod(method);
@@ -340,14 +338,14 @@ public class Reader implements ModelCreator<Options> {
 	}
 
 	@Override
-	public Model createModel() {
+	public void model(Model model) {
 		try {
+			this.model = model;
 			defaultEnumType = options.isDefaultStringEnums() ? JEnum.EnumType.STRING : JEnum.EnumType.NUMERIC;
 			String[] packArr = options.getPackages().toArray(new String[0]);
 			classOverrideHandler.ingestOverrides(options.getClassSubstitutions());
 			this.modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packArr);
 			createModel(packArr);
-			return model;
 		} catch (Throwable t) {
 			logger.error("Caught exception creating model: ", t);
 			throw t;

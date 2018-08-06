@@ -150,8 +150,6 @@ public class Reader implements ModelCreator<Options> {
 			detector.addMethod(method.method, method.springRequestInfo.methods);
 		}
 
-		model = new Model();
-
 		for (MethodInfo method : annotatedMethods.values()) {
 			try {
 				readMethod(method, detector);
@@ -499,12 +497,12 @@ public class Reader implements ModelCreator<Options> {
 	}
 
 	@Override
-	public Model createModel() {
+	public void model(Model model) {
 		assert options != null;
 		assert options.getPackages() != null;
 
+		this.model = model;
 		createModel(options.getPackages().toArray(new String[0]));
-		return model;
 	}
 
 	@Override

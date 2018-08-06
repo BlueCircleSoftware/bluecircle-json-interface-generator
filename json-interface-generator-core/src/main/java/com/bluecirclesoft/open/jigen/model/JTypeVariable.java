@@ -57,11 +57,8 @@ public class JTypeVariable extends JType {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("name", name)
-				.append("intersectionBounds", intersectionBounds)
-				.toString();
+		return new ToStringBuilder(this).append("name", name).append("intersectionBounds", intersectionBounds).toString();
 	}
-
 
 	@Override
 	public boolean needsWrapping() {

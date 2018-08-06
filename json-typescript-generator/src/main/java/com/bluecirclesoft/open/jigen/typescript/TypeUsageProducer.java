@@ -44,19 +44,22 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	private final boolean treatNullAsUndefined;
 
+	private final boolean useUnknown;
+
 	public enum WillBeSpecialized {
 		YES,
 		NO
 	}
 
-	public TypeUsageProducer(String immutableSuffix, boolean treatNullAsUndefined) {
-		this(immutableSuffix, WillBeSpecialized.NO, treatNullAsUndefined);
+	public TypeUsageProducer(String immutableSuffix, boolean treatNullAsUndefined, boolean useUnknown) {
+		this(immutableSuffix, WillBeSpecialized.NO, treatNullAsUndefined, useUnknown);
 	}
 
-	public TypeUsageProducer(String immutableSuffix, WillBeSpecialized isSpecializing, boolean treatNullAsUndefined) {
+	public TypeUsageProducer(String immutableSuffix, WillBeSpecialized isSpecializing, boolean treatNullAsUndefined, boolean useUnknown) {
 		this.immutableSuffix = immutableSuffix;
 		this.isSpecializing = isSpecializing;
 		this.treatNullAsUndefined = treatNullAsUndefined;
+		this.useUnknown = useUnknown;
 	}
 
 	@Override
@@ -83,7 +86,7 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 					} else {
 						needsComma = true;
 					}
-					sb.append("any");
+					sb.append(useUnknown ? "unknown" : "any");
 				}
 				sb.append(">");
 				return sb.toString();
@@ -93,7 +96,7 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JAny jAny) {
-		return "any";
+		return useUnknown ? "unknown" : "any";
 	}
 
 	@Override
@@ -129,7 +132,8 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JSpecialization jSpecialization) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(new TypeUsageProducer(immutableSuffix, WillBeSpecialized.YES, treatNullAsUndefined)));
+		sb.append(jSpecialization.getBase()
+				.accept(new TypeUsageProducer(immutableSuffix, WillBeSpecialized.YES, treatNullAsUndefined, useUnknown)));
 		sb.append("<");
 		boolean needsComma = false;
 		for (JType param : jSpecialization.getParameters()) {
@@ -181,7 +185,7 @@ class TypeUsageProducer implements JTypeVisitor<String> {
 		// TypeScript doesn't have the concept of wildcard types, or of lower bounds. So I'll just convert the upper bounds and leave
 		// the rest, on the theory that it's better than nothing
 		if (jWildcard.getUpperBounds().isEmpty()) {
-			return "any";
+			return useUnknown ? "unknown" : "any";
 		} else {
 			StringBuilder sb = new StringBuilder();
 			for (JType bound : jWildcard.getUpperBounds()) {

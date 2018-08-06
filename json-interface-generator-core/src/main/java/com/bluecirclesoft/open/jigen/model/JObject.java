@@ -71,6 +71,10 @@ public class JObject extends JToplevelType {
 
 	private Class<?> sourceClass;
 
+	private final SortedMap<String, JObject> superclasses = new TreeMap<>();
+
+	private final SortedMap<String, JObject> subclasses = new TreeMap<>();
+
 	public JObject(String name, Class<?> sourceClass) {
 		this.name = name;
 		this.sourceClass = sourceClass;
@@ -176,5 +180,22 @@ public class JObject extends JToplevelType {
 
 	public void setSourceClass(Class<?> sourceClass) {
 		this.sourceClass = sourceClass;
+	}
+
+	@Override
+	public boolean hasTypeVariables() {
+		return typeVariables.size() > 0;
+	}
+
+	public SortedMap<String, Field> getFields() {
+		return fields;
+	}
+
+	public SortedMap<String, JObject> getSuperclasses() {
+		return superclasses;
+	}
+
+	public SortedMap<String, JObject> getSubclasses() {
+		return subclasses;
 	}
 }

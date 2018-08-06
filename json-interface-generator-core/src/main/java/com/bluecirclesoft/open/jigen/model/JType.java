@@ -48,4 +48,12 @@ abstract public class JType implements Serializable {
 	public boolean canBeUndefined() {
 		return false;
 	}
+
+	public boolean hasTypeVariables() {
+		return false;
+	}
+
+	public List<JTypeVariable> getTypeVariables() {
+		return new ArrayList<>();
+	}
 }

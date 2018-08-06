@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.function.Function;
 
 /**
  * TODO document me
@@ -73,7 +74,7 @@ class OutputHandler {
 		writer.close();
 	}
 
-	void writeResource(String resourcePath) {
+	void writeResource(String resourcePath, Function<String, String> substitution) {
 		InputStream fileResource = OutputHandler.class.getResourceAsStream(resourcePath);
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileResource))) {
 			while (true) {
@@ -81,7 +82,7 @@ class OutputHandler {
 				if (line == null) {
 					break;
 				}
-				line(line);
+				line(substitution.apply(line));
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

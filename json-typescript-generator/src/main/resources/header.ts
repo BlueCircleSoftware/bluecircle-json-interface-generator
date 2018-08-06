@@ -16,6 +16,8 @@
 
 export namespace jsonInterfaceGenerator {
 
+    export type UnknownType = unknown;
+
     /**
      * Generic options for an AJAX call.  I try to be ajax-lib-agnostic here, but my main dev library is jQuery.
      * TODO more testing to see if this makes sense for, e.g., Axios
@@ -104,7 +106,7 @@ export namespace jsonInterfaceGenerator {
     /**
      * A type for a function that will handle AJAX calls
      */
-    type AjaxInvoker = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => void;
+    type AjaxInvoker = (url: string, method: string, data: UnknownType, isBodyParam: boolean, options: JsonOptions<UnknownType>) => void;
 
     /**
      * The ajax caller used by generated code.
@@ -130,208 +132,212 @@ export namespace jsonInterfaceGenerator {
         [index: number]: EnumType;
     }
 
-    export enum WriteOption {
-        WRITE,
-        READ_FILL,
+    export type Selector = string | number;
+
+    export type SelectorList = Array<Selector>;
+
+    export function join(selector: SelectorList, next: Selector) {
+        let result = selector.slice();
+        result.push(next);
+        return result;
     }
 
-    /**
-     * Thing that collects changes - may be a ChangeRoot, which has a list of versions of the tree
-     */
-    export abstract class ChangeCollector<Key> {
-
-        public abstract get(key: Key): any;
-
-        public abstract set(key: Key, val: any): void;
+    export interface ChangeWatcher<T> {
+        onChange: () => void;
     }
 
-    export abstract class DirectWrapper<Obj, K = keyof Obj> extends ChangeCollector<K> {
+    interface Mapish<V> {
+        [key: string]: V;
 
-        public abstract getObj(write: WriteOption): Obj;
+        [index: number]: V;
     }
 
-    /**
-     * A "change root" - contains a list of changes to an object/array
-     */
-    export class ChangeRoot<Obj> extends DirectWrapper<Obj> {
-        private l: Obj[] = [];
-        private readonly factory: () => Obj;
+    interface WatcherTree {
+        watchers: ChangeWatcher<UnknownType>[];
+        children: Mapish<WatcherTree>;
+    }
 
-        public constructor(initial: Obj | (() => Obj)) {
-            super();
-            if (typeof initial === "function") {
-                this.factory = initial;
+    export class ChangeRoot<T> {
+        private _history: T[];
+
+        private _watchers: WatcherTree = {
+            watchers: [],
+            children: {},
+        };
+
+        public constructor(start: T) {
+            this._history = [start];
+        }
+
+        public get current(): Readonly<T> {
+            return this._history[0];
+        }
+
+        public get history(): Readonly<T[]> {
+            return this._history;
+        }
+
+        public watch(selector: SelectorList, watcher: ChangeWatcher<UnknownType>) {
+            let lastChild = this._watchers;
+            for (const elem of selector) {
+                let child = lastChild.children[elem];
+                if (!child) {
+                    child = {watchers: [], children: {}};
+                    lastChild.children[elem] = child;
+                }
+            }
+            let lastWatchers = lastChild.watchers;
+            if (lastWatchers.indexOf(watcher) < 0) {
+                lastWatchers.push(watcher);
+            }
+        }
+
+        public unwatch(selector: SelectorList, watcher: ChangeWatcher<UnknownType>) {
+            let lastChild = this._watchers;
+            for (const elem of selector) {
+                let child = lastChild.children[elem];
+                if (!child) {
+                    child = {watchers: [], children: {}};
+                    lastChild.children[elem] = child;
+                }
+            }
+            lastChild.watchers = lastChild.watchers.filter(elem => elem !== watcher);
+        }
+
+        public getVal(selector: SelectorList): UnknownType {
+            let current = this.current;
+            for (const elem of selector) {
+                if (current === undefined || current === null) {
+                    throw new Error(current + " encountered at " + elem + " in path " + selector);
+                }
+                current = (current as any)[elem];
+            }
+            return current;
+        }
+
+        public setVal(selector: SelectorList, newVal: UnknownType): void {
+            // part 1: clone tree up until change point
+            let lastObj: UnknownType;
+
+            lastObj = ChangeRoot.clone(this.current);
+            this._history.unshift(lastObj as T);
+
+            for (let i = 0; i < selector.length - 1; i++) {
+                const elem = selector[i];
+                const cl = ChangeRoot.clone((lastObj as any)[elem]);
+                (lastObj as any)[elem] = cl;
+                lastObj = cl;
+            }
+
+            if (selector.length > 0) {
+                (lastObj as any)[selector[selector.length - 1]] = newVal;
+            }
+
+            // part 2: notify watchers
+            let lastWatchers = this._watchers;
+            for (const elem of selector) {
+                if (!lastWatchers) {
+                    return;
+                }
+                for (const watcher of lastWatchers.watchers) {
+                    watcher.onChange();
+                }
+                lastWatchers = lastWatchers.children[elem];
+            }
+            this.notifyRestOfWatchers(lastWatchers);
+        }
+
+        private notifyRestOfWatchers(watchers: WatcherTree): void {
+            if (watchers) {
+                for (const watcher of watchers.watchers) {
+                    watcher.onChange();
+                }
+                for (const child of Object.getOwnPropertyNames(watchers.children)) {
+                    this.notifyRestOfWatchers(watchers.children[child]);
+                }
+            }
+        }
+
+        private static clone<U>(val: U): U {
+            if (typeof val === "object") {
+                if (Array.isArray(val)) {
+                    return (val as any).slice();
+                } else {
+                    return {...(val as any)};
+                }
             } else {
-                this.factory = () => initial;
+                return val;
             }
-        }
-
-        public getHistory(index: number): Obj {
-            return this.l[index];
-        }
-
-        public getHistorySize(): number {
-            return this.l.length;
-        }
-
-        public getCurrent(): Obj {
-            return this.getObj(WriteOption.READ_FILL);
-        }
-
-        public getObj(write: WriteOption): Obj {
-            let cur: Obj;
-            switch (write) {
-                case WriteOption.WRITE:
-                    if (this.l.length === 0) {
-                        cur = this.factory();
-                    } else {
-                        cur = this.l[this.l.length - 1];
-                    }
-                    let nxt: Obj;
-                    if (typeof cur === "object") {
-                        nxt = (Object as any).assign({}, cur);
-                    } else {
-                        nxt = (cur as any[]).slice() as any as Obj;
-                    }
-                    this.l.push(nxt);
-                    return nxt;
-                case WriteOption.READ_FILL:
-                    if (this.l.length === 0) {
-                        cur = this.factory();
-                        this.l.push(cur);
-                    } else {
-                        cur = this.l[this.l.length - 1];
-                    }
-                    return cur;
-                default:
-                    throw new Error("Unhandled " + write);
-            }
-        }
-
-        public get<K extends keyof Obj>(key: K): Obj[K] {
-            return this.getObj(WriteOption.READ_FILL)[key];
-        }
-
-        public set<K extends keyof Obj>(key: K, val: Obj[K]): void {
-            this.getObj(WriteOption.WRITE)[key] = val;
         }
     }
 
-    // wrapper to build descendants
-    export class ObjectWrapper<T> extends DirectWrapper<T> {
-        private parent: DirectWrapper<any>;
-        private readonly myIndex: string | number;
-        private readonly factory: () => T;
+    export class ChangeWrapper<T> {
+        private _root: ChangeRoot<UnknownType>;
+        private _selector: SelectorList;
+        private _extensionCache: { [key: string]: SelectorList } = {};
 
-        public constructor(parent: DirectWrapper<any>, myIndex: string | number, factory: () => T) {
-            super();
-            this.parent = parent;
-            this.myIndex = myIndex;
-            this.factory = factory;
+        public constructor(root: jsonInterfaceGenerator.ChangeRoot<UnknownType>, selector?: jsonInterfaceGenerator.SelectorList) {
+            this._root = root;
+            this._selector = selector ? selector : [];
         }
 
-        public getObj(write: WriteOption): T {
-            const parentObj = this.parent.getObj(write);
-            let myObj = parentObj[this.myIndex];
+        public makeChild<U>(next: Selector): ChangeWrapper<U> {
+            return new ChangeWrapper<U>(this._root, this.extend(next));
+        }
 
-            switch (write) {
-                case WriteOption.WRITE:
-                case WriteOption.READ_FILL:
-                    if (myObj === undefined) {
-                        myObj = this.factory();
-                        parentObj[this.myIndex] = myObj;
-                    }
-                    return myObj;
-                default:
-                    throw new Error("Unhandled " + write);
+        public extend(next: Selector): SelectorList {
+            if (this._extensionCache.hasOwnProperty(next)) {
+                return this._extensionCache[next];
+            } else {
+                let nextPath = this._selector.slice();
+                nextPath.push(next);
+                this._extensionCache[next] = nextPath;
+                return nextPath;
             }
         }
 
-        public get<K extends keyof T>(key: K): T[K] {
-            return this.getObj(WriteOption.READ_FILL)[key];
+        public get(): Readonly<T> {
+            return this._root.getVal(this._selector) as T;
         }
 
-        public set<K extends keyof T>(key: K, val: T[K]): void {
-            this.getObj(WriteOption.WRITE)[key] = val;
-        }
-    }
-
-    export class OLeafAcc<DataType> extends ChangeCollector<keyof DataType> {
-        private parent: ObjectWrapper<DataType>;
-
-        public constructor(parent: ObjectWrapper<DataType>) {
-            super();
-            this.parent = parent;
+        public get root(): ChangeRoot<UnknownType> {
+            return this._root;
         }
 
-        public get<K extends keyof DataType>(key: K): DataType[K] {
-            return this.parent.getObj(WriteOption.READ_FILL)[key];
+        public set(newVal: T): void {
+            this._root.setVal(this._selector, newVal);
         }
 
-        public set<K extends keyof DataType>(key: K, val: DataType[K]): void {
-            this.parent.getObj(WriteOption.WRITE)[key] = val;
-        }
-    }
-
-    export class ArrayWrapper<T> extends DirectWrapper<T[], number> {
-        private parent: DirectWrapper<any, string | number>;
-        private readonly myIndex: string | number;
-        private readonly factory: () => T[];
-
-        public constructor(parent: DirectWrapper<any, string | number>, myIndex: string | number, factory: () => T[]) {
-            super();
-            this.parent = parent;
-            this.myIndex = myIndex;
-            this.factory = factory;
+        public getSub<U>(next: Selector): Readonly<U> {
+            return this._root.getVal(this.extend(next)) as U;
         }
 
-        public getObj(write: WriteOption): T[] {
-            const parentObj = this.parent.getObj(write);
-            let myObj = parentObj[this.myIndex];
-
-            switch (write) {
-                case WriteOption.WRITE:
-                case WriteOption.READ_FILL:
-                    if (myObj === undefined) {
-                        myObj = this.factory();
-                        parentObj[this.myIndex] = myObj;
-                    }
-                    return myObj;
-                default:
-                    throw new Error("Unhandled " + write);
-            }
+        public setSub(next: Selector, newVal: UnknownType): void {
+            this._root.setVal(this.extend(next), newVal);
         }
 
-        public get(key: number): T {
-            return (this.getObj(WriteOption.READ_FILL) as any as T[])[key];
+        public watch(watcher: ChangeWatcher<T>): void {
+            this._root.watch(this._selector, watcher);
         }
 
-        public set(key: number, val: T): void {
-            (this.getObj(WriteOption.WRITE) as any as T[])[key] = val;
-        }
-
-        public toArray(): T[] {
-            return this.getObj(WriteOption.READ_FILL) as any as T[];
-        }
-
-        public fromArray(newArray: T[]): void {
-            const arr = this.getObj(WriteOption.WRITE) as any as T[];
-            arr.length = 0;
-            arr.push(...newArray);
+        public unwatch(watcher: ChangeWatcher<T>): void {
+            this._root.unwatch(this._selector, watcher);
         }
     }
 
-    export class WrappedElementArrayWrapper<DataType, WrapperType> {
-        private readonly parent: ArrayWrapper<DataType>;
-        private readonly leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType;
+    export class PrimitiveArrayWrapper<T> {
+        private _delegate: jsonInterfaceGenerator.ChangeWrapper<T[]>;
 
-        public constructor(parent: ArrayWrapper<DataType>, leafWrapper: (parent: ArrayWrapper<DataType>, index: number) => WrapperType) {
-            this.parent = parent;
-            this.leafWrapper = leafWrapper;
+        public constructor(base: jsonInterfaceGenerator.ChangeRoot<UnknownType>, path: jsonInterfaceGenerator.SelectorList) {
+            this._delegate = new jsonInterfaceGenerator.ChangeWrapper<T[]>(base, path);
         }
 
-        public get(key: number): WrapperType {
-            return this.leafWrapper(this.parent, key);
+        public get(index: number): Readonly<T> {
+            return this._delegate.getSub(index);
+        }
+
+        public set(index: number, newVal: T): void {
+            return this._delegate.setSub(index, newVal);
         }
     }
 

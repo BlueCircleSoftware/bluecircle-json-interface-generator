@@ -18,10 +18,13 @@ package com.bluecirclesoft.open.jigen.model;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
@@ -90,8 +93,41 @@ public class Model implements Serializable {
 	public Endpoint getEndpoint(String name) {
 		Endpoint endpoint = endpoints.get(name);
 		if (endpoint == null) {
-			throw new RuntimeException("No enpoint found named " + name);
+			throw new RuntimeException("No endpoint found named " + name);
 		}
 		return endpoint;
+	}
+
+	private void withAllSuperclasses(Class<?> startClass, Consumer<Class<?>> consumer) {
+		ArrayDeque<Class<?>> queue = new ArrayDeque<>();
+		queue.add(startClass.getSuperclass());
+		Collections.addAll(queue, startClass.getInterfaces());
+		while (!queue.isEmpty()) {
+			Class<?> currentClass = queue.pollFirst();
+			if (currentClass != null) {
+				consumer.accept(currentClass);
+				queue.add(currentClass.getSuperclass());
+				Collections.addAll(queue, currentClass.getInterfaces());
+			}
+		}
+	}
+
+	public void doGlobalCleanups() {
+		for (Map.Entry<Type, JType> entry : interfaces.entrySet()) {
+			if (entry.getValue() instanceof JObject) {
+				JObject jSub = (JObject) entry.getValue();
+				Class<?> startClass = (Class<?>) entry.getKey();
+				Class<?> testClass = startClass.getSuperclass();
+				while (testClass != Object.class) {
+					if (interfaces.containsKey(testClass)) {
+						JObject jSuper = (JObject) interfaces.get(testClass);
+						jSuper.getSubclasses().put(startClass.getName(), jSub);
+						jSub.getSuperclasses().put(testClass.getName(), jSuper);
+						break;
+					}
+					testClass = testClass.getSuperclass();
+				}
+			}
+		}
 	}
 }

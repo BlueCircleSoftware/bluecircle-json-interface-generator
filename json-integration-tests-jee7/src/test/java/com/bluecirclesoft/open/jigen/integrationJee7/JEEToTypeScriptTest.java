@@ -81,7 +81,9 @@ public class JEEToTypeScriptTest {
 		List<String> errors = new ArrayList<>();
 		modeller.acceptOptions(makeInputOptions("com.bluecirclesoft"), errors);
 		Assert.assertEquals(0, errors.size());
-		Model model = modeller.createModel();
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
 
 		// Create typescript
 		Writer outputTypeScript = new Writer();
@@ -103,6 +105,7 @@ public class JEEToTypeScriptTest {
 	private com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
 		com.bluecirclesoft.open.jigen.typescript.Options options = new com.bluecirclesoft.open.jigen.typescript.Options();
 		options.setProduceImmutables(true);
+		options.setUseUnknown(true);
 		options.setOutputFile(s);
 		return options;
 	}

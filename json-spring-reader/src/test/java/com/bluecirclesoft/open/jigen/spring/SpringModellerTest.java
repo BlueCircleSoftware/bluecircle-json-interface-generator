@@ -49,7 +49,9 @@ public class SpringModellerTest {
 		List<String> errors = new ArrayList<>();
 		modeller.acceptOptions(options, errors);
 		Assert.assertEquals(0, errors.size());
-		Model model = modeller.createModel();
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
 
 		Assert.assertEquals(5, sizeof(model.getEndpoints()));
 

@@ -16,7 +16,6 @@
 
 package com.bluecirclesoft.open.jigen.jee7;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +48,9 @@ public class JavaEEModellerTest {
 		List<String> errors = new ArrayList<>();
 		modeller.acceptOptions(options, errors);
 		Assert.assertEquals(0, errors.size());
-		Model model = modeller.createModel();
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
 
 		Assert.assertEquals(5, sizeof(model.getEndpoints()));
 

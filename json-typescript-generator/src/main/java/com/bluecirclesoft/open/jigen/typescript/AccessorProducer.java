@@ -49,63 +49,87 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	private final boolean treatNullAsUndefined;
 
-	public AccessorProducer(String name, OutputHandler writer, boolean treatNullAsUndefined) {
+	private final boolean useUnknown;
+
+	public String capitalize(String variableName) {
+		return variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
+	}
+
+	private String writeTypeVariables(JType jType, TypeUsageProducer tup) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<");
+		boolean needsComma = false;
+		for (JType param : jType.getTypeVariables()) {
+			if (needsComma) {
+				sb.append(", ");
+			} else {
+				needsComma = true;
+			}
+			sb.append(param.accept(tup));
+		}
+		sb.append(">");
+		return sb.toString();
+	}
+
+	private String writeSpecializedTypes(JSpecialization jSpecialization, TypeUsageProducer tup) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<");
+		boolean needsComma = false;
+		for (JType param : jSpecialization.getParameters()) {
+			if (needsComma) {
+				sb.append(", ");
+			} else {
+				needsComma = true;
+			}
+			sb.append(param.accept(tup));
+		}
+		sb.append(">");
+		return sb.toString();
+	}
+
+	public AccessorProducer(String name, OutputHandler writer, boolean treatNullAsUndefined, boolean useUnknown) {
 		this.name = name;
 		this.writer = writer;
 		this.treatNullAsUndefined = treatNullAsUndefined;
+		this.useUnknown = useUnknown;
 	}
 
 	private void primitiveAccessor(String type) {
-		writer.line("public get " + name + "() : " + type + " {");
+		writer.line("public get " + name + "() : Readonly<" + type + "> {");
 		writer.indentIn();
-		writer.line("return this.$base.get(\"" + name + "\");");
+		writer.line("return this._delegate.getSub(\"" + name + "\") as Readonly<" + type + ">;");
 		writer.indentOut();
 		writer.line("}");
-		writer.line("public set " + name + "(v : " + type + ") {");
+		writer.line("public set " + name + "(v : Readonly<" + type + ">) {");
 		writer.indentIn();
-		writer.line("this.$base.set(\"" + name + "\", v);");
+		writer.line("this._delegate.setSub(\"" + name + "\", v);");
 		writer.indentOut();
 		writer.line("}");
 	}
 
-	private void objectAccessor(String type) {
-		writer.line("public get " + name + "() : " + type + "$Imm {");
+	private void objectAccessor(String type, String variables) {
+		writer.line("public get " + name + "() : " + type + "$Imm " + variables + " {");
 		writer.indentIn();
-		writer.line(
-				"return new " + type + "$Imm(new jsonInterfaceGenerator.ObjectWrapper<" + type + ">(this.$base, \"" + name + "\", " + type +
-						".make));");
+		writer.line("return new " + type + "$Imm" + variables + "(this._delegate.root, this._delegate.extend(\"" + name + "\"));");
 		writer.indentOut();
 		writer.line("}");
 	}
 
 	private void primitiveArrayAccessor(String type) {
-		writer.line("public get " + name + "() : jsonInterfaceGenerator.ArrayWrapper<" + type + "> {");
+		writer.line("public get " + name + "() : jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + "> {");
 		writer.indentIn();
-		writer.line("return new jsonInterfaceGenerator.ArrayWrapper<" + type + ">(this.$base, \"" + name + "\", () => []);");
+		writer.line("return new jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + ">(this._delegate.root, this._delegate.extend(\"" +
+				name + "\"));");
 		writer.indentOut();
 		writer.line("}");
 	}
 
 	private void objectArrayAccessor(String intfType, String wrapperType) {
+		writer.line("public get " + name + "(): jsonInterfaceGenerator.PrimitiveArrayWrapper<" + intfType + "> {");
+		writer.indentIn();
 		writer.line(
-				"public get " + name + "(): jsonInterfaceGenerator.WrappedElementArrayWrapper<" + intfType + ", " + wrapperType + "> {");
-		writer.indentIn();
-		writer.line("let newLeaf = new jsonInterfaceGenerator.ArrayWrapper<" + intfType + ">(this.$base, \"" + name + "\", () => {");
-		writer.indentIn();
-		writer.line("return [];");
-		writer.indentOut();
-		writer.line("});");
-		writer.line("return new jsonInterfaceGenerator.WrappedElementArrayWrapper<" + intfType + ", " + wrapperType +
-				">(newLeaf, (parent: jsonInterfaceGenerator.ArrayWrapper<" + intfType + ">, index: number) => {");
-		writer.indentIn();
-		writer.line("let wrapperLeaf = new jsonInterfaceGenerator.ObjectWrapper<" + intfType + ">(parent, index, () => {");
-		writer.indentIn();
-		writer.line("return " + intfType + ".make();");
-		writer.indentOut();
-		writer.line("});");
-		writer.line("return new " + wrapperType + "(wrapperLeaf);");
-		writer.indentOut();
-		writer.line("});");
+				"return new jsonInterfaceGenerator.PrimitiveArrayWrapper<" + intfType + ">(this._delegate.root, this._delegate.extend(\"" +
+						name + "\"));");
 		writer.indentOut();
 		writer.line("}");
 	}
@@ -113,29 +137,26 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	@Override
 	public Object visit(JObject jObject) {
 		if (jObject.isConstructible()) {
-			objectAccessor(jObject.getReference());
+			objectAccessor(jObject.getReference(), "");
 		}
 		return null;
 	}
 
 	@Override
 	public Object visit(JAny jAny) {
-		primitiveAccessor("any");
+		primitiveAccessor(useUnknown ? "unknown" : "any");
 		return null;
 
 	}
 
 	@Override
 	public Object visit(JArray jArray) {
-		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null, treatNullAsUndefined));
+		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
 		if (jArray.getElementType().needsWrapping()) {
 			if (jArray.getElementType() instanceof JTypeVariable) {
-				// TODO skipping this for now - the immutable wrapper wants to auto-create objects all the way down, but we have a type
-				// variable here, so there's no good way to implement that.  Holding off for now, until I understand a good use case
-				log.info("Cannot create immutable wrapper for array of type {}", new TypeUsageProducer(null, treatNullAsUndefined).visit(jArray));
-			} else if (!jArray.getElementType().isConstructible()) {
+				primitiveArrayAccessor(interfaceName);
 			} else {
-				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm", treatNullAsUndefined);
+				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm", treatNullAsUndefined, useUnknown);
 				String wrapperName = jArray.getElementType().accept(typeUsageProducer);
 				objectArrayAccessor(interfaceName, wrapperName);
 			}
@@ -180,21 +201,8 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JSpecialization jSpecialization) {
-		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined);
-		StringBuilder sb = new StringBuilder();
-		sb.append(jSpecialization.getBase().accept(tup));
-		sb.append("<");
-		boolean needsComma = false;
-		for (JType param : jSpecialization.getParameters()) {
-			if (needsComma) {
-				sb.append(", ");
-			} else {
-				needsComma = true;
-			}
-			sb.append(param.accept(tup));
-		}
-		sb.append(">");
-		String type = sb.toString();
+		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, useUnknown);
+		String type = jSpecialization.getBase().accept(tup) + writeSpecializedTypes(jSpecialization, tup);
 		primitiveAccessor(type);
 		return null;
 	}
@@ -208,41 +216,48 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JMap jMap) {
-		primitiveAccessor("{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null, treatNullAsUndefined)) + "}");
+		primitiveAccessor(
+				"{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown)) + "}");
 		return null;
 
 	}
 
 	@Override
 	public Object visit(JUnionType jUnionType) {
-		if (jUnionType.needsWrapping()) {
-			JUnionType stripped = jUnionType.getStripped();
-			String typeString = stripped.accept(new TypeUsageProducer(null, treatNullAsUndefined));
-			if (stripped.getMembers().size() == 1) {
-				return stripped.getMembers().get(0).accept(this);
-			} else {
-				if (stripped.needsWrapping()) {
-					primitiveAccessor(typeString);
+		JType stripped = jUnionType.getStripped();
+		if (stripped.needsWrapping()) {
+			if (stripped instanceof JArray) {
+				return visit((JArray) stripped);
+			} else if (stripped instanceof JObject) {
+				if (stripped.hasTypeVariables()) {
+					String typeString = stripped.accept(
+							new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, useUnknown));
+					String variables = writeTypeVariables(stripped, new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+					objectAccessor(typeString, variables);
+					return null;
 				} else {
-					objectAccessor(typeString);
+					String typeString = stripped.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+					objectAccessor(typeString, "");
+					return null;
 				}
+			} else if (stripped instanceof JSpecialization) {
+				return visit((JSpecialization) stripped);
 			}
-		} else {
-			String typeString = jUnionType.accept(new TypeUsageProducer(null, treatNullAsUndefined));
-			primitiveAccessor(typeString);
 		}
+		String typeString = jUnionType.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+		primitiveAccessor(typeString);
 		return null;
 	}
 
 	@Override
 	public Object visit(JNull jNull) {
-		primitiveAccessor(jNull.accept(new TypeUsageProducer(null, treatNullAsUndefined)));
+		primitiveAccessor(jNull.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown)));
 		return null;
 	}
 
 	@Override
 	public Object visit(JWildcard jWildcard) {
-		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null, treatNullAsUndefined)));
+		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown)));
 		return null;
 	}
 }

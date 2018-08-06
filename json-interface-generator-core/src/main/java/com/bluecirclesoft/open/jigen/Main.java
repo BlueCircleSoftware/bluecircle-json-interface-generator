@@ -46,8 +46,6 @@ public final class Main {
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
 
-		Model model = null;
-
 		List<ModelCreator> modellers = new ArrayList<>();
 		List<CodeProducer> producers = new ArrayList<>();
 
@@ -105,10 +103,12 @@ public final class Main {
 
 		handleErrors(errors);
 
+		Model model = new Model();
 		// apply processors
 		for (ModelCreator modeller : modellers) {
-			model = modeller.createModel();
+			modeller.model(model);
 		}
+		model.doGlobalCleanups();
 		for (CodeProducer producer : producers) {
 			producer.output(model);
 		}

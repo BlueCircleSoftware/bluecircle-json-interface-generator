@@ -16,8 +16,6 @@
 
 package com.bluecirclesoft.open.jigen;
 
-import java.util.List;
-
 import com.bluecirclesoft.open.jigen.model.Model;
 
 /**
@@ -28,7 +26,7 @@ public interface ModelCreator<T> extends ConfigurableProcessor<T> {
 	/**
 	 * Create the model.
 	 *
-	 * @return the model
+	 * @param model The model to fill
 	 */
-	Model createModel();
+	void model(Model model);
 }

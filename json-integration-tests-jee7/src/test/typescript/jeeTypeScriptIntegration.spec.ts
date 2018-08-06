@@ -258,34 +258,46 @@ describe("test TestServicesObject", () => {
             d: "qwerty",
         };
 
+        function asrt<T>(input: T | null | undefined): T {
+            if (input === null || input === undefined) {
+                throw new Error("was not defined");
+            }
+            return input;
+        }
+
         const root = new jsonInterfaceGenerator.ChangeRoot<integrationJee7.NestedOuter>(base);
         const imm = new integrationJee7.NestedOuter$Imm(root);
         expect(imm.d).toEqual("qwerty");
-        const b = imm.b;
+        const b = asrt(imm.b);
         expect(b.b).toEqual("gh");
-        const ver1 = root.getCurrent();
+        const ver1 = root.current;
         b.b = "ij";
         expect(b.b).toEqual("ij");
-        const ver2 = root.getCurrent();
-        expect(root.getHistorySize()).toEqual(2);
+        const ver2 = root.current;
+        expect(root.history.length).toEqual(2);
         expect(ver1 === ver2).toBeFalsy("version not updated");
-        expect(root.getHistory(0)).toEqual(ver1);
-        expect(root.getHistory(1)).toEqual(ver2);
+        expect(root.history[1]).toEqual(ver1);
+        expect(root.history[0]).toEqual(ver2);
 
-        const eAcc = b.e;
+        const eAcc = asrt(b.e);
         expect(eAcc.get(1)).toEqual(5);
         eAcc.set(1, 23);
-        expect(root.getHistorySize()).toEqual(3);
+        expect(root.history.length).toEqual(3);
         expect(eAcc.get(1)).toEqual(23);
 
         imm.d = null;
-        expect(root.getHistorySize()).toEqual(4);
+        expect(root.history.length).toEqual(4);
         expect(imm.d).toEqual(null);
 
     });
 
-    // TODO figure out why this isn't working, and re-enable
     it("can handle subclasses", () => {
+
+        // These will be compilation errors if something's wrong
+        let sub1Instance = integrationJee7.testPackage3.Sub1.make();
+        let superRef: integrationJee7.testPackage3.Super = sub1Instance;
+        let hyperRef: integrationJee7.testPackage3.Hyper = sub1Instance;
+
         console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/getGenericListSupers");
         let result: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super> | undefined;
 
@@ -295,9 +307,9 @@ describe("test TestServicesObject", () => {
                     result = ck(s);
                 }));
 
-        expect(integrationJee7.testPackage3.Sub1.isSub1(ck(ck(result).list)[0])).toBeTruthy();
-        expect(integrationJee7.testPackage3.Sub2.isSub2(ck(ck(result).list)[1])).toBeTruthy();
-        expect(integrationJee7.testPackage3.Sub3.isSub3(ck(ck(result).list)[2])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub1.isInstance(ck(ck(result).list)[0])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub2.isInstance(ck(ck(result).list)[1])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub3.isInstance(ck(ck(result).list)[2])).toBeTruthy();
     })
 });
 

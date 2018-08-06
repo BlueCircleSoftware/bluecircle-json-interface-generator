@@ -13,6 +13,8 @@ public class Options {
 
 	private boolean nullIsUndefined;
 
+	private boolean useUnknown;
+
 	public String getOutputFile() {
 		return outputFile;
 	}
@@ -43,5 +45,13 @@ public class Options {
 
 	public void setNullIsUndefined(boolean nullIsUndefined) {
 		this.nullIsUndefined = nullIsUndefined;
+	}
+
+	public boolean isUseUnknown() {
+		return useUnknown;
+	}
+
+	public void setUseUnknown(boolean useUnknown) {
+		this.useUnknown = useUnknown;
 	}
 }

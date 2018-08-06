@@ -18,6 +18,7 @@ package com.bluecirclesoft.open.jigen.jacksonModeller;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -195,6 +196,9 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			} else {
 				jObject.setTypeDiscriminatorValue(getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty));
 			}
+			// whatever class is declaring this property, assume it's a superclass that we want to model in the output as a
+			// 'superinterface'
+			jacksonTypeModeller.queueType(((Member) annotatedThing).getDeclaringClass());
 		}
 		// actually define property at fixup time
 		jacksonTypeModeller.addFixup(type, jType -> jObject.makeProperty(name, jType, required));

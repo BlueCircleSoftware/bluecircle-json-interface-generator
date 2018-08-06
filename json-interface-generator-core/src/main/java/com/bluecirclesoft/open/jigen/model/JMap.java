@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.util.List;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -53,5 +55,15 @@ public class JMap extends JType {
 	@Override
 	public boolean needsWrapping() {
 		return true;
+	}
+
+	@Override
+	public boolean hasTypeVariables() {
+		return valueType.hasTypeVariables();
+	}
+
+	@Override
+	public List<JTypeVariable> getTypeVariables() {
+		return valueType.getTypeVariables();
 	}
 }

@@ -16,6 +16,8 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.util.List;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -59,5 +61,15 @@ public class JArray extends JType {
 	@Override
 	public boolean needsWrapping() {
 		return true;
+	}
+
+	@Override
+	public boolean hasTypeVariables() {
+		return elementType.hasTypeVariables();
+	}
+
+	@Override
+	public List<JTypeVariable> getTypeVariables() {
+		return elementType.getTypeVariables();
 	}
 }

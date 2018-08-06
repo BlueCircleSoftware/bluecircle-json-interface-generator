@@ -68,7 +68,7 @@ Currently, you'll need to invoke Java to run the generator utility. TODO - plugi
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>
                 <artifactId>json-typescript-generator</artifactId>
-                <version>0.20</version>
+                <version>0.22</version>
                 <scope>test</scope>
             </dependency>
 	
@@ -171,6 +171,7 @@ outputFile | String | (required) The TypeScript file to generate (path will be c
 stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
 produceImmutables | boolean | Produce immutable wrappers along with interfaces (default: false)
 nullIsUndefined | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
+useUnknown | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: false)
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with

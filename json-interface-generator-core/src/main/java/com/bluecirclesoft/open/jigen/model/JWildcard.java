@@ -45,4 +45,32 @@ public class JWildcard extends JType {
 	public boolean needsWrapping() {
 		return false;
 	}
+
+	@Override
+	public boolean hasTypeVariables() {
+		for (JType bound : upperBounds) {
+			if (bound.hasTypeVariables()) {
+				return true;
+			}
+		}
+		for (JType bound : lowerBounds) {
+			if (bound.hasTypeVariables()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public List<JTypeVariable> getTypeVariables() {
+		List<JTypeVariable> result = new ArrayList<>();
+		for (JType bound : upperBounds) {
+			result.addAll(bound.getTypeVariables());
+		}
+		for (JType bound : lowerBounds) {
+			result.addAll(bound.getTypeVariables());
+		}
+		return result;
+
+	}
 }

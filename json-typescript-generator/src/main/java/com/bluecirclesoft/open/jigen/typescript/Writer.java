@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,7 +137,7 @@ public class Writer implements CodeProducer<Options> {
 			addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
 		}
 		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" +
-				endpoint.getResponseBody().accept(new TypeUsageProducer(null, isTreatNullAsUndefined())) + ">");
+				endpoint.getResponseBody().accept(new TypeUsageProducer(null, isTreatNullAsUndefined(), options.isUseUnknown())) + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
 		writer.indentIn();
 
@@ -238,7 +239,8 @@ public class Writer implements CodeProducer<Options> {
 	}
 
 	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
-		addParameter(parameterList, needsComma, name, type.accept(new TypeUsageProducer(null, isTreatNullAsUndefined())));
+		addParameter(parameterList, needsComma, name,
+				type.accept(new TypeUsageProducer(null, isTreatNullAsUndefined(), options.isUseUnknown())));
 	}
 
 	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
@@ -264,7 +266,7 @@ public class Writer implements CodeProducer<Options> {
 		List<? extends JToplevelType> declarations = toList(namespace.getDeclarations());
 		declarations.sort(Comparator.comparing(JToplevelType::getName));
 		for (JType type : namespace.getDeclarations()) {
-			type.accept(new TypeDeclarationProducer(this, writer, isProduceImmutables(), isTreatNullAsUndefined()));
+			type.accept(new TypeDeclarationProducer(this, writer, isProduceImmutables(), isTreatNullAsUndefined(), options.isUseUnknown()));
 		}
 		outputEndpoints(namespace);
 		for (Namespace subNamespace : namespace.getNamespaces()) {
@@ -295,7 +297,14 @@ public class Writer implements CodeProducer<Options> {
 			}
 			writer = new OutputHandler(new PrintWriter(new FileWriter(getOutputFile())));
 		}
-		writer.writeResource("/header.ts");
+		Pattern pattern = Pattern.compile("export type UnknownType = unknown");
+		writer.writeResource("/header.ts", (line) -> {
+			if (!options.isUseUnknown() && pattern.matcher(line).matches()) {
+				return line.replace("unknown", "any");
+			} else {
+				return line;
+			}
+		});
 		writer.line();
 
 	}

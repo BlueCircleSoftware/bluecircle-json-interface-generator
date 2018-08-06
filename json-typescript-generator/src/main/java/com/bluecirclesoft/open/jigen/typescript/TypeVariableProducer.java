@@ -42,9 +42,12 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	private final String immutableSuffix;
 
-	public TypeVariableProducer(UsageLocation location, String immutableSuffix) {
+	private final boolean useUnknown;
+
+	public TypeVariableProducer(UsageLocation location, String immutableSuffix, boolean useUnknown) {
 		this.location = location;
 		this.immutableSuffix = immutableSuffix;
+		this.useUnknown = useUnknown;
 	}
 
 	@Override
@@ -72,7 +75,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JAny jAny) {
-		return "any";
+		return useUnknown ? "unknown" : "any";
 	}
 
 	@Override
