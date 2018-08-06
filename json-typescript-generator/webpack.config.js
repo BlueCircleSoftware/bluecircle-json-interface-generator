@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-var failPlugin = require("webpack-fail-plugin");
+var path = require("path");
 
 module.exports = {
-    entry: './src/test/typescript/header.spec.ts',
+    entry: "./src/test/typescript/header.spec.ts",
     output: {
-        filename: 'target/bundle.js'
+        filename: "bundle.js",
+        path: path.resolve(__dirname, "target")
     }, // Enable sourcemaps for debugging webpack's output.
-    devtool: "source-map",
+    devtool: "inline-source-map",
+    mode: "development",
     resolve: {
-        extensions: ['.ts', '.js', '.tsx', '.jsx', '']
+        extensions: [".tsx", ".ts", ".jsx", ".js"]
     },
     module: {
-        loaders: [{
+        rules: [{
             test: /\.tsx?$/,
-            loader: 'awesome-typescript-loader'
-        }],
-        preLoaders: [// All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-            {
-                test: /\.js$/,
-                loader: "source-map-loader"
-            }]
-
-    },
-    plugins: [failPlugin // fail on error (why not default?)
-    ]
+            loader: "awesome-typescript-loader"
+        }, {
+            test: /\.js$/,
+            loader: "source-map-loader"
+        }]
+    }
 };

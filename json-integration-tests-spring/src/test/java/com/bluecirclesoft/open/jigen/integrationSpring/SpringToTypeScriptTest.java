@@ -108,7 +108,7 @@ public class SpringToTypeScriptTest {
 
 		// Run test cases from test browser
 		TestHelper.system("npm install");
-		TestHelper.system("../node_modules/.bin/webpack");
+		TestHelper.system("../node_modules/.bin/webpack --bail");
 		TestHelper.system("../node_modules/.bin/karma start --baseUrl " + baseRestUrl);
 	}
 
