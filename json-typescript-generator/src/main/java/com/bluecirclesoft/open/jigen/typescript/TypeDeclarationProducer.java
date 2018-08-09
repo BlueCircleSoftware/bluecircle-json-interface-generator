@@ -172,6 +172,9 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private void makeInterfaceDeclaration(JObject intf) {
 		String interfaceLabel = intf.getName();
+
+		Set<String> subTypeValues = null;
+
 		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null, useUnknown));
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined, useUnknown);
 		writer.line();
@@ -202,10 +205,10 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			String typeString;
 			if (Objects.equals(intf.getTypeDiscriminatorField(), prop.getKey())) {
 				// is type discriminator - type will be the values
-				Set<String> values = collectTypeValues(intf);
+				subTypeValues = collectTypeValues(intf);
 				StringBuilder typeBuilder = new StringBuilder();
 				boolean needsOr = false;
-				for (String value : values) {
+				for (String value : subTypeValues) {
 					if (needsOr) {
 						typeBuilder.append(" | ");
 					} else {
@@ -271,10 +274,11 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line("}");
 		}
 		if (hasCastFunction) {
+			writer.line("const TYPE_REGEX = new RegExp(\"" + createTypeRegex(subTypeValues) + "\");");
 			writer.line("export function isInstance(obj: any): obj is " + interfaceLabel + " {");
 			writer.indentIn();
-			writer.line("return typeof obj === \"object\" && obj[\"" + intf.getTypeDiscriminatorField() + "\"] === \"" +
-					intf.getTypeDiscriminatorValue() + "\";");
+			writer.line("return typeof obj === \"object\" && !!obj[\"" + intf.getTypeDiscriminatorField() + "\"] && TYPE_REGEX.exec" +
+					"(obj[\"" + intf.getTypeDiscriminatorField() + "\"]) !== null;");
 			writer.indentOut();
 			writer.line("}");
 		}
@@ -297,6 +301,16 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line("this._delegate = new jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">(base, path);");
 			writer.indentOut();
 			writer.line("}");
+			writer.line("public get " + "$self" + "() : Readonly<" + interfaceLabel + typeVars + "> {");
+			writer.indentIn();
+			writer.line("return this._delegate.get() as Readonly<" + interfaceLabel + typeVars + ">;");
+			writer.indentOut();
+			writer.line("}");
+			writer.line("public set " + "$self" + "(v : Readonly<" + interfaceLabel + typeVars + ">) {");
+			writer.indentIn();
+			writer.line("this._delegate.set(v);");
+			writer.indentOut();
+			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
 				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined, useUnknown);
 				prop.getValue().getType().accept(accessorProducer);
@@ -304,6 +318,22 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 		}
+	}
+
+	private String createTypeRegex(Set<String> subTypeStrings) {
+		StringBuilder result = new StringBuilder();
+		result.append("^(");
+		boolean needsBar = false;
+		for (String string : subTypeStrings) {
+			if (needsBar) {
+				result.append("|");
+			} else {
+				needsBar = true;
+			}
+			result.append(string.replace(".", "\\."));
+		}
+		result.append(")$");
+		return result.toString();
 	}
 
 	private Set<String> collectTypeValues(JObject intf) {

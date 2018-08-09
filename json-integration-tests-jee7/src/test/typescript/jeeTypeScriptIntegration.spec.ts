@@ -308,8 +308,20 @@ describe("test TestServicesObject", () => {
                 }));
 
         expect(integrationJee7.testPackage3.Sub1.isInstance(ck(ck(result).list)[0])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub2.isInstance(ck(ck(result).list)[0])).toBeFalsy();
+        expect(integrationJee7.testPackage3.Sub3.isInstance(ck(ck(result).list)[0])).toBeFalsy();
+        expect(integrationJee7.testPackage3.Sub1.isInstance(ck(ck(result).list)[1])).toBeFalsy();
         expect(integrationJee7.testPackage3.Sub2.isInstance(ck(ck(result).list)[1])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Sub3.isInstance(ck(ck(result).list)[1])).toBeFalsy();
+        expect(integrationJee7.testPackage3.Sub1.isInstance(ck(ck(result).list)[2])).toBeFalsy();
+        expect(integrationJee7.testPackage3.Sub2.isInstance(ck(ck(result).list)[2])).toBeFalsy();
         expect(integrationJee7.testPackage3.Sub3.isInstance(ck(ck(result).list)[2])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Super.isInstance(ck(ck(result).list)[0])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Super.isInstance(ck(ck(result).list)[1])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Super.isInstance(ck(ck(result).list)[2])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Hyper.isInstance(ck(ck(result).list)[0])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Hyper.isInstance(ck(ck(result).list)[1])).toBeTruthy();
+        expect(integrationJee7.testPackage3.Hyper.isInstance(ck(ck(result).list)[2])).toBeTruthy();
     })
 });
 
