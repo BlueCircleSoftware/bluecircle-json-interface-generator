@@ -301,6 +301,45 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line("this._delegate = new jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">(base, path);");
 			writer.indentOut();
 			writer.line("}");
+			writer.line("public $watch" + "(watcher: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel + typeVars + ">): void;");
+			writer.line("public $watch" + "<K extends keyof " + interfaceLabel + typeVars + ">(key: K, watcher: jsonInterfaceGenerator." +
+					"ChangeWatcher<" + interfaceLabel + typeVars + "[K]>): void;");
+			writer.line("public $watch" + "(keyOrWatcher: any, watcher?: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel +
+					typeVars + ">): void {");
+			writer.indentIn();
+			writer.line("if (typeof keyOrWatcher===\"string\") {");
+			writer.indentIn();
+			writer.line(
+					"this._delegate.watchSub(keyOrWatcher, watcher as jsonInterfaceGenerator.ChangeWatcher<" + interfaceLabel + typeVars +
+							">);");
+			writer.indentOut();
+			writer.line("} else {");
+			writer.indentIn();
+			writer.line("this._delegate.watch(keyOrWatcher);");
+			writer.indentOut();
+			writer.line("}");
+			writer.indentOut();
+			writer.line("}");
+			writer.line("public $unwatch" + "(watcher: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel + typeVars + ">): " +
+					"void;");
+			writer.line("public $unwatch" + "<K extends keyof " + interfaceLabel + typeVars + ">(key: K, watcher: jsonInterfaceGenerator." +
+					"ChangeWatcher<" + interfaceLabel + typeVars + "[K]>): void;");
+			writer.line("public $unwatch" + "(keyOrWatcher: any, watcher?: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel +
+					typeVars + ">): void {");
+			writer.indentIn();
+			writer.line("if (typeof keyOrWatcher===\"string\") {");
+			writer.indentIn();
+			writer.line(
+					"this._delegate.unwatchSub(keyOrWatcher, watcher as jsonInterfaceGenerator.ChangeWatcher<" + interfaceLabel + typeVars +
+							">);");
+			writer.indentOut();
+			writer.line("} else {");
+			writer.indentIn();
+			writer.line("this._delegate.unwatch(keyOrWatcher);");
+			writer.indentOut();
+			writer.line("}");
+			writer.indentOut();
+			writer.line("}");
 			writer.line("public get " + "$self" + "() : Readonly<" + interfaceLabel + typeVars + "> {");
 			writer.indentIn();
 			writer.line("return this._delegate.get() as Readonly<" + interfaceLabel + typeVars + ">;");

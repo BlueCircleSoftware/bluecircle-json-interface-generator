@@ -265,29 +265,72 @@ describe("test TestServicesObject", () => {
             return input;
         }
 
-        const root = new jsonInterfaceGenerator.ChangeRoot<integrationJee7.NestedOuter>(base);
-        const imm = new integrationJee7.NestedOuter$Imm(root);
-        expect(imm.d).toEqual("qwerty");
-        const b = asrt(imm.b);
-        expect(b.b).toEqual("gh");
-        const ver1 = root.current;
-        b.b = "ij";
-        expect(b.b).toEqual("ij");
-        const ver2 = root.current;
-        expect(root.history.length).toEqual(2);
-        expect(ver1 === ver2).toBeFalsy("version not updated");
-        expect(root.history[1]).toEqual(ver1);
-        expect(root.history[0]).toEqual(ver2);
+        {
+            const root = new jsonInterfaceGenerator.ChangeRoot<integrationJee7.NestedOuter>(base);
+            const imm = new integrationJee7.NestedOuter$Imm(root);
+            expect(imm.d).toEqual("qwerty");
+            const b = asrt(imm.b);
+            expect(b.b).toEqual("gh");
+            const ver1 = root.current;
+            b.b = "ij";
+            expect(b.b).toEqual("ij");
+            const ver2 = root.current;
+            expect(root.history.length).toEqual(2);
+            expect(ver1 === ver2).toBeFalsy("version not updated");
+            expect(root.history[1]).toEqual(ver1);
+            expect(root.history[0]).toEqual(ver2);
 
-        const eAcc = asrt(b.e);
-        expect(eAcc.get(1)).toEqual(5);
-        eAcc.set(1, 23);
-        expect(root.history.length).toEqual(3);
-        expect(eAcc.get(1)).toEqual(23);
+            const eAcc = asrt(b.e);
+            expect(eAcc.get(1)).toEqual(5);
+            eAcc.set(1, 23);
+            expect(root.history.length).toEqual(3);
+            expect(eAcc.get(1)).toEqual(23);
 
-        imm.d = null;
-        expect(root.history.length).toEqual(4);
-        expect(imm.d).toEqual(null);
+            imm.d = null;
+            expect(root.history.length).toEqual(4);
+            expect(imm.d).toEqual(null);
+        }
+
+        // again, but with watchers
+        {
+            let dChange = 0;
+            let bChange = 0;
+            let bbChange = 0;
+            const root = new jsonInterfaceGenerator.ChangeRoot<integrationJee7.NestedOuter>(base);
+            root.watch(["b"], () => bChange++);
+            root.watch(["b", "b"], () => bbChange++);
+            const imm = new integrationJee7.NestedOuter$Imm(root);
+            imm.$watch("d", (newVal, oldVal, path): void => {
+                console.log("Change: ", oldVal, " -> ", newVal, " at ", path);
+                dChange++;
+            });
+            console.log("Root now ", root);
+            expect(imm.d).toEqual("qwerty");
+            const b = asrt(imm.b);
+            expect(b.b).toEqual("gh");
+            const ver1 = root.current;
+            b.b = "ij"; // b: 1, b.b: 1
+            expect(b.b).toEqual("ij");
+            const ver2 = root.current;
+            expect(root.history.length).toEqual(2);
+            expect(ver1 === ver2).toBeFalsy("version not updated");
+            expect(root.history[1]).toEqual(ver1);
+            expect(root.history[0]).toEqual(ver2);
+
+            const eAcc = asrt(b.e);
+            expect(eAcc.get(1)).toEqual(5);
+            eAcc.set(1, 23); // b: 2 b.e: 1 b.e.1: 1
+            expect(root.history.length).toEqual(3);
+            expect(eAcc.get(1)).toEqual(23);
+
+            imm.d = null; // d: 1
+            expect(root.history.length).toEqual(4);
+            expect(imm.d).toEqual(null);
+
+            expect(dChange).toBe(1);
+            expect(bChange).toBe(2);
+            expect(bbChange).toBe(1);
+        }
 
     });
 

@@ -142,9 +142,7 @@ export namespace jsonInterfaceGenerator {
         return result;
     }
 
-    export interface ChangeWatcher<T> {
-        onChange: () => void;
-    }
+    export type ChangeWatcher<T> = (newVal: Readonly<T>, oldVal: Readonly<T>, path: Readonly<SelectorList>) => void;
 
     interface Mapish<V> {
         [key: string]: V;
@@ -177,7 +175,7 @@ export namespace jsonInterfaceGenerator {
             return this._history;
         }
 
-        public watch(selector: SelectorList, watcher: ChangeWatcher<UnknownType>) {
+        public watch(selector: SelectorList, watcher: ChangeWatcher<any>) {
             let lastChild = this._watchers;
             for (const elem of selector) {
                 let child = lastChild.children[elem];
@@ -185,6 +183,7 @@ export namespace jsonInterfaceGenerator {
                     child = {watchers: [], children: {}};
                     lastChild.children[elem] = child;
                 }
+                lastChild = child;
             }
             let lastWatchers = lastChild.watchers;
             if (lastWatchers.indexOf(watcher) < 0) {
@@ -192,7 +191,7 @@ export namespace jsonInterfaceGenerator {
             }
         }
 
-        public unwatch(selector: SelectorList, watcher: ChangeWatcher<UnknownType>) {
+        public unwatch(selector: SelectorList, watcher: ChangeWatcher<any>) {
             let lastChild = this._watchers;
             for (const elem of selector) {
                 let child = lastChild.children[elem];
@@ -200,15 +199,20 @@ export namespace jsonInterfaceGenerator {
                     child = {watchers: [], children: {}};
                     lastChild.children[elem] = child;
                 }
+                lastChild = child;
             }
             lastChild.watchers = lastChild.watchers.filter(elem => elem !== watcher);
         }
 
-        public getVal(selector: SelectorList): UnknownType {
-            let current = this.current;
+        public getVal(selector: SelectorList, start?: Readonly<T>, undef?: boolean): UnknownType {
+            let current = start ? start : this.current;
             for (const elem of selector) {
                 if (current === undefined || current === null) {
-                    throw new Error(current + " encountered at " + elem + " in path " + selector);
+                    if (undef) {
+                        return undefined;
+                    } else {
+                        throw new Error(current + " encountered at " + elem + " in path " + selector);
+                    }
                 }
                 current = (current as any)[elem];
             }
@@ -235,25 +239,28 @@ export namespace jsonInterfaceGenerator {
 
             // part 2: notify watchers
             let lastWatchers = this._watchers;
+            let changePath: SelectorList = [];
             for (const elem of selector) {
                 if (!lastWatchers) {
                     return;
                 }
                 for (const watcher of lastWatchers.watchers) {
-                    watcher.onChange();
+                    watcher(this.getVal(changePath, this._history[0], true) as Readonly<UnknownType>, this.getVal(changePath, this._history[1], true) as Readonly<UnknownType>, changePath);
                 }
                 lastWatchers = lastWatchers.children[elem];
             }
-            this.notifyRestOfWatchers(lastWatchers);
+            this.notifyRestOfWatchers(changePath, lastWatchers);
         }
 
-        private notifyRestOfWatchers(watchers: WatcherTree): void {
+        private notifyRestOfWatchers(startPath: SelectorList, watchers: WatcherTree): void {
             if (watchers) {
                 for (const watcher of watchers.watchers) {
-                    watcher.onChange();
+                    watcher(this.getVal(startPath, this._history[0], true) as Readonly<UnknownType>, this.getVal(startPath, this._history[1], true) as Readonly<UnknownType>, startPath);
                 }
                 for (const child of Object.getOwnPropertyNames(watchers.children)) {
-                    this.notifyRestOfWatchers(watchers.children[child]);
+                    let nextPath = startPath.slice();
+                    nextPath.push(child);
+                    this.notifyRestOfWatchers(nextPath, watchers.children[child]);
                 }
             }
         }
@@ -317,11 +324,19 @@ export namespace jsonInterfaceGenerator {
         }
 
         public watch(watcher: ChangeWatcher<T>): void {
-            this._root.watch(this._selector, watcher);
+            this._root.watch(this._selector, watcher as ChangeWatcher<UnknownType>);
         }
 
         public unwatch(watcher: ChangeWatcher<T>): void {
-            this._root.unwatch(this._selector, watcher);
+            this._root.unwatch(this._selector, watcher as ChangeWatcher<UnknownType>);
+        }
+
+        public watchSub<U>(next: Selector, watcher: ChangeWatcher<U>): void {
+            this._root.watch(this.extend(next), watcher as ChangeWatcher<UnknownType>);
+        }
+
+        public unwatchSub<U>(next: Selector, watcher: ChangeWatcher<U>): void {
+            this._root.unwatch(this.extend(next), watcher as ChangeWatcher<UnknownType>);
         }
     }
 
