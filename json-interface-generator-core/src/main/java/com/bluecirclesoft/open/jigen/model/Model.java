@@ -20,11 +20,11 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
@@ -98,36 +98,42 @@ public class Model implements Serializable {
 		return endpoint;
 	}
 
-	private void withAllSuperclasses(Class<?> startClass, Consumer<Class<?>> consumer) {
-		ArrayDeque<Class<?>> queue = new ArrayDeque<>();
-		queue.add(startClass.getSuperclass());
-		Collections.addAll(queue, startClass.getInterfaces());
-		while (!queue.isEmpty()) {
-			Class<?> currentClass = queue.pollFirst();
-			if (currentClass != null) {
-				consumer.accept(currentClass);
-				queue.add(currentClass.getSuperclass());
-				Collections.addAll(queue, currentClass.getInterfaces());
+	public void doGlobalCleanups() {
+		// go through the classes, and put references to super- and subclasses in them all
+		for (Map.Entry<Type, JType> entry : interfaces.entrySet()) {
+			// if it's an object
+			if (entry.getValue() instanceof JObject) {
+				// do a breadth-first search of all the ancestors
+				ArrayDeque<Class<?>> parentQueue = new ArrayDeque<>();
+				parentQueue.add((Class<?>) entry.getKey());
+				while (!parentQueue.isEmpty()) {
+					Class<?> subClass = parentQueue.poll();
+					// find superclass and all the interfaces we implement
+					Set<Class<?>> supers = new HashSet<>();
+					if (isInteresting(subClass.getSuperclass())) {
+						supers.add(subClass.getSuperclass());
+					}
+					for (Class<?> intf : subClass.getInterfaces()) {
+						if (isInteresting(intf)) {
+							supers.add(intf);
+						}
+					}
+					// map this subclass with each of its supers
+					for (Class<?> superClass : supers) {
+						if (interfaces.containsKey(superClass)) {
+							JObject jSuper = (JObject) interfaces.get(superClass);
+							JObject jSub = (JObject) interfaces.get(subClass);
+							jSuper.getSubclasses().put(subClass.getName(), jSub);
+							jSub.getSuperclasses().put(superClass.getName(), jSuper);
+						}
+					}
+					parentQueue.addAll(supers);
+				}
 			}
 		}
 	}
 
-	public void doGlobalCleanups() {
-		for (Map.Entry<Type, JType> entry : interfaces.entrySet()) {
-			if (entry.getValue() instanceof JObject) {
-				JObject jSub = (JObject) entry.getValue();
-				Class<?> startClass = (Class<?>) entry.getKey();
-				Class<?> testClass = startClass.getSuperclass();
-				while (testClass != Object.class) {
-					if (interfaces.containsKey(testClass)) {
-						JObject jSuper = (JObject) interfaces.get(testClass);
-						jSuper.getSubclasses().put(startClass.getName(), jSub);
-						jSub.getSuperclasses().put(testClass.getName(), jSuper);
-						break;
-					}
-					testClass = testClass.getSuperclass();
-				}
-			}
-		}
+	private boolean isInteresting(Class<?> superclass) {
+		return superclass != null && superclass != Object.class;
 	}
 }

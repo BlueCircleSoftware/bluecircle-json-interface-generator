@@ -49,7 +49,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	private final boolean treatNullAsUndefined;
 
-	private final boolean useUnknown;
+	private final UnknownProducer unknownProducer;
 
 	public String capitalize(String variableName) {
 		return variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
@@ -87,11 +87,11 @@ class AccessorProducer implements JTypeVisitor<Object> {
 		return sb.toString();
 	}
 
-	public AccessorProducer(String name, OutputHandler writer, boolean treatNullAsUndefined, boolean useUnknown) {
+	public AccessorProducer(String name, OutputHandler writer, boolean treatNullAsUndefined, UnknownProducer unknownProducer) {
 		this.name = name;
 		this.writer = writer;
 		this.treatNullAsUndefined = treatNullAsUndefined;
-		this.useUnknown = useUnknown;
+		this.unknownProducer = unknownProducer;
 	}
 
 	private void primitiveAccessor(String type) {
@@ -144,19 +144,19 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JAny jAny) {
-		primitiveAccessor(useUnknown ? "unknown" : "any");
+		primitiveAccessor(unknownProducer.getUnknown());
 		return null;
 
 	}
 
 	@Override
 	public Object visit(JArray jArray) {
-		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
 		if (jArray.getElementType().needsWrapping()) {
 			if (jArray.getElementType() instanceof JTypeVariable) {
 				primitiveArrayAccessor(interfaceName);
 			} else {
-				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm", treatNullAsUndefined, useUnknown);
+				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm", treatNullAsUndefined, unknownProducer);
 				String wrapperName = jArray.getElementType().accept(typeUsageProducer);
 				objectArrayAccessor(interfaceName, wrapperName);
 			}
@@ -201,7 +201,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JSpecialization jSpecialization) {
-		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, useUnknown);
+		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, unknownProducer);
 		String type = jSpecialization.getBase().accept(tup) + writeSpecializedTypes(jSpecialization, tup);
 		primitiveAccessor(type);
 		return null;
@@ -217,7 +217,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	@Override
 	public Object visit(JMap jMap) {
 		primitiveAccessor(
-				"{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown)) + "}");
+				"{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer)) + "}");
 		return null;
 
 	}
@@ -231,12 +231,12 @@ class AccessorProducer implements JTypeVisitor<Object> {
 			} else if (stripped instanceof JObject) {
 				if (stripped.hasTypeVariables()) {
 					String typeString = stripped.accept(
-							new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, useUnknown));
-					String variables = writeTypeVariables(stripped, new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+							new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, unknownProducer));
+					String variables = writeTypeVariables(stripped, new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
 					objectAccessor(typeString, variables);
 					return null;
 				} else {
-					String typeString = stripped.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+					String typeString = stripped.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
 					objectAccessor(typeString, "");
 					return null;
 				}
@@ -244,20 +244,20 @@ class AccessorProducer implements JTypeVisitor<Object> {
 				return visit((JSpecialization) stripped);
 			}
 		}
-		String typeString = jUnionType.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown));
+		String typeString = jUnionType.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
 		primitiveAccessor(typeString);
 		return null;
 	}
 
 	@Override
 	public Object visit(JNull jNull) {
-		primitiveAccessor(jNull.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown)));
+		primitiveAccessor(jNull.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer)));
 		return null;
 	}
 
 	@Override
 	public Object visit(JWildcard jWildcard) {
-		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null, treatNullAsUndefined, useUnknown)));
+		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer)));
 		return null;
 	}
 }

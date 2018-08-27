@@ -56,15 +56,15 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final boolean treatNullAsUndefined;
 
-	private final boolean useUnknown;
+	private final UnknownProducer unknownProducer;
 
 	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable, boolean treatNullAsUndefined,
-	                               boolean useUnknown) {
+	                               UnknownProducer unknownProducer) {
 		this.writer = writer;
 		this.producer = typeScriptProducer;
 		this.produceImmutable = produceImmutable;
 		this.treatNullAsUndefined = treatNullAsUndefined;
-		this.useUnknown = useUnknown;
+		this.unknownProducer = unknownProducer;
 	}
 
 	@Override
@@ -175,8 +175,8 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 		Set<String> subTypeValues = null;
 
-		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null, useUnknown));
-		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined, useUnknown);
+		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null, unknownProducer));
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer);
 		writer.line();
 		StringBuilder declLine = new StringBuilder("export interface " + definterfaceType);
 		if (intf.getSuperclasses().size() > 0) {
@@ -233,20 +233,29 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.line("}");
 
 		String typeVars = "";
+		String unknownTypeVars = "";
 		if (!intf.getTypeVariables().isEmpty()) {
 			StringBuilder typeVarsBuilder = new StringBuilder();
+			StringBuilder unknownTypeVarsBuilder = new StringBuilder();
 			typeVarsBuilder.append('<');
+			unknownTypeVarsBuilder.append('<');
 			boolean needsComma = false;
 			for (JTypeVariable var : intf.getTypeVariables()) {
 				if (needsComma) {
 					typeVarsBuilder.append(',');
+					unknownTypeVarsBuilder.append(',');
 				} else {
 					needsComma = true;
 				}
 				typeVarsBuilder.append(var.getName());
+				// TODO I'm not sure I'm satisfied with this - will this short-circuit type analysis
+				// for the isInstance methods?
+				unknownTypeVarsBuilder.append("any");
 			}
 			typeVarsBuilder.append('>');
+			unknownTypeVarsBuilder.append('>');
 			typeVars = typeVarsBuilder.toString();
+			unknownTypeVars = unknownTypeVarsBuilder.toString();
 		}
 
 		boolean hasMakeFunction = StringUtils.isNotBlank(intf.getNewObjectJson());
@@ -273,12 +282,15 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 		}
-		if (hasCastFunction) {
+		if (hasCastFunction && subTypeValues != null) {
 			writer.line("const TYPE_REGEX = new RegExp(\"" + createTypeRegex(subTypeValues) + "\");");
-			writer.line("export function isInstance(obj: any): obj is " + interfaceLabel + " {");
+			writer.line(
+					"export function isInstance(obj: " + unknownProducer.getUnknown() + "): obj is " + interfaceLabel + unknownTypeVars +
+							" {");
 			writer.indentIn();
-			writer.line("return typeof obj === \"object\" && !!obj[\"" + intf.getTypeDiscriminatorField() + "\"] && TYPE_REGEX.exec" +
-					"(obj[\"" + intf.getTypeDiscriminatorField() + "\"]) !== null;");
+			writer.line("return typeof obj === \"object\" && !Array.isArray(obj) && !!(obj as {[k:string]:any})[\"" +
+					intf.getTypeDiscriminatorField() + "\"] && TYPE_REGEX.exec((obj as {[k:string]:any})[\"" +
+					intf.getTypeDiscriminatorField() + "\"]) !== null;");
 			writer.indentOut();
 			writer.line("}");
 		}
@@ -288,54 +300,53 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 
 		if (produceImmutable) {
-			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm", useUnknown));
+			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm", unknownProducer));
 			declLine = new StringBuilder("export class " + immutableInterfaceType + " {");
 			writer.line(declLine.toString());
 			writer.indentIn();
 
-			String usinterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.USAGE, null, useUnknown));
-			writer.line("private _delegate: jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">;");
+			String localChangeWrapper = "jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">";
+			String localChangeWatcher = "jsonInterfaceGenerator.ChangeWatcher<" + interfaceLabel + typeVars + ">";
+
+			writer.line("private _delegate: " + localChangeWrapper + ";");
 			writer.line("public constructor(base: jsonInterfaceGenerator.ChangeRoot<jsonInterfaceGenerator.UnknownType>, path?: " +
 					"jsonInterfaceGenerator" + ".SelectorList) {");
 			writer.indentIn();
-			writer.line("this._delegate = new jsonInterfaceGenerator.ChangeWrapper<" + interfaceLabel + typeVars + ">(base, path);");
+			writer.line("this._delegate = new " + localChangeWrapper + "(base, path);");
 			writer.indentOut();
 			writer.line("}");
-			writer.line("public $watch" + "(watcher: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel + typeVars + ">): void;");
+			writer.line("public $watch" + "(watcher: " + localChangeWatcher + "): void;");
 			writer.line("public $watch" + "<K extends keyof " + interfaceLabel + typeVars + ">(key: K, watcher: jsonInterfaceGenerator." +
 					"ChangeWatcher<" + interfaceLabel + typeVars + "[K]>): void;");
-			writer.line("public $watch" + "(keyOrWatcher: any, watcher?: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel +
-					typeVars + ">): void {");
+			writer.line(
+					"public $watch" + "(keyOrWatcher: string | " + localChangeWatcher + ", watcher?: " + localChangeWatcher + "): void {");
 			writer.indentIn();
 			writer.line("if (typeof keyOrWatcher===\"string\") {");
 			writer.indentIn();
 			writer.line(
-					"this._delegate.watchSub(keyOrWatcher, watcher as jsonInterfaceGenerator.ChangeWatcher<" + interfaceLabel + typeVars +
-							">);");
+					"this._delegate.watchSub(keyOrWatcher as string, watcher as jsonInterfaceGenerator.ChangeWatcher<" + interfaceLabel +
+							typeVars + ">);");
 			writer.indentOut();
 			writer.line("} else {");
 			writer.indentIn();
-			writer.line("this._delegate.watch(keyOrWatcher);");
+			writer.line("this._delegate.watch(keyOrWatcher as " + localChangeWatcher + ");");
 			writer.indentOut();
 			writer.line("}");
 			writer.indentOut();
 			writer.line("}");
-			writer.line("public $unwatch" + "(watcher: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel + typeVars + ">): " +
-					"void;");
+			writer.line("public $unwatch" + "(watcher: " + localChangeWatcher + "): " + "void;");
 			writer.line("public $unwatch" + "<K extends keyof " + interfaceLabel + typeVars + ">(key: K, watcher: jsonInterfaceGenerator." +
 					"ChangeWatcher<" + interfaceLabel + typeVars + "[K]>): void;");
-			writer.line("public $unwatch" + "(keyOrWatcher: any, watcher?: jsonInterfaceGenerator." + "ChangeWatcher<" + interfaceLabel +
-					typeVars + ">): void {");
+			writer.line("public $unwatch" + "(keyOrWatcher: string | " + localChangeWatcher + ", watcher?: " + localChangeWatcher +
+					"): void {");
 			writer.indentIn();
 			writer.line("if (typeof keyOrWatcher===\"string\") {");
 			writer.indentIn();
-			writer.line(
-					"this._delegate.unwatchSub(keyOrWatcher, watcher as jsonInterfaceGenerator.ChangeWatcher<" + interfaceLabel + typeVars +
-							">);");
+			writer.line("this._delegate.unwatchSub(keyOrWatcher as string, watcher as " + localChangeWatcher + ");");
 			writer.indentOut();
 			writer.line("} else {");
 			writer.indentIn();
-			writer.line("this._delegate.unwatch(keyOrWatcher);");
+			writer.line("this._delegate.unwatch(keyOrWatcher as " + localChangeWatcher + ");");
 			writer.indentOut();
 			writer.line("}");
 			writer.indentOut();
@@ -351,7 +362,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
-				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined, useUnknown);
+				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined, unknownProducer);
 				prop.getValue().getType().accept(accessorProducer);
 			}
 			writer.indentOut();

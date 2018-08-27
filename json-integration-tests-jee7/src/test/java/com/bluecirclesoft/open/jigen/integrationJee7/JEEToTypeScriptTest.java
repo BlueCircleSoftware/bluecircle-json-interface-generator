@@ -93,8 +93,10 @@ public class JEEToTypeScriptTest {
 
 		String generatedTs = FileUtils.readFileToString(new File("target/generated-sources/jeeToTypeScript.ts"));
 
-		Assert.assertTrue("Incorrect type parameter conversion: Generic1", generatedTs.contains("Generic1<Ty extends ABase>"));
-		Assert.assertTrue("Incorrect type parameter conversion: Generic2", generatedTs.contains("Generic2<Ty extends BBase>"));
+		Assert.assertTrue("Incorrect type parameter conversion: Generic1",
+				generatedTs.contains("Generic1<Ty extends com.bluecirclesoft.open.jigen.integrationJee7.typeVar.ABase>"));
+		Assert.assertTrue("Incorrect type parameter conversion: Generic2",
+				generatedTs.contains("Generic2<Ty extends com.bluecirclesoft.open.jigen.integrationJee7.typeVar.BBase>"));
 
 		// Run test cases from test browser
 		TestHelper.system("npm install");

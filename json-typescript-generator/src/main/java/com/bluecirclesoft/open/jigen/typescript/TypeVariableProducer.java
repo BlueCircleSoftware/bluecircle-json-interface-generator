@@ -42,18 +42,29 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	private final String immutableSuffix;
 
-	private final boolean useUnknown;
+	private final UnknownProducer unknownProducer;
 
-	public TypeVariableProducer(UsageLocation location, String immutableSuffix, boolean useUnknown) {
+	public TypeVariableProducer(UsageLocation location, String immutableSuffix, UnknownProducer unknownProducer) {
 		this.location = location;
 		this.immutableSuffix = immutableSuffix;
-		this.useUnknown = useUnknown;
+		this.unknownProducer = unknownProducer;
 	}
 
 	@Override
 	public String visit(JObject jObject) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(jObject.getName());
+		String name;
+		switch (this.location) {
+			case DEFINITION:
+				name = jObject.getName();
+				break;
+			case USAGE:
+				name = jObject.getReference();
+				break;
+			default:
+				throw new RuntimeException("Unhandled location: " + this.location);
+		}
+		sb.append(name);
 		if (immutableSuffix != null) {
 			sb.append(immutableSuffix);
 		}
@@ -75,7 +86,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JAny jAny) {
-		return useUnknown ? "unknown" : "any";
+		return unknownProducer.getUnknown();
 	}
 
 	@Override
@@ -128,7 +139,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 					} else {
 						needsAmpersand = true;
 					}
-					sb.append(bound.accept(this));
+					sb.append(bound.accept(new TypeVariableProducer(UsageLocation.USAGE, "", unknownProducer)));
 				}
 			}
 		}
