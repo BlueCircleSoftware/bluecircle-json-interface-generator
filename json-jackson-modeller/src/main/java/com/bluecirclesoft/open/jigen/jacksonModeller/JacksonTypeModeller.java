@@ -53,8 +53,8 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.PropertyEnumerator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -580,22 +580,20 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	}
 
 	private JEnum buildEnum(Class<Enum<?>> rawClass) {
-		try {
-			List<JEnum.EnumDeclaration> entries = new ArrayList<>();
-			Enum<?>[] constants = rawClass.getEnumConstants();
-			Map<String, Enum<?>> usedValues = new HashMap<>();
-			for (Enum<?> enumConstant : constants) {
-				// Reading annotations off enums is cray cray
-				// https://stackoverflow.com/questions/7254126/get-annotations-for-enum-type-variable/7260009#7260009
+		List<JEnum.EnumDeclaration> entries = new ArrayList<>();
+		Enum<?>[] constants = rawClass.getEnumConstants();
+		Map<String, Enum<?>> usedValues = new HashMap<>();
+		for (Enum<?> enumConstant : constants) {
 
-				JsonProperty jsonPropertyAnnotation =
-						enumConstant.getClass().getField(enumConstant.name()).getAnnotation(JsonProperty.class);
-				String enumConstantValue;
-				if (jsonPropertyAnnotation != null && !jsonPropertyAnnotation.value().equals(JsonProperty.USE_DEFAULT_NAME)) {
-					enumConstantValue = jsonPropertyAnnotation.value();
-				} else {
-					enumConstantValue = enumConstant.name();
+			ObjectMapper objectMapper = new ObjectMapper();
+			try {
+				String enumConstantValue = objectMapper.writeValueAsString(enumConstant);
+				// strip quotes
+				int length = enumConstantValue.length();
+				if (length > 1 && enumConstantValue.charAt(0) == '"') {
+					enumConstantValue = enumConstantValue.substring(1, length - 1);
 				}
+
 				if (usedValues.containsKey(enumConstantValue)) {
 					logger.warn("Computed serialized value of {} to be {}, but that value was also used for {} " +
 									"- keeping first definition only",
@@ -604,10 +602,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 					usedValues.put(enumConstantValue, enumConstant);
 				}
 				entries.add(new JEnum.EnumDeclaration(enumConstant.name(), enumConstant.ordinal(), enumConstantValue));
+			} catch (JsonProcessingException e) {
+				logger.warn("Couldn not serialize " + enumConstant + ", skipping");
 			}
-			return new JEnum(rawClass.getName(), defaultEnumType, entries);
-		} catch (NoSuchFieldException e) {
-			throw new RuntimeException(e);
 		}
+		return new JEnum(rawClass.getName(), defaultEnumType, entries);
 	}
 }
