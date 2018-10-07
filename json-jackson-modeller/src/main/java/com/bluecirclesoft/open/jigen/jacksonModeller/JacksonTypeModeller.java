@@ -580,6 +580,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	}
 
 	private JEnum buildEnum(Class<Enum<?>> rawClass) {
+		JEnum.EnumType enumType = null;
 		List<JEnum.EnumDeclaration> entries = new ArrayList<>();
 		Enum<?>[] constants = rawClass.getEnumConstants();
 		Map<String, Enum<?>> usedValues = new HashMap<>();
@@ -592,6 +593,15 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				int length = enumConstantValue.length();
 				if (length > 1 && enumConstantValue.charAt(0) == '"') {
 					enumConstantValue = enumConstantValue.substring(1, length - 1);
+					if (enumType != null && enumType != JEnum.EnumType.STRING) {
+						throw new RuntimeException("Jackson giving both numeric and string values for enum " + rawClass.getName());
+					}
+					enumType = JEnum.EnumType.STRING;
+				} else {
+					if (enumType != null && enumType != JEnum.EnumType.NUMERIC) {
+						throw new RuntimeException("Jackson giving both numeric and string values for enum " + rawClass.getName());
+					}
+					enumType = JEnum.EnumType.NUMERIC;
 				}
 
 				if (usedValues.containsKey(enumConstantValue)) {
@@ -606,6 +616,6 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				logger.warn("Couldn not serialize " + enumConstant + ", skipping");
 			}
 		}
-		return new JEnum(rawClass.getName(), defaultEnumType, entries);
+		return new JEnum(rawClass.getName(), enumType == null ? defaultEnumType : enumType, entries);
 	}
 }
