@@ -167,9 +167,14 @@ includeSubclasses | boolean | When modelling a class, also model its subclasses 
 
 Option | Type | Description
 -------|------|------------
-outputFile | String | (required) The TypeScript file to generate (path will be created if necessary)
+outputFile | String | (required) The TypeScript file or folder to generate (path will be created if necessary)
+outputStructure | String | Specify how to map packages to TypeScript files: 
+ &nbsp; | &nbsp; |   FILES_IN_TREE: one file per package, in a folder hierarchy matching the package hierarchy
+ &nbsp; | &nbsp; |   FILES_IN_ONE_FOLDER: one file per package, but all at the top of the output folder (default)
+ &nbsp; | &nbsp; |   NAMESPACES: one file for all the output, with namespaces that match the package hierarchy
 stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
 produceImmutables | boolean | Produce immutable wrappers along with interfaces (default: false)
+immutableSuffix | String | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')
 nullIsUndefined | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
 useUnknown | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: false)
 ## Making AJAX calls
@@ -178,51 +183,44 @@ I try to be agnostic as to which AJAX library you're using (if any).  So on star
 the handler you want to use to invoke AJAX calls. The function you'll need to implement looks like this:
  
 ```typescript
-export namespace jsonInterfaceGenerator {
-    export interface JsonOptions<R> {
-        /**
-         * Is this call async?
-         */
-        async?: boolean;
+export interface JsonOptions<R> {
+	/**
+	 * Is this call async?
+	 */
+	async?: boolean;
 
-        /**
-         * Completion callback
-         * @param {boolean} success true if error() was not called
-         */
-        complete? (success: boolean): void;
+	/**
+	 * Completion callback
+	 * @param {boolean} success true if error() was not called
+	 */
+	complete? (success: boolean): void;
 
-        /**
-         * Error callback
-         * @param {string} errorThrown
-         * @returns {any}
-         */
-        error? (errorThrown: string): any;
+	/**
+	 * Error callback
+	 * @param {string} errorThrown
+	 * @returns {any}
+	 */
+	error? (errorThrown: string): any;
 
-        /**
-         * Success callback
-         * @param {R} data
-         * @returns {any}
-         */
-        success? (data: R): any;
-    }
-
-    /**
-     * A type for a function that will handle AJAX calls
-     */
-    type AjaxInvoker = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => void;
-
-    /**
-     * The ajax caller used by generated code.
-     */
-    export let callAjax: AjaxInvoker;
+	/**
+	 * Success callback
+	 * @param {R} data
+	 * @returns {any}
+	 */
+	success? (data: R): any;
 }
+
+/**
+ * A type for a function that will handle AJAX calls
+ */
+type AjaxInvoker = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => void;
 ```
 
 Here is the implementation we use for jQuery:
 
 ```typescript
 
-jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
+jsonInterfaceGenerator.setCallAjax((url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
     let error = false;
     let settings: JQueryAjaxSettings = {
         method: method,
@@ -254,7 +252,7 @@ jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBod
         settings["dataType"] = "json";
     }
     $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
-};
+});
 ```
 
 ## Miscellaneous Weirdness
