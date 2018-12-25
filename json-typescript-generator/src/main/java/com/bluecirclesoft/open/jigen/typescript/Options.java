@@ -28,9 +28,13 @@ public class Options {
 
 	private boolean produceImmutables;
 
+	private String immutableSuffix = "$Imm";
+
 	private boolean nullIsUndefined;
 
 	private boolean useUnknown;
+
+	private OutputStructure outputStructure = OutputStructure.FILES_IN_ONE_FOLDER;
 
 	public String getOutputFile() {
 		return outputFile;
@@ -70,5 +74,21 @@ public class Options {
 
 	public void setUseUnknown(boolean useUnknown) {
 		this.useUnknown = useUnknown;
+	}
+
+	public String getImmutableSuffix() {
+		return immutableSuffix;
+	}
+
+	public void setImmutableSuffix(String immutableSuffix) {
+		this.immutableSuffix = immutableSuffix;
+	}
+
+	public OutputStructure getOutputStructure() {
+		return outputStructure;
+	}
+
+	public void setOutputStructure(OutputStructure outputStructure) {
+		this.outputStructure = outputStructure;
 	}
 }

@@ -44,6 +44,10 @@ import org.apache.commons.lang3.text.translate.LookupTranslator;
  */
 public class JsStringBuilder {
 
+	private static final CharSequenceTranslator ESCAPE_ECMASCRIPT =
+			new AggregateTranslator(new LookupTranslator(new String[][]{{"\"", "\\\""}, {"\\", "\\\\"}}),
+					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()), JavaUnicodeEscaper.outsideOf(32, 127));
+
 	/**
 	 * For each component, is it literal?
 	 */
@@ -59,7 +63,7 @@ public class JsStringBuilder {
 	 *
 	 * @param s the string
 	 */
-	public void addLiteral(String s) {
+	void addLiteral(String s) {
 		literalFlags.add(true);
 		components.add(s);
 	}
@@ -69,15 +73,10 @@ public class JsStringBuilder {
 	 *
 	 * @param s the snippet
 	 */
-	public void addCode(String s) {
+	void addCode(String s) {
 		literalFlags.add(false);
 		components.add(s);
 	}
-
-	public static final CharSequenceTranslator ESCAPE_ECMASCRIPT =
-			new AggregateTranslator(new LookupTranslator(new String[][]{{"\"", "\\\""}, {"\\", "\\\\"}}),
-					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()), JavaUnicodeEscaper.outsideOf(32, 127));
-
 
 	/**
 	 * Get the resulting string. If no components were added, it returns a representation of the empty string.

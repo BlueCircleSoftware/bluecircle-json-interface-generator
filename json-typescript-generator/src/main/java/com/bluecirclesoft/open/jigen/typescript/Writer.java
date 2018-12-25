@@ -16,10 +16,7 @@
 
 package com.bluecirclesoft.open.jigen.typescript;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -49,11 +46,50 @@ public class Writer implements CodeProducer<Options> {
 
 	private static final Logger log = LoggerFactory.getLogger(Writer.class);
 
-	private OutputHandler writer;
-
 	private boolean produceAccessorFunctionals = false;
 
 	private Options options;
+
+	private OutputController outputController;
+
+	private TypeUsageProducer usageProducerNoSuffix;
+
+	private static void handleUrlParams(String template, JsStringBuilder url, List<EndpointParameter> urlParams) {
+		SortedMap<Integer, EndpointParameter> starts = new TreeMap<>();
+		Map<Integer, Integer> ends = new HashMap<>();
+
+		if (urlParams != null) {
+			for (EndpointParameter param : urlParams) {
+				String paramExpression = "{" + param.getNetworkName() + "}";
+				int pos = template.indexOf(paramExpression);
+				if (pos >= 0) {
+					starts.put(pos, param);
+					ends.put(pos, pos + paramExpression.length());
+				}
+			}
+		}
+		int curPos = 0;
+		for (Map.Entry<Integer, EndpointParameter> entry : starts.entrySet()) {
+			int newPos = entry.getKey();
+			url.addLiteral(template.substring(curPos, newPos));
+			url.addCode("encodeURI(String(" + entry.getValue().getCodeName() + "))");
+			curPos = ends.get(newPos);
+		}
+		if (curPos < template.length()) {
+			url.addLiteral(template.substring(curPos));
+		}
+	}
+
+	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
+		if (needsComma[0]) {
+			parameterList.append(", ");
+		} else {
+			needsComma[0] = true;
+		}
+		parameterList.append(name);
+		parameterList.append(" : ");
+		parameterList.append(type);
+	}
 
 	public boolean isProduceAccessorFunctionals() {
 		return produceAccessorFunctionals;
@@ -75,13 +111,6 @@ public class Writer implements CodeProducer<Options> {
 		return options.isNullIsUndefined();
 	}
 
-	public Writer() {
-	}
-
-	Writer(PrintWriter writer) {
-		this.writer = new OutputHandler(writer);
-	}
-
 	@Override
 	public Class<Options> getOptionsClass() {
 		return Options.class;
@@ -89,6 +118,7 @@ public class Writer implements CodeProducer<Options> {
 
 	@Override
 	public void acceptOptions(Options options, List<String> errors) {
+		assert options != null : "options is null";
 		this.options = options;
 		if (options.getOutputFile() == null) {
 			errors.add("Output file is required.");
@@ -97,27 +127,24 @@ public class Writer implements CodeProducer<Options> {
 
 	@Override
 	public void output(Model model) throws IOException {
-		Namespace ns = Namespace.namespacifyModel(model, isStripCommonNamespaces());
-		start();
+		assert options != null : "this.options is null - did you forget to call acceptOptions?";
+		this.usageProducerNoSuffix =
+				new TypeUsageProducer(options, TypeUsageProducer.WillBeSpecialized.YES, TypeUsageProducer.UseImmutableSuffix.NO);
+		this.outputController = new OutputController(options);
 		try {
+			Namespace ns = Namespace.namespacifyModel(model, isStripCommonNamespaces());
+			start();
 			outputNamespace(ns);
-			writer.line();
-			writer.line("export {};");
 		} finally {
-			if (writer != null) {
-				writer.flush();
-				if (writer != null && getOutputFile() != null) {
-					writer.close();
-				}
-			}
+			this.outputController.finish();
 		}
 	}
 
-	private void outputEndpoints(Namespace namespace) {
+	private void outputEndpoints(Namespace namespace, TSFileWriter writer) {
 		for (Endpoint endpoint : namespace.getEndpoints()) {
 			ValidEndpointResponse validity = endpoint.isValid();
 			if (validity.ok) {
-				writeEndpoint(endpoint);
+				writeEndpoint(endpoint, writer);
 			} else {
 				log.warn("Could not create caller for endpoint {}:", endpoint);
 				for (String msg : validity.problems) {
@@ -127,18 +154,19 @@ public class Writer implements CodeProducer<Options> {
 		}
 	}
 
-	private void writeEndpoint(Endpoint endpoint) {
+	private void writeEndpoint(Endpoint endpoint, TSFileWriter writer) {
 		final String name = endpoint.getId();
 
 		// create parameter list for function declaration
 		StringBuilder parameterList = new StringBuilder();
 		boolean needsComma[] = {false};
 		for (EndpointParameter parameter : endpoint.getParameters()) {
-			addParameter(parameterList, needsComma, parameter.getCodeName(), parameter.getType());
+			addParameter(parameterList, needsComma, parameter.getCodeName(),
+					parameter.getType().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer)));
 		}
+		writer.addImport("jsonInterfaceGenerator", endpoint.getNamespace(), writer.getJIGNamespace());
 		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" +
-				endpoint.getResponseBody().accept(new TypeUsageProducer(null, isTreatNullAsUndefined(), new UnknownProducer(options))) +
-				">");
+				endpoint.getResponseBody().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer)) + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
 		writer.indentIn();
 
@@ -177,7 +205,7 @@ public class Writer implements CodeProducer<Options> {
 					writer.line("const submitData = JSON.stringify(" + bodyParams.get(0).getCodeName() + ");");
 				} else {
 					List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.FORM);
-					createSubmitDataBodyFromParams(params);
+					createSubmitDataBodyFromParams(params, writer);
 				}
 				break;
 			case GET:
@@ -185,7 +213,7 @@ public class Writer implements CodeProducer<Options> {
 			case DELETE:
 				// adding query parameters
 				List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.QUERY);
-				createSubmitDataBodyFromParams(params);
+				createSubmitDataBodyFromParams(params, writer);
 				break;
 			default:
 				writer.line("const submitData = undefined;");
@@ -199,33 +227,7 @@ public class Writer implements CodeProducer<Options> {
 		writer.line("}");
 	}
 
-	private static void handleUrlParams(String template, JsStringBuilder url, List<EndpointParameter> urlParams) {
-		SortedMap<Integer, EndpointParameter> starts = new TreeMap<>();
-		Map<Integer, Integer> ends = new HashMap<>();
-
-		if (urlParams != null) {
-			for (EndpointParameter param : urlParams) {
-				String paramExpression = "{" + param.getNetworkName() + "}";
-				int pos = template.indexOf(paramExpression);
-				if (pos >= 0) {
-					starts.put(pos, param);
-					ends.put(pos, pos + paramExpression.length());
-				}
-			}
-		}
-		int curPos = 0;
-		for (Map.Entry<Integer, EndpointParameter> entry : starts.entrySet()) {
-			int newPos = entry.getKey();
-			url.addLiteral(template.substring(curPos, newPos));
-			url.addCode("encodeURI(String(" + entry.getValue().getCodeName() + "))");
-			curPos = ends.get(newPos);
-		}
-		if (curPos < template.length()) {
-			url.addLiteral(template.substring(curPos));
-		}
-	}
-
-	private void createSubmitDataBodyFromParams(List<EndpointParameter> params) {
+	private void createSubmitDataBodyFromParams(List<EndpointParameter> params, TSFileWriter writer) {
 		writer.line("const submitData = {");
 		writer.indentIn();
 		if (params != null) {
@@ -239,46 +241,39 @@ public class Writer implements CodeProducer<Options> {
 		writer.line("};");
 	}
 
-	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type) {
-		addParameter(parameterList, needsComma, name,
-				type.accept(new TypeUsageProducer(null, isTreatNullAsUndefined(), new UnknownProducer(options))));
+	private void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, JType type, Namespace currentNamespace,
+	                          TSFileWriter writer) {
+		addParameter(parameterList, needsComma, name, type.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
 	}
 
-	private static void addParameter(StringBuilder parameterList, boolean[] needsComma, String name, String type) {
-		if (needsComma[0]) {
-			parameterList.append(", ");
-		} else {
-			needsComma[0] = true;
-		}
-		parameterList.append(name);
-		parameterList.append(" : ");
-		parameterList.append(type);
-	}
+	private void outputNamespace(Namespace namespace) throws IOException {
+		TSFileWriter writer = outputController.getNamespaceHandler(namespace);
+		try {
+			boolean doingNamespace = namespace.getName() != null && options.getOutputStructure() == OutputStructure.NAMESPACES;
+			if (doingNamespace) {
+				writer.line();
+				// top-level namespaces should not get 'export' sub-namespaces should. Vagaries of JavaScript
+				writer.line("export namespace " + namespace.getName() + " {");
+				writer.indentIn();
+			}
 
-	private void outputNamespace(Namespace namespace) {
-		if (namespace.getName() != null) {
-			writer.line();
-			// top-level namespaces should not get 'export' sub-namespaces should. Vagaries of JavaScript
-			writer.line("export namespace " + namespace.getName() + " {");
-			writer.indentIn();
+			// sort namespaces for stability of output
+			List<? extends JToplevelType> declarations = toList(namespace.getDeclarations());
+			declarations.sort(Comparator.comparing(JToplevelType::getName));
+			for (JType type : namespace.getDeclarations()) {
+				type.accept(new TypeDeclarationProducer(writer, options));
+			}
+			outputEndpoints(namespace, writer);
+			for (Namespace subNamespace : namespace.getNamespaces()) {
+				outputNamespace(subNamespace);
+			}
+			if (doingNamespace) {
+				writer.indentOut();
+				writer.line("}");
+			}
+		} finally {
+			outputController.close(writer);
 		}
-
-		// sort namespaces for stability of output
-		List<? extends JToplevelType> declarations = toList(namespace.getDeclarations());
-		declarations.sort(Comparator.comparing(JToplevelType::getName));
-		for (JType type : namespace.getDeclarations()) {
-			type.accept(new TypeDeclarationProducer(this, writer, isProduceImmutables(), isTreatNullAsUndefined(),
-					new UnknownProducer(options)));
-		}
-		outputEndpoints(namespace);
-		for (Namespace subNamespace : namespace.getNamespaces()) {
-			outputNamespace(subNamespace);
-		}
-		if (namespace.getName() != null) {
-			writer.indentOut();
-			writer.line("}");
-		}
-
 	}
 
 	private List<JToplevelType> toList(Iterable<? extends JToplevelType> declarations) {
@@ -290,28 +285,29 @@ public class Writer implements CodeProducer<Options> {
 	}
 
 	private void start() throws IOException {
-		if (getOutputFile() != null) {
-			File outputDir = getOutputFile().getAbsoluteFile().getParentFile();
-			if (!outputDir.exists()) {
-				if (!outputDir.mkdirs()) {
-					throw new RuntimeException("Could not create folder " + outputDir.getAbsolutePath());
+		TSFileWriter writer = outputController.getNamespaceHandler(TSFileWriter.JIG_NAMESPACE);
+		try {
+			boolean doingNamespace = options.getOutputStructure() == OutputStructure.NAMESPACES;
+			if (doingNamespace) {
+				writer.line("export namespace jsonInterfaceGenerator {");
+				writer.indentIn();
+			}
+			Pattern pattern = Pattern.compile("^\\s*export type UnknownType = unknown");
+			writer.writeResource("/header.ts", (line) -> {
+				if (!options.isUseUnknown() && pattern.matcher(line).matches()) {
+					return line.replace("unknown", "any");
+				} else {
+					return line;
 				}
+			});
+			writer.line();
+			if (doingNamespace) {
+				writer.indentOut();
+				writer.line("}");
 			}
-			writer = new OutputHandler(new PrintWriter(new FileWriter(getOutputFile())));
+		} finally {
+			outputController.close(writer);
 		}
-		Pattern pattern = Pattern.compile("^\\s*export type UnknownType = unknown");
-		writer.writeResource("/header.ts", (line) -> {
-			if (!options.isUseUnknown() && pattern.matcher(line).matches()) {
-				return line.replace("unknown", "any");
-			} else {
-				return line;
-			}
-		});
-		writer.line();
 
-	}
-
-	public File getOutputFile() {
-		return new File(options.getOutputFile());
 	}
 }

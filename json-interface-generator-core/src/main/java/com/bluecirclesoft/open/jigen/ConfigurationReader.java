@@ -51,7 +51,8 @@ class ConfigurationReader {
 
 	}
 
-	public void configureOneProcessor(List<String> errors, ConfigurableProcessor processor, String readerWriter, String configLabel) {
+	public void configureOneProcessor(List<String> errors, ConfigurableProcessor processor, String readerWriter, String configLabel)
+			throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
 
 		Class<?> optionsClass = processor.getOptionsClass();

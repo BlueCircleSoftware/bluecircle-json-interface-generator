@@ -29,6 +29,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class Endpoint implements Serializable {
 
+	private final List<EndpointParameter> parameters = new ArrayList<>();
+
 	private String id;
 
 	private HttpMethod method;
@@ -37,10 +39,23 @@ public class Endpoint implements Serializable {
 
 	private String pathTemplate;
 
-	private final List<EndpointParameter> parameters = new ArrayList<>();
+	private Namespace namespace;
 
 	Endpoint(String id) {
 		this.id = id;
+	}
+
+	/**
+	 * Are there any parameters of the specified type?
+	 *
+	 * @param sortedParams the parameters
+	 * @param type         the desired type
+	 * @return yes or no
+	 */
+	private static boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams,
+	                               EndpointParameter.NetworkType type) {
+		List<EndpointParameter> endpointParameters = sortedParams.get(type);
+		return endpointParameters != null && endpointParameters.size() > 0;
 	}
 
 	public HttpMethod getMethod() {
@@ -60,6 +75,10 @@ public class Endpoint implements Serializable {
 		return responseBody;
 	}
 
+	public void setResponseBody(JType responseBody) {
+		this.responseBody = responseBody;
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -68,16 +87,20 @@ public class Endpoint implements Serializable {
 		this.id = id;
 	}
 
-	public void setResponseBody(JType responseBody) {
-		this.responseBody = responseBody;
-	}
-
 	public String getPathTemplate() {
 		return pathTemplate;
 	}
 
 	public void setPathTemplate(String pathTemplate) {
 		this.pathTemplate = pathTemplate;
+	}
+
+	public Namespace getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(Namespace namespace) {
+		this.namespace = namespace;
 	}
 
 	@Override
@@ -103,20 +126,6 @@ public class Endpoint implements Serializable {
 		}
 		return result;
 	}
-
-	/**
-	 * Are there any parameters of the specified type?
-	 *
-	 * @param sortedParams the parameters
-	 * @param type         the desired type
-	 * @return yes or no
-	 */
-	private static boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams,
-	                               EndpointParameter.NetworkType type) {
-		List<EndpointParameter> endpointParameters = sortedParams.get(type);
-		return endpointParameters != null && endpointParameters.size() > 0;
-	}
-
 
 	/**
 	 * Is this endpoint a valid endpoint (i.e., can we generate a stub for it)?

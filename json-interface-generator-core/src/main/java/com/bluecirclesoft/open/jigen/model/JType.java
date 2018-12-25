@@ -56,4 +56,13 @@ abstract public class JType implements Serializable {
 	public List<JTypeVariable> getTypeVariables() {
 		return new ArrayList<>();
 	}
+
+	/**
+	 * Get the namespace that this type is defined in.
+	 *
+	 * @return the namespace, or null if there is no namespace (e.g., 'unknown', 'number', type variable, etc.)
+	 */
+	public Namespace getContainingNamespace() {
+		return null;
+	}
 }

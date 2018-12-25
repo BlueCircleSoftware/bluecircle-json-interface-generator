@@ -48,9 +48,7 @@ import com.bluecirclesoft.open.jigen.model.JWildcard;
  */
 class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
-	private final OutputHandler writer;
-
-	private final Writer producer;
+	private final TSFileWriter writer;
 
 	private final boolean produceImmutable;
 
@@ -58,13 +56,17 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 	private final UnknownProducer unknownProducer;
 
-	public TypeDeclarationProducer(Writer typeScriptProducer, OutputHandler writer, boolean produceImmutable, boolean treatNullAsUndefined,
-	                               UnknownProducer unknownProducer) {
+	private final String immutableSuffix;
+
+	private final Options options;
+
+	public TypeDeclarationProducer(TSFileWriter writer, Options options) {
 		this.writer = writer;
-		this.producer = typeScriptProducer;
-		this.produceImmutable = produceImmutable;
-		this.treatNullAsUndefined = treatNullAsUndefined;
-		this.unknownProducer = unknownProducer;
+		this.options = options;
+		this.produceImmutable = options.isProduceImmutables();
+		this.treatNullAsUndefined = options.isNullIsUndefined();
+		this.unknownProducer = new UnknownProducer(options);
+		this.immutableSuffix = options.getImmutableSuffix();
 	}
 
 	@Override
@@ -115,6 +117,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		writer.indentOut();
 		writer.line("}");
 		// enum already has index -> name and name -> index, but we will emit index -> enum constant and name -> enum constant
+		writer.addImport("jsonInterfaceGenerator", jEnum.getContainingNamespace(), writer.getJIGNamespace());
 		writer.line("export const " + name + "_values : jsonInterfaceGenerator.EnumReverseLookup<" + name + "> = {};");
 		for (JEnum.EnumDeclaration value : values) {
 			writer.line(name + "_values[" + value.getNumericValue() + "] = " + name + "." + value.getName() + ";");
@@ -176,7 +179,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		Set<String> subTypeValues = null;
 
 		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null, unknownProducer));
-		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer);
+		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(options, TypeUsageProducer.UseImmutableSuffix.NO);
 		writer.line();
 		StringBuilder declLine = new StringBuilder("export interface " + definterfaceType);
 		if (intf.getSuperclasses().size() > 0) {
@@ -188,7 +191,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 				} else {
 					needsComma = true;
 				}
-				declLine.append(typeUsageProducer.visit(entry.getValue()));
+				declLine.append(typeUsageProducer.getProducer(intf.getContainingNamespace(), writer).visit(entry.getValue()));
 			}
 		}
 		declLine.append(" {");
@@ -225,7 +228,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 				if (type.canBeUndefined() || (treatNullAsUndefined && type.canBeNull())) {
 					makeOptional = "?";
 				}
-				typeString = type.accept(typeUsageProducer);
+				typeString = type.accept(typeUsageProducer.getProducer(intf.getContainingNamespace(), writer));
 			}
 			writer.line(prop.getKey() + makeOptional + ": " + typeString + ";");
 		}
@@ -300,6 +303,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 
 		if (produceImmutable) {
+			writer.addImport("jsonInterfaceGenerator", intf.getContainingNamespace(), writer.getJIGNamespace());
 			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm", unknownProducer));
 			declLine = new StringBuilder("export class " + immutableInterfaceType + " {");
 			writer.line(declLine.toString());
@@ -362,7 +366,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
-				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, treatNullAsUndefined, unknownProducer);
+				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, options, intf.getContainingNamespace());
 				prop.getValue().getType().accept(accessorProducer);
 			}
 			writer.indentOut();

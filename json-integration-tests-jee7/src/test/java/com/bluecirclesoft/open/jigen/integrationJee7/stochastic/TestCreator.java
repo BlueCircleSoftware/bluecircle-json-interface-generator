@@ -12,13 +12,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package com.bluecirclesoft.open.jigen.typescript;
+package com.bluecirclesoft.open.jigen.integrationJee7.stochastic;
+
+import java.util.Random;
 
 /**
- * Enum to notate whether a produced type string is to be used at a type definition, or a type usage (reference)
+ * Create random models in Java, and try to convert them to TypeScript.
+ * <p>
+ * 1) If the Java compiles, the TypeScript should compile.
  */
-public enum UsageLocation {
-	DEFINITION,
-	USAGE}
+public class TestCreator {
+
+	private Random random = new Random();
+
+	public static void main(String[] args) {
+
+	}
+
+}

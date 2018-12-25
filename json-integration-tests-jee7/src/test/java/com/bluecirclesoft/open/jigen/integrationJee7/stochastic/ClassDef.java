@@ -12,13 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package com.bluecirclesoft.open.jigen.typescript;
+package com.bluecirclesoft.open.jigen.integrationJee7.stochastic;
 
 /**
- * Enum to notate whether a produced type string is to be used at a type definition, or a type usage (reference)
+ * TODO document me
  */
-public enum UsageLocation {
-	DEFINITION,
-	USAGE}
+public class ClassDef {
+
+}

@@ -59,7 +59,8 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 				name = jObject.getName();
 				break;
 			case USAGE:
-				name = jObject.getReference();
+//				name = jObject.getReference(); TODO
+				name = jObject.getName();
 				break;
 			default:
 				throw new RuntimeException("Unhandled location: " + this.location);

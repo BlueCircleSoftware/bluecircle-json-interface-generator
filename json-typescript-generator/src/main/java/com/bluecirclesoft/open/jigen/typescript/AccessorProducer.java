@@ -35,6 +35,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
+import com.bluecirclesoft.open.jigen.model.Namespace;
 
 /**
  * TODO document me
@@ -45,11 +46,34 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	private final String name;
 
-	private final OutputHandler writer;
+	private final TSFileWriter writer;
 
-	private final boolean treatNullAsUndefined;
+	private final Options options;
 
 	private final UnknownProducer unknownProducer;
+
+	private final String immutableSuffix;
+
+	private final TypeUsageProducer usageProducerNoSuffix;
+
+	private final TypeUsageProducer usageProducerSpecializedNoSuffix;
+
+	private final TypeUsageProducer usageProducerWithSuffix;
+
+	private final Namespace currentNamespace;
+
+	AccessorProducer(String name, TSFileWriter writer, Options options, Namespace currentNamespace) {
+		this.name = name;
+		this.writer = writer;
+		this.unknownProducer = new UnknownProducer(options);
+		this.immutableSuffix = options.getImmutableSuffix();
+		this.options = options;
+		this.currentNamespace = currentNamespace;
+		usageProducerNoSuffix = new TypeUsageProducer(options, TypeUsageProducer.UseImmutableSuffix.NO);
+		usageProducerSpecializedNoSuffix =
+				new TypeUsageProducer(options, TypeUsageProducer.WillBeSpecialized.YES, TypeUsageProducer.UseImmutableSuffix.NO);
+		usageProducerWithSuffix = new TypeUsageProducer(options, TypeUsageProducer.UseImmutableSuffix.YES);
+	}
 
 	public String capitalize(String variableName) {
 		return variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
@@ -65,7 +89,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 			} else {
 				needsComma = true;
 			}
-			sb.append(param.accept(tup));
+			sb.append(param.accept(tup.getProducer(currentNamespace, writer)));
 		}
 		sb.append(">");
 		return sb.toString();
@@ -81,17 +105,10 @@ class AccessorProducer implements JTypeVisitor<Object> {
 			} else {
 				needsComma = true;
 			}
-			sb.append(param.accept(tup));
+			sb.append(param.accept(tup.getProducer(currentNamespace, writer)));
 		}
 		sb.append(">");
 		return sb.toString();
-	}
-
-	public AccessorProducer(String name, OutputHandler writer, boolean treatNullAsUndefined, UnknownProducer unknownProducer) {
-		this.name = name;
-		this.writer = writer;
-		this.treatNullAsUndefined = treatNullAsUndefined;
-		this.unknownProducer = unknownProducer;
 	}
 
 	private void primitiveAccessor(String type) {
@@ -108,14 +125,15 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	}
 
 	private void objectAccessor(String type, String variables) {
-		writer.line("public get " + name + "() : " + type + "$Imm " + variables + " {");
+		writer.line("public get " + name + "() : " + type + immutableSuffix + variables + " {");
 		writer.indentIn();
-		writer.line("return new " + type + "$Imm" + variables + "(this._delegate.root, this._delegate.extend(\"" + name + "\"));");
+		writer.line("return new " + type + immutableSuffix + variables + "(this._delegate.root, this._delegate.extend(\"" + name + "\"));");
 		writer.indentOut();
 		writer.line("}");
 	}
 
 	private void primitiveArrayAccessor(String type) {
+		writer.addImport("jsonInterfaceGenerator", currentNamespace, writer.getJIGNamespace());
 		writer.line("public get " + name + "() : jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + "> {");
 		writer.indentIn();
 		writer.line("return new jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + ">(this._delegate.root, this._delegate.extend(\"" +
@@ -125,6 +143,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	}
 
 	private void objectArrayAccessor(String intfType, String wrapperType) {
+		writer.addImport("jsonInterfaceGenerator", currentNamespace, writer.getJIGNamespace());
 		writer.line("public get " + name + "(): jsonInterfaceGenerator.PrimitiveArrayWrapper<" + intfType + "> {");
 		writer.indentIn();
 		writer.line(
@@ -137,7 +156,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	@Override
 	public Object visit(JObject jObject) {
 		if (jObject.isConstructible()) {
-			objectAccessor(jObject.getReference(), "");
+			objectAccessor(jObject.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)), "");
 		}
 		return null;
 	}
@@ -151,13 +170,12 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JArray jArray) {
-		String interfaceName = jArray.getElementType().accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
+		String interfaceName = jArray.getElementType().accept(usageProducerNoSuffix.getProducer(currentNamespace, writer));
 		if (jArray.getElementType().needsWrapping()) {
 			if (jArray.getElementType() instanceof JTypeVariable) {
 				primitiveArrayAccessor(interfaceName);
 			} else {
-				TypeUsageProducer typeUsageProducer = new TypeUsageProducer("$Imm", treatNullAsUndefined, unknownProducer);
-				String wrapperName = jArray.getElementType().accept(typeUsageProducer);
+				String wrapperName = jArray.getElementType().accept(usageProducerWithSuffix.getProducer(currentNamespace, writer));
 				objectArrayAccessor(interfaceName, wrapperName);
 			}
 		} else {
@@ -176,7 +194,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JEnum jEnum) {
-		primitiveAccessor(jEnum.getReference());
+		primitiveAccessor(jEnum.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
 		return null;
 
 	}
@@ -201,8 +219,9 @@ class AccessorProducer implements JTypeVisitor<Object> {
 
 	@Override
 	public Object visit(JSpecialization jSpecialization) {
-		TypeUsageProducer tup = new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, unknownProducer);
-		String type = jSpecialization.getBase().accept(tup) + writeSpecializedTypes(jSpecialization, tup);
+		TypeUsageProducer tup = usageProducerSpecializedNoSuffix;
+		String type =
+				jSpecialization.getBase().accept(tup.getProducer(currentNamespace, writer)) + writeSpecializedTypes(jSpecialization, tup);
 		primitiveAccessor(type);
 		return null;
 	}
@@ -217,7 +236,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	@Override
 	public Object visit(JMap jMap) {
 		primitiveAccessor(
-				"{[name: string]:" + jMap.getValueType().accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer)) + "}");
+				"{[name: string]:" + jMap.getValueType().accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)) + "}");
 		return null;
 
 	}
@@ -230,13 +249,12 @@ class AccessorProducer implements JTypeVisitor<Object> {
 				return visit((JArray) stripped);
 			} else if (stripped instanceof JObject) {
 				if (stripped.hasTypeVariables()) {
-					String typeString = stripped.accept(
-							new TypeUsageProducer(null, TypeUsageProducer.WillBeSpecialized.YES, treatNullAsUndefined, unknownProducer));
-					String variables = writeTypeVariables(stripped, new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
+					String typeString = stripped.accept(usageProducerSpecializedNoSuffix.getProducer(currentNamespace, writer));
+					String variables = writeTypeVariables(stripped, usageProducerNoSuffix);
 					objectAccessor(typeString, variables);
 					return null;
 				} else {
-					String typeString = stripped.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
+					String typeString = stripped.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer));
 					objectAccessor(typeString, "");
 					return null;
 				}
@@ -244,20 +262,20 @@ class AccessorProducer implements JTypeVisitor<Object> {
 				return visit((JSpecialization) stripped);
 			}
 		}
-		String typeString = jUnionType.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer));
+		String typeString = jUnionType.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer));
 		primitiveAccessor(typeString);
 		return null;
 	}
 
 	@Override
 	public Object visit(JNull jNull) {
-		primitiveAccessor(jNull.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer)));
+		primitiveAccessor(jNull.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
 		return null;
 	}
 
 	@Override
 	public Object visit(JWildcard jWildcard) {
-		primitiveAccessor(jWildcard.accept(new TypeUsageProducer(null, treatNullAsUndefined, unknownProducer)));
+		primitiveAccessor(jWildcard.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
 		return null;
 	}
 }

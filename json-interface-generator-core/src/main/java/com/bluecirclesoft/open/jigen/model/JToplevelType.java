@@ -16,8 +16,6 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Base class for types that are defined at top level (namely, objects and enums).
  */
@@ -30,6 +28,7 @@ public abstract class JToplevelType extends JType {
 	 *
 	 * @return the namespace
 	 */
+	@Override
 	public Namespace getContainingNamespace() {
 		return containingNamespace;
 	}
@@ -39,18 +38,6 @@ public abstract class JToplevelType extends JType {
 	}
 
 	abstract public String getName();
-
-	public String getReference() {
-		String namespace = "??";
-		if (containingNamespace != null) {
-			namespace = getContainingNamespace().getReference();
-		}
-		if (StringUtils.isBlank(namespace)) {
-			return getName();
-		} else {
-			return namespace + "." + getName();
-		}
-	}
 
 	abstract public void setName(String name);
 

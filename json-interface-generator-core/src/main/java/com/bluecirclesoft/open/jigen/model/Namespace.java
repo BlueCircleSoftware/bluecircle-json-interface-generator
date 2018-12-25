@@ -29,79 +29,22 @@ import com.bluecirclesoft.open.jigen.Regexes;
  */
 public class Namespace implements Serializable {
 
-	private String name;
-
-	private Namespace containingNamespace;
-
 	private final List<Namespace> namespaces = new ArrayList<>();
 
 	private final List<JToplevelType> declarations = new ArrayList<>();
 
 	private final List<Endpoint> endpoints = new ArrayList<>();
 
-	private Namespace(Namespace containingNamespace, String name) {
+	private String name;
+
+	private Namespace containingNamespace;
+
+	public Namespace(Namespace containingNamespace, String name) {
 		this.containingNamespace = containingNamespace;
 		this.name = name;
 	}
 
 	private Namespace() {
-	}
-
-	private Namespace findSubNamespace(String name) {
-		for (Namespace thing : namespaces) {
-			if (thing != null && thing.getName().equals(name)) {
-				return thing;
-			}
-		}
-		Namespace newNamespace = new Namespace(this, name);
-		namespaces.add(newNamespace);
-		return newNamespace;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<Namespace> getNamespaces() {
-		return namespaces;
-	}
-
-	private void setContainingNamespace(Namespace containingNamespace) {
-		this.containingNamespace = containingNamespace;
-	}
-
-	public String getReference() {
-		if (containingNamespace == null) {
-			if (StringUtils.isBlank(name)) {
-				return "";
-			} else {
-				return name;
-			}
-		} else {
-			String parent = containingNamespace.getReference();
-			if (StringUtils.isBlank(parent)) {
-				return name;
-			} else {
-				return parent + "." + name;
-			}
-		}
-	}
-
-	public Iterable<? extends JToplevelType> getDeclarations() {
-		return declarations;
-	}
-
-	private void addDeclaration(JToplevelType tlType) {
-		declarations.add(tlType);
-		tlType.setContainingNamespace(this);
-	}
-
-	private boolean isDeclarationsEmpty() {
-		return declarations.isEmpty();
 	}
 
 	public static Namespace namespacifyModel(Model model, boolean stripCommonNamespaces) {
@@ -149,6 +92,50 @@ public class Namespace implements Serializable {
 		return top;
 	}
 
+	private Namespace findSubNamespace(String name) {
+		for (Namespace thing : namespaces) {
+			if (thing != null && thing.getName().equals(name)) {
+				return thing;
+			}
+		}
+		Namespace newNamespace = new Namespace(this, name);
+		namespaces.add(newNamespace);
+		return newNamespace;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public List<Namespace> getNamespaces() {
+		return namespaces;
+	}
+
+	public Namespace getContainingNamespace() {
+		return containingNamespace;
+	}
+
+	private void setContainingNamespace(Namespace containingNamespace) {
+		this.containingNamespace = containingNamespace;
+	}
+
+	public Iterable<? extends JToplevelType> getDeclarations() {
+		return declarations;
+	}
+
+	private void addDeclaration(JToplevelType tlType) {
+		declarations.add(tlType);
+		tlType.setContainingNamespace(this);
+	}
+
+	private boolean isDeclarationsEmpty() {
+		return declarations.isEmpty();
+	}
+
 	/**
 	 * Sort all my sub-elements
 	 */
@@ -163,10 +150,31 @@ public class Namespace implements Serializable {
 
 	private void addEndpoint(Endpoint endpoint) {
 		endpoints.add(endpoint);
+		endpoint.setNamespace(this);
 	}
 
 
 	public List<Endpoint> getEndpoints() {
 		return endpoints;
+	}
+
+
+	public String conjoin(String separator) {
+		String name = this.getName();
+		Namespace containingNamespace = this.getContainingNamespace();
+		if (containingNamespace == null) {
+			if (StringUtils.isBlank(name)) {
+				return "";
+			} else {
+				return name;
+			}
+		} else {
+			String parent = containingNamespace.conjoin(separator);
+			if (StringUtils.isBlank(parent)) {
+				return name;
+			} else {
+				return parent + separator + name;
+			}
+		}
 	}
 }

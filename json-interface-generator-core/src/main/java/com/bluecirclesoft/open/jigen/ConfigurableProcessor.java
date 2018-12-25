@@ -17,6 +17,7 @@
 
 package com.bluecirclesoft.open.jigen;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -37,5 +38,5 @@ public interface ConfigurableProcessor<T> {
 	 * @param options the options object
 	 * @param errors  a list of errors to add this object's specific errors to.
 	 */
-	void acceptOptions(T options, List<String> errors);
+	void acceptOptions(T options, List<String> errors) throws IOException;
 }
