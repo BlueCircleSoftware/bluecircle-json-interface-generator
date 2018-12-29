@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.typescript;
@@ -79,11 +80,10 @@ class TypeUsageProducer {
 
 		return new JTypeVisitor<String>() {
 
-			private final ReferenceGenerator referenceGenerator = new ReferenceGenerator(referenceLocation, writer, options);
-
 			@Override
 			public String visit(JObject jObject) {
-				String refStr = referenceGenerator.makeReference(jObject) + (immutableSuffix != null ? immutableSuffix : "");
+				String prefix = writer.getReferencePrefix(referenceLocation, jObject.getContainingNamespace());
+				String refStr = prefix + jObject.getName() + (immutableSuffix != null ? immutableSuffix : "");
 				if (isSpecializing == WillBeSpecialized.YES) {
 					// produced as part of a JSpecialization, which will output its own type parameters
 					return refStr;
@@ -130,7 +130,8 @@ class TypeUsageProducer {
 
 			@Override
 			public String visit(JEnum jEnum) {
-				return referenceGenerator.makeReference(jEnum);
+				String prefix = writer.getReferencePrefix(referenceLocation, jEnum.getContainingNamespace());
+				return prefix + jEnum.getName();
 			}
 
 			@Override
@@ -150,6 +151,10 @@ class TypeUsageProducer {
 
 			@Override
 			public String visit(JSpecialization jSpecialization) {
+				if (!jSpecialization.getBase().isSpecializable()) {
+					return jSpecialization.getBase().accept(this);
+				}
+
 				StringBuilder sb = new StringBuilder();
 				TypeUsageProducer subTup = new TypeUsageProducer(options, WillBeSpecialized.YES, useImmutableSuffix);
 				sb.append(jSpecialization.getBase().accept(subTup.getProducer(referenceLocation, writer)));

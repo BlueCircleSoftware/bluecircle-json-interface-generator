@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.model;
@@ -64,5 +65,14 @@ abstract public class JType implements Serializable {
 	 */
 	public Namespace getContainingNamespace() {
 		return null;
+	}
+
+	/**
+	 * Can be specialized, i.e., can have {@code <T>} after it
+	 *
+	 * @return tes or no
+	 */
+	public boolean isSpecializable() {
+		return true;
 	}
 }

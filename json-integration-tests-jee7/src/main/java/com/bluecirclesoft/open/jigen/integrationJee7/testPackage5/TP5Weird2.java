@@ -15,32 +15,20 @@
  *
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integrationJee7.testPackage5;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import com.bluecirclesoft.open.jigen.annotations.DiscriminatedBy;
+import com.bluecirclesoft.open.jigen.annotations.TypeDiscriminator;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage4.TP4Super2;
 
 /**
  * TODO document me
  */
-public class JNumber extends JType {
+public class TP5Weird2<T extends TP4Super2> extends TP4Super2 {
 
-	@Override
-	public <T> T accept(JTypeVisitor<T> visitor) {
-		return visitor.visit(this);
+	@TypeDiscriminator(discriminatedBy = DiscriminatedBy.CLASS_NAME)
+	public String getType() {
+		return this.getClass().getName();
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).toString();
-	}
-
-	@Override
-	public boolean needsWrapping() {
-		return false;
-	}
-
-	@Override
-	public boolean isSpecializable() {
-		return false;
-	}
 }

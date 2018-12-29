@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Blue Circle Software, LLC
+ * Copyright 2018 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.integrationJee7;
@@ -46,6 +47,10 @@ import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Sub1;
 import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Sub2;
 import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Sub3;
 import com.bluecirclesoft.open.jigen.integrationJee7.testPackage3.Super;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage4.TP4Super;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage4.TP4Super2;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage5.TP5Weird;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage5.TP5Weird2;
 
 /**
  * Test services that consume/produce objects
@@ -235,4 +240,17 @@ public class TestServicesObject {
 		return result;
 	}
 
+	@GET
+	@Path("/getTP5Weird")
+	@Produces(MediaType.APPLICATION_JSON)
+	public TP5Weird<TP4Super> getTP5Weird() {
+		return new TP5Weird<>();
+	}
+
+	@GET
+	@Path("/getTP5Weird2")
+	@Produces(MediaType.APPLICATION_JSON)
+	public TP5Weird2<TP4Super2> getTP5Weird2() {
+		return new TP5Weird2<>();
+	}
 }

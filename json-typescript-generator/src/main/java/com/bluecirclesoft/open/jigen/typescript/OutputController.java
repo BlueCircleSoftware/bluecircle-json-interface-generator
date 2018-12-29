@@ -19,6 +19,7 @@ package com.bluecirclesoft.open.jigen.typescript;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import com.bluecirclesoft.open.jigen.model.Namespace;
 
@@ -118,6 +119,26 @@ public class OutputController {
 				return true;
 			case FILES_IN_TREE:
 				return true;
+			default:
+				throw new RuntimeException("Unhandled output structure " + this);
+		}
+	}
+
+	public String getReferencePrefix(Namespace currentNamespace, Namespace referencedNamespace) {
+		switch (options.getOutputStructure()) {
+			case NAMESPACES:
+				if (Objects.equals(currentNamespace, referencedNamespace)) {
+					return "";
+				} else {
+					return referencedNamespace.conjoin(".");
+				}
+			case FILES_IN_ONE_FOLDER:
+			case FILES_IN_TREE:
+				if (Objects.equals(currentNamespace, referencedNamespace)) {
+					return "";
+				} else {
+					return referencedNamespace.conjoin("_");
+				}
 			default:
 				throw new RuntimeException("Unhandled output structure " + this);
 		}

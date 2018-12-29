@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.typescript;
@@ -178,7 +179,8 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 		Set<String> subTypeValues = null;
 
-		String definterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, null, unknownProducer));
+		String definterfaceType = intf.accept(
+				new TypeVariableProducer(UsageLocation.DEFINITION, null, unknownProducer, intf.getContainingNamespace(), writer));
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(options, TypeUsageProducer.UseImmutableSuffix.NO);
 		writer.line();
 		StringBuilder declLine = new StringBuilder("export interface " + definterfaceType);
@@ -304,7 +306,8 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 
 		if (produceImmutable) {
 			writer.addImport("jsonInterfaceGenerator", intf.getContainingNamespace(), writer.getJIGNamespace());
-			String immutableInterfaceType = intf.accept(new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm", unknownProducer));
+			String immutableInterfaceType = intf.accept(
+					new TypeVariableProducer(UsageLocation.DEFINITION, "$Imm", unknownProducer, intf.getContainingNamespace(), writer));
 			declLine = new StringBuilder("export class " + immutableInterfaceType + " {");
 			writer.line(declLine.toString());
 			writer.indentIn();

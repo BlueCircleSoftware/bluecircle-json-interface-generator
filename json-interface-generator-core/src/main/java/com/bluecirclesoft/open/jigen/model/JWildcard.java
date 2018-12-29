@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.model;
@@ -71,6 +72,10 @@ public class JWildcard extends JType {
 			result.addAll(bound.getTypeVariables());
 		}
 		return result;
+	}
 
+	@Override
+	public boolean isSpecializable() {
+		return false;
 	}
 }

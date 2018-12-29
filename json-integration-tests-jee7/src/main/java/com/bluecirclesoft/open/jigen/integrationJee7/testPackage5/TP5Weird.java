@@ -15,32 +15,13 @@
  *
  */
 
-package com.bluecirclesoft.open.jigen.model;
+package com.bluecirclesoft.open.jigen.integrationJee7.testPackage5;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import com.bluecirclesoft.open.jigen.integrationJee7.testPackage4.TP4Super;
 
 /**
  * TODO document me
  */
-public class JNumber extends JType {
+public class TP5Weird<T extends TP4Super> extends TP4Super {
 
-	@Override
-	public <T> T accept(JTypeVisitor<T> visitor) {
-		return visitor.visit(this);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).toString();
-	}
-
-	@Override
-	public boolean needsWrapping() {
-		return false;
-	}
-
-	@Override
-	public boolean isSpecializable() {
-		return false;
-	}
 }

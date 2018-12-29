@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.typescript;
@@ -32,6 +33,7 @@ import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
+import com.bluecirclesoft.open.jigen.model.Namespace;
 
 /**
  * TODO document me
@@ -44,10 +46,17 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	private final UnknownProducer unknownProducer;
 
-	public TypeVariableProducer(UsageLocation location, String immutableSuffix, UnknownProducer unknownProducer) {
+	private final Namespace locationNamespace;
+
+	private final TSFileWriter writer;
+
+	public TypeVariableProducer(UsageLocation location, String immutableSuffix, UnknownProducer unknownProducer,
+	                            Namespace locationNamespace, TSFileWriter writer) {
 		this.location = location;
 		this.immutableSuffix = immutableSuffix;
 		this.unknownProducer = unknownProducer;
+		this.locationNamespace = locationNamespace;
+		this.writer = writer;
 	}
 
 	@Override
@@ -59,8 +68,8 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 				name = jObject.getName();
 				break;
 			case USAGE:
-//				name = jObject.getReference(); TODO
-				name = jObject.getName();
+				String prefix = writer.getReferencePrefix(locationNamespace, jObject.getContainingNamespace());
+				name = prefix + jObject.getName();
 				break;
 			default:
 				throw new RuntimeException("Unhandled location: " + this.location);
@@ -140,7 +149,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 					} else {
 						needsAmpersand = true;
 					}
-					sb.append(bound.accept(new TypeVariableProducer(UsageLocation.USAGE, "", unknownProducer)));
+					sb.append(bound.accept(new TypeVariableProducer(UsageLocation.USAGE, "", unknownProducer, locationNamespace, writer)));
 				}
 			}
 		}

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package com.bluecirclesoft.open.jigen.model;
 
@@ -176,5 +177,30 @@ public class Namespace implements Serializable {
 				return parent + separator + name;
 			}
 		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof Namespace)) {
+			return false;
+		}
+
+		Namespace namespace = (Namespace) o;
+
+		if (!getName().equals(namespace.getName())) {
+			return false;
+		}
+		return getContainingNamespace() != null ? getContainingNamespace().equals(namespace.getContainingNamespace()) :
+				namespace.getContainingNamespace() == null;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = getName().hashCode();
+		result = 31 * result + (getContainingNamespace() != null ? getContainingNamespace().hashCode() : 0);
+		return result;
 	}
 }
