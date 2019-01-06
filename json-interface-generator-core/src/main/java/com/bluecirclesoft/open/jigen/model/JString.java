@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package com.bluecirclesoft.open.jigen.model;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * TODO document me
+ * Represents the TypeScript 'string' type
  */
 public class JString extends JType {
 

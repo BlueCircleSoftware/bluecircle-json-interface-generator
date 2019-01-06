@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO document me
+ * Represents a wildcard type (like '? extends MyClass').
  */
 public class JWildcard extends JType {
 

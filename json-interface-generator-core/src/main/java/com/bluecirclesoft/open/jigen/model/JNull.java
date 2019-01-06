@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 package com.bluecirclesoft.open.jigen.model;
 
 /**
- * TODO document me
+ * Represents the TypeScript 'null' type
  */
 public class JNull extends JType {
 

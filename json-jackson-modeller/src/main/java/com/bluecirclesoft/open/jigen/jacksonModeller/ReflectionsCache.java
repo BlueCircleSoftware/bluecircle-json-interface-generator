@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO document me
+ * Cache to hold on to Reflections scanners, since they can be very time consuming to build (see {@link Reflections})
  */
-public class ReflectionsCache {
+class ReflectionsCache {
 
 	private static final Logger logger = LoggerFactory.getLogger(ReflectionsCache.class);
 

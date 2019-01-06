@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.jee7;
@@ -65,7 +66,7 @@ import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 
 /**
- * TODO document me
+ * Read Java packages and look for JAX-RS methods - convert those into a {@link Model}
  */
 public class Reader implements ModelCreator<Options> {
 
@@ -98,13 +99,13 @@ public class Reader implements ModelCreator<Options> {
 
 	private Model model;
 
-	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
+	private final ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
 
 	private JEnum.EnumType defaultEnumType = JEnum.EnumType.NUMERIC;
 
-	JacksonTypeModeller modeller;
+	private JacksonTypeModeller modeller;
 
-	private Model createModel(String... packageNames) {
+	private void createModel(String... packageNames) {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
@@ -131,7 +132,6 @@ public class Reader implements ModelCreator<Options> {
 			}
 		}
 
-		return model;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.integrationSpring;
 
 /**
- * TODO document me
+ * Use the stack to get the name of the current/calling function
  */
-public class CallerFinder {
+class CallerFinder {
 
-	public static String getMyName() {
+	/**
+	 * Get the name of the function that called this function (function is called 'getMyName' because in the context of the caller, the
+	 * caller's name is "my name")
+	 *
+	 * @return the caller's name
+	 */
+	static String getMyName() {
 		return Thread.currentThread().getStackTrace()[2].getMethodName();
 	}
 }

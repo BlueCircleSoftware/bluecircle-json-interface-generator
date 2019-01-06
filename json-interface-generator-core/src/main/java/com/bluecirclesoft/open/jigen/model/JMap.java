@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.model;
@@ -21,7 +22,7 @@ import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * TODO document me
+ * Corresponds to a map - if 'valueType' is V, then this represents the TypeScript type {@code {[key:string]:V} }
  */
 public class JMap extends JType {
 
