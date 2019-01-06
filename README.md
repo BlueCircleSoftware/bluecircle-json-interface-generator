@@ -1,6 +1,6 @@
 # bluecircle-json-interface-generator
 
-A utility to read your Java JAX-RS methods, and generate TypeScript interfaces and AJAX calls to use those interfaces.
+BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript interfaces and AJAX calls to use those interfaces.
 
 *THIS IS A WORK IN PROGRESS* - So far, this has only been used internally. Bugs, comments, suggestions? Please tell us!
 
@@ -14,7 +14,47 @@ A utility to read your Java JAX-RS methods, and generate TypeScript interfaces a
 	</dependency>
 ```
 
-## What does it do?
+## What is BC-JIG for? What's the intended use case?
+
+BC-JIG eliminates the need to maintain a separate document describing the API of a Java server, by reflecting upon the server and 
+producing stubs in other languages (TypeScript at the moment).
+
+This is highly useful for projects that have a server, written in Java, that has client(s) that are **tightly bound** to 
+the server. Tightly bound could mean:
+
+* Whenever the server is deployed, the clients are always deployed as well, or
+* You can't imagine multiple clients using different versions of an API, or
+* The server's services are internal to the app. Nobody else would use them, nor would you want them to.
+
+Basically, this project is for RESTful Java services that are meant to be internal, and the client and server are updated in lock-step. 
+The best example consumer of BC-JIG is a single-page app where the backend is Java, the frontend is TypeScript, and the API used by the 
+frontend needs to be rebuilt when the Java is rebuilt.
+
+Also, BC-JIG is extensible: you can implement your own
+[ModelCreator](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/ModelCreator.java) that produces a 
+[Model](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/model/Model.java), and/or implement a 
+[CodeProducer](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/CodeProducer.java) that receives the Model and 
+produces stubs in whatever target language you choose. 
+
+## What is BC-JIG *not*?
+
+It is most assuredly *not* [Swagger](https://swagger.io/) or OpenAPI. The scope of Swagger is much different and much more broad.  BC-JIG
+is intended as an inside-the-project tool. 
+
+It is also not [JSON Schema](https://json-schema.org/). BC-JIG is about producing JSON that maps (more or less) to Java objects. There are
+many things you can express using JSON Schema that Java would not be able to understand, 
+[and vice versa.](https://github.com/json-schema-org/json-schema-org.github.io/issues/148)
+
+It is also probably not going to be a good fit for servers other than Java, for a couple of reasons:
+
+* The internal model is built on a sort of synthesis of the Java type system, the TypeScript type system, and the capabilities of JSON. 
+Java's and TypeScript's type systems have quite a bit of synergy, especially when it comes to generics. But, the further afield a server 
+language gets from the Java type system, the worse the fit with the internal model.
+* The Java readers rely on reflection to easily determine the endpoints, and [Jackson](https://github.com/FasterXML/jackson) to inspect 
+the parameters/return types and determine the JSON structure to be sent along the wire. If you can't reflect upon the server, then you'll
+ spend a lot of time maintaining a separate document that describes the API, and, well, you might as well be using Swagger at that point.
+
+## What does it look like?
 
 It takes Java JAX-RS code like this:
 
