@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 export type UnknownType = unknown;
@@ -45,6 +46,26 @@ export interface JsonOptions<R> {
      * @returns {any}
      */
     success?(data: R): any;
+}
+
+/**
+ * Generic options for an AJAX call.  I try to be ajax-lib-agnostic here, but my main dev library is jQuery.
+ * TODO more testing to see if this makes sense for, e.g., Axios
+ */
+export interface JsonPromiseOptions<R> {
+    /**
+     * Is this call async?
+     */
+    async?: boolean;
+
+    /**
+     * Is this call a promise call?
+     */
+    promise: true;
+}
+
+export function asPromise<R>(): JsonPromiseOptions<R> {
+    return {promise: true};
 }
 
 export function joinPath(...parts: string[]): string {
@@ -111,12 +132,31 @@ type AjaxInvoker = (url: string, method: string, data: UnknownType, isBodyParam:
  */
 let callAjaxFn: AjaxInvoker;
 
+function isPromiseOptions(val: JsonOptions<UnknownType> | JsonPromiseOptions<UnknownType>): val is JsonPromiseOptions<UnknownType> {
+    return !!(val as JsonPromiseOptions<any>).promise
+}
+
 export function setCallAjax(newCallAjax: AjaxInvoker): void {
     callAjaxFn = newCallAjax;
 }
 
-export function callAjax(url: string, method: string, data: UnknownType, isBodyParam: boolean, options: JsonOptions<UnknownType>): void {
-    callAjaxFn(url, method, data, isBodyParam, options);
+export function callAjax(url: string, method: string, data: UnknownType, isBodyParam: boolean, options: JsonOptions<UnknownType> | JsonPromiseOptions<UnknownType>): void | Promise<any> {
+    if (isPromiseOptions(options)) {
+        return new Promise<UnknownType>((resolve, reject) => {
+            const newOptions: JsonOptions<UnknownType> = {
+                async: options.async,
+                success(data: UnknownType): UnknownType {
+                    resolve(data);
+                }
+            };
+            newOptions.error = errorThrown => {
+                reject(errorThrown);
+            };
+            callAjaxFn(url, method, data, isBodyParam, newOptions);
+        });
+    } else {
+        callAjaxFn(url, method, data, isBodyParam, options);
+    }
 }
 
 export type DebugLoggerType = (args: any[]) => void;

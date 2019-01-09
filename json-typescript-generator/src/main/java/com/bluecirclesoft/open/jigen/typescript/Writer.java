@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.typescript;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -165,9 +167,25 @@ public class Writer implements CodeProducer<Options> {
 					parameter.getType().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer)));
 		}
 		writer.addImport("jsonInterfaceGenerator", endpoint.getNamespace(), writer.getJIGNamespace());
-		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" +
-				endpoint.getResponseBody().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer)) + ">");
-		writer.line("export function " + name + "(" + parameterList.toString() + ") : void {");
+		String returnType = endpoint.getResponseBody().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer));
+		// save off constructed parameters
+		StringBuilder savedParameterList = new StringBuilder(parameterList);
+		boolean[] savedNeedsComma = Arrays.copyOf(needsComma, needsComma.length);
+		// callback style declaration
+		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
+		writer.line("export function " + name + "(" + parameterList.toString() + ") : void;");
+		// promise style declaration
+		parameterList = new StringBuilder(savedParameterList);
+		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
+		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonPromiseOptions<" + returnType + ">");
+		writer.line("export function " + name + "(" + parameterList.toString() + ") : Promise<" + returnType + ">;");
+		// real implementation
+		parameterList = new StringBuilder(savedParameterList);
+		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
+		addParameter(parameterList, needsComma, "options",
+				"jsonInterfaceGenerator" + ".JsonOptions<" + returnType + "> | " + "jsonInterfaceGenerator" + ".JsonPromiseOptions<" +
+						returnType + ">");
+		writer.line("export function " + name + "(" + parameterList.toString() + ") : void | Promise<" + returnType + "> {");
 		writer.indentIn();
 
 		// construct AJAX url, encoding any path params
@@ -220,8 +238,8 @@ public class Writer implements CodeProducer<Options> {
 				break;
 		}
 
-		writer.line(
-				"jsonInterfaceGenerator.callAjax(" + url.get() + ", \"" + endpoint.getMethod().name() + "\", submitData, " + isBodyParam +
+		writer.line("return jsonInterfaceGenerator.callAjax(" + url.get() + ", \"" + endpoint.getMethod().name() + "\", submitData, " +
+				isBodyParam +
 						", options);");
 		writer.indentOut();
 		writer.line("}");

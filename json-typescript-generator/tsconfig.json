@@ -6,7 +6,11 @@
     "strict": true,
     "alwaysStrict": true,
     //    "outDir": "../../../target/generated-javascript/js"
-    "allowSyntheticDefaultImports": false
+    "allowSyntheticDefaultImports": false,
+    "lib": [
+      "es6",
+      "dom"
+    ]
   },
   "awesomeTypescriptLoaderOptions": {
     "forkChecker": true,
