@@ -49,6 +49,8 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -56,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
+import com.bluecirclesoft.open.jigen.annotations.Generate;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -72,6 +75,8 @@ public class Reader implements ModelCreator<Options> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
+	private static final Map<Class<? extends Annotation>, HttpMethod> annotationHttpMethodMap = new HashMap<>();
+
 	private static class MethodInfo {
 
 		boolean consumer;
@@ -85,8 +90,6 @@ public class Reader implements ModelCreator<Options> {
 		}
 	}
 
-	private static final Map<Class<? extends Annotation>, HttpMethod> annotationHttpMethodMap = new HashMap<>();
-
 	static {
 		annotationHttpMethodMap.put(DELETE.class, HttpMethod.DELETE);
 		annotationHttpMethodMap.put(GET.class, HttpMethod.GET);
@@ -95,44 +98,15 @@ public class Reader implements ModelCreator<Options> {
 		annotationHttpMethodMap.put(PUT.class, HttpMethod.PUT);
 	}
 
+	private final ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
+
 	private Options options;
 
 	private Model model;
 
-	private final ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
-
 	private JEnum.EnumType defaultEnumType = JEnum.EnumType.NUMERIC;
 
 	private JacksonTypeModeller modeller;
-
-	private void createModel(String... packageNames) {
-		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
-		for (String packageName : packageNames) {
-			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
-					.setScanners(new MethodAnnotationsScanner()));
-
-			for (Method method : findJaxRsMethods(reflections)) {
-				logger.info("Handling method {}", method);
-				boolean producer = isProducer(method);
-				if (producer) {
-					annotatedMethods.computeIfAbsent(method, MethodInfo::new).producer = true;
-				}
-				boolean consumer = isConsumer(method);
-				if (consumer) {
-					annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumer = true;
-				}
-			}
-		}
-
-		for (MethodInfo method : annotatedMethods.values()) {
-			try {
-				readMethod(method);
-			} catch (Exception e) {
-				throw new RuntimeException("Error processing JAX-RS method " + method.method, e);
-			}
-		}
-
-	}
 
 	/**
 	 * Find methods which are JAX-RS methods
@@ -152,6 +126,16 @@ public class Reader implements ModelCreator<Options> {
 			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
 		}
 		return resultSet;
+	}
+
+	/**
+	 * Find classes which are tagged with {@link Generate}
+	 *
+	 * @param reflections the reflections object
+	 * @return a set of all appropriate classes
+	 */
+	private static Set<Class<?>> findClassesTaggedGenerate(Reflections reflections) {
+		return reflections.getTypesAnnotatedWith(Generate.class);
 	}
 
 	private static boolean isProducer(Method method) {
@@ -216,6 +200,64 @@ public class Reader implements ModelCreator<Options> {
 			throw new RuntimeException("No path provided (on class or method)");
 		}
 		return result;
+	}
+
+	private static boolean isValidJavaIdentifier(String value) {
+		for (int i = 0; i < value.length(); i++) {
+			if (i == 0) {
+				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
+					return false;
+				}
+			} else {
+				if (!Character.isJavaIdentifierPart(value.charAt(i))) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private static Set<HttpMethod> identifyHttpMethods(Method method) {
+		Set<HttpMethod> result = EnumSet.noneOf(HttpMethod.class);
+		for (Map.Entry<Class<? extends Annotation>, HttpMethod> entry : annotationHttpMethodMap.entrySet()) {
+			if (method.isAnnotationPresent(entry.getKey())) {
+				result.add(entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	private void createModel(String... packageNames) {
+		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
+		for (String packageName : packageNames) {
+			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
+					.setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner()));
+
+			for (Method method : findJaxRsMethods(reflections)) {
+				logger.info("Handling method {}", method);
+				boolean producer = isProducer(method);
+				if (producer) {
+					annotatedMethods.computeIfAbsent(method, MethodInfo::new).producer = true;
+				}
+				boolean consumer = isConsumer(method);
+				if (consumer) {
+					annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumer = true;
+				}
+			}
+
+			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
+				modeller.readOneType(model, generatedClass);
+			}
+		}
+
+		for (MethodInfo method : annotatedMethods.values()) {
+			try {
+				readMethod(method);
+			} catch (Exception e) {
+				throw new RuntimeException("Error processing JAX-RS method " + method.method, e);
+			}
+		}
+
 	}
 
 	private void readMethod(MethodInfo methodInfo) {
@@ -305,31 +347,6 @@ public class Reader implements ModelCreator<Options> {
 				model.removeEndpoint(endpoint);
 			}
 		}
-	}
-
-	private static boolean isValidJavaIdentifier(String value) {
-		for (int i = 0; i < value.length(); i++) {
-			if (i == 0) {
-				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
-					return false;
-				}
-			} else {
-				if (!Character.isJavaIdentifierPart(value.charAt(i))) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	private static Set<HttpMethod> identifyHttpMethods(Method method) {
-		Set<HttpMethod> result = EnumSet.noneOf(HttpMethod.class);
-		for (Map.Entry<Class<? extends Annotation>, HttpMethod> entry : annotationHttpMethodMap.entrySet()) {
-			if (method.isAnnotationPresent(entry.getKey())) {
-				result.add(entry.getValue());
-			}
-		}
-		return result;
 	}
 
 	@Override

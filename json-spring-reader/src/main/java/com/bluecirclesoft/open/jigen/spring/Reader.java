@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2019 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.spring;
@@ -31,6 +32,8 @@ import java.util.function.BiConsumer;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -43,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
+import com.bluecirclesoft.open.jigen.annotations.Generate;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -61,6 +65,10 @@ public class Reader implements ModelCreator<Options> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
+	private static final Map<RequestMethod, HttpMethod> httpMethodMap = new HashMap<>();
+
+	private static final Set<HttpMethod> jsonnableMethods = new HashSet<>();
+
 	private static class MethodInfo {
 
 		boolean consumer;
@@ -76,10 +84,6 @@ public class Reader implements ModelCreator<Options> {
 			this.springRequestInfo = springRequestInfo;
 		}
 	}
-
-	private static final Map<RequestMethod, HttpMethod> httpMethodMap = new HashMap<>();
-
-	private static final Set<HttpMethod> jsonnableMethods = new HashSet<>();
 
 	static {
 		httpMethodMap.put(RequestMethod.DELETE, HttpMethod.DELETE);
@@ -98,6 +102,8 @@ public class Reader implements ModelCreator<Options> {
 		jsonnableMethods.add(HttpMethod.DELETE);
 	}
 
+	private final GlobalAnnotationMap annotationMap = new GlobalAnnotationMap();
+
 	private Options options;
 
 	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
@@ -106,9 +112,68 @@ public class Reader implements ModelCreator<Options> {
 
 	private Model model;
 
-	private final GlobalAnnotationMap annotationMap = new GlobalAnnotationMap();
-
 	private String[] packageNames;
+
+	private static boolean isProducer(Method method, SpringRequestInfo springRequestInfo) {
+		return springRequestInfo.producesJson || method.getGenericReturnType() == Void.TYPE;
+	}
+
+	private static boolean isConsumer(Method method, SpringRequestInfo springRequestInfo) {
+		return springRequestInfo.consumesJson || springRequestInfo.consumesForm;
+	}
+
+	private static String joinPaths(String... pathElements) {
+		StringBuilder pathBuilder = new StringBuilder();
+		for (String pathElement : pathElements) {
+			if (pathElement != null) {
+				if (pathBuilder.length() > 0 && pathBuilder.charAt(pathBuilder.length() - 1) == '/') {
+					pathBuilder.deleteCharAt(pathBuilder.length() - 1);
+				}
+				if (!pathElement.startsWith("/")) {
+					pathBuilder.append("/");
+				}
+				pathBuilder.append(pathElement);
+			}
+		}
+		String result = pathBuilder.toString();
+		if (StringUtils.isBlank(result)) {
+			throw new RuntimeException("No path provided (on class or method)");
+		}
+		return result;
+	}
+
+	private static String prependSlash(String c) {
+		if (c != null && c.charAt(0) != '/') {
+			return '/' + c;
+		} else {
+			return c;
+		}
+	}
+
+	private static boolean isValidJavaIdentifier(String value) {
+		for (int i = 0; i < value.length(); i++) {
+			if (i == 0) {
+				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
+					return false;
+				}
+			} else {
+				if (!Character.isJavaIdentifierPart(value.charAt(i))) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Find classes which are tagged with {@link Generate}
+	 *
+	 * @param reflections the reflections object
+	 * @return a set of all appropriate classes
+	 */
+	private static Set<Class<?>> findClassesTaggedGenerate(Reflections reflections) {
+		return reflections.getTypesAnnotatedWith(Generate.class);
+	}
 
 	private Model createModel(String... packageNames) {
 
@@ -120,7 +185,7 @@ public class Reader implements ModelCreator<Options> {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
-					.setScanners(new MethodAnnotationsScanner()));
+					.setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner()));
 
 			Set<Method> allMethods = findRequestMappingMethods(reflections);
 			for (Method method : allMethods) {
@@ -142,6 +207,12 @@ public class Reader implements ModelCreator<Options> {
 					newMethodInfo.producer = producer;
 					newMethodInfo.consumer = consumer;
 				}
+			}
+
+			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
+				JacksonTypeModeller modeller =
+						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
+				modeller.readOneType(model, generatedClass);
 			}
 		}
 
@@ -179,34 +250,6 @@ public class Reader implements ModelCreator<Options> {
 			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
 		}
 		return resultSet;
-	}
-
-	private static boolean isProducer(Method method, SpringRequestInfo springRequestInfo) {
-		return springRequestInfo.producesJson || method.getGenericReturnType() == Void.TYPE;
-	}
-
-	private static boolean isConsumer(Method method, SpringRequestInfo springRequestInfo) {
-		return springRequestInfo.consumesJson || springRequestInfo.consumesForm;
-	}
-
-	private static String joinPaths(String... pathElements) {
-		StringBuilder pathBuilder = new StringBuilder();
-		for (String pathElement : pathElements) {
-			if (pathElement != null) {
-				if (pathBuilder.length() > 0 && pathBuilder.charAt(pathBuilder.length() - 1) == '/') {
-					pathBuilder.deleteCharAt(pathBuilder.length() - 1);
-				}
-				if (!pathElement.startsWith("/")) {
-					pathBuilder.append("/");
-				}
-				pathBuilder.append(pathElement);
-			}
-		}
-		String result = pathBuilder.toString();
-		if (StringUtils.isBlank(result)) {
-			throw new RuntimeException("No path provided (on class or method)");
-		}
-		return result;
 	}
 
 	private void readMethod(MethodInfo methodInfo, MethodCollisionDetector detector) {
@@ -471,29 +514,6 @@ public class Reader implements ModelCreator<Options> {
 			}
 		}
 		return mappingAnn;
-	}
-
-	private static String prependSlash(String c) {
-		if (c != null && c.charAt(0) != '/') {
-			return '/' + c;
-		} else {
-			return c;
-		}
-	}
-
-	private static boolean isValidJavaIdentifier(String value) {
-		for (int i = 0; i < value.length(); i++) {
-			if (i == 0) {
-				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
-					return false;
-				}
-			} else {
-				if (!Character.isJavaIdentifierPart(value.charAt(i))) {
-					return false;
-				}
-			}
-		}
-		return true;
 	}
 
 	@Override
