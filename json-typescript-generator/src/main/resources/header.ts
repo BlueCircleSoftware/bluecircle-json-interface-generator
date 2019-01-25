@@ -145,7 +145,7 @@ export function callAjax(url: string, method: string, data: UnknownType, isBodyP
         return new Promise<UnknownType>((resolve, reject) => {
             const newOptions: JsonOptions<UnknownType> = {
                 async: options.async,
-                success(data: UnknownType): UnknownType {
+                success(data: UnknownType): void {
                     resolve(data);
                 }
             };
