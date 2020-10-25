@@ -118,10 +118,9 @@ public final class Main {
 	private static String findConfigLabel(String name) {
 		if (name.startsWith(JIG_COMMON_PACKAGE)) {
 			// strip the JIG_COMMON_PACKAGE leader, and the .Reader or .Writer trailer
-			String remainder1 = name.substring(JIG_COMMON_PACKAGE.length());
-			int dotPos = remainder1.indexOf('.');
-			String remainder2 = remainder1.substring(0, dotPos);
-			return remainder2;
+			String remainder = name.substring(JIG_COMMON_PACKAGE.length());
+			int dotPos = remainder.indexOf('.');
+			return remainder.substring(0, dotPos);
 		} else {
 			return name;
 		}

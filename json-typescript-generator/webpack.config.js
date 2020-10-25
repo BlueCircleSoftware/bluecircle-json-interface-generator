@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var path = require("path");
+const path = require("path");
 
 module.exports = {
     entry: "./src/test/typescript/header.spec.ts",
@@ -30,7 +30,7 @@ module.exports = {
     module: {
         rules: [{
             test: /\.tsx?$/,
-            loader: "awesome-typescript-loader"
+            loader: "ts-loader"
         }, {
             test: /\.js$/,
             loader: "source-map-loader"

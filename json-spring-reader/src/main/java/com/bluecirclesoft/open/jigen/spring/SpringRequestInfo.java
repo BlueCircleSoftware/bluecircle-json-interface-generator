@@ -18,8 +18,6 @@ package com.bluecirclesoft.open.jigen.spring;
 
 import java.util.Set;
 
-import org.springframework.web.bind.annotation.RequestMethod;
-
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
 
 /**
@@ -44,7 +42,7 @@ class SpringRequestInfo {
 
 	@Override
 	public String toString() {
-		return "SpringRequestInfo{" + "consumesForm=" + consumesForm + ", consumesJson=" + consumesJson + ", producesJson=" +
-				producesJson + ", url='" + path + '\'' + ", methods=" + methods + '}';
+		return "SpringRequestInfo{" + "consumesForm=" + consumesForm + ", consumesJson=" + consumesJson + ", producesJson=" + producesJson +
+				", url='" + path + '\'' + ", methods=" + methods + '}';
 	}
 }

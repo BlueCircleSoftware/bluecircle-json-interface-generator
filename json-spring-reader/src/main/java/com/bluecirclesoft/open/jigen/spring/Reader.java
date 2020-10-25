@@ -21,6 +21,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -239,13 +240,8 @@ public class Reader implements ModelCreator<Options> {
 	 * @return a set of all appropriate methods
 	 */
 	private Set<Method> findRequestMappingMethods(Reflections reflections) {
-		Set<Method> resultSet = new TreeSet<>((Method m1, Method m2) -> {
-			int result = m1.getDeclaringClass().getName().compareTo(m2.getDeclaringClass().getName());
-			if (result != 0) {
-				return result;
-			}
-			return m1.getName().compareTo(m2.getName());
-		});
+		Set<Method> resultSet = new TreeSet<>(
+				Comparator.comparing((Method m) -> m.getDeclaringClass().getName()).thenComparing(Method::getName));
 		for (Class<? extends Annotation> annotation : this.annotationMap.getAllAnnotations()) {
 			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
 		}

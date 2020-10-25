@@ -32,7 +32,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class JObject extends JToplevelType {
 
-	public class Field implements Serializable {
+	public static class Field implements Serializable {
 
 		private final String name;
 

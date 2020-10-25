@@ -11,9 +11,5 @@
       "es6",
       "dom"
     ]
-  },
-  "awesomeTypescriptLoaderOptions": {
-    "forkChecker": true,
-    "useWebpackText": true
   }
 }

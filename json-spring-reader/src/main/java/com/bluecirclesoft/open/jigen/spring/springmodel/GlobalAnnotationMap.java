@@ -43,7 +43,7 @@ public class GlobalAnnotationMap {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalAnnotationMap.class);
 
-	private final Map<Class<? extends Annotation>, MappingAnotation> map = new LinkedHashMap<>();
+	private final Map<Class<? extends Annotation>, MappingAnnotation> map = new LinkedHashMap<>();
 
 	public void ingestAnnotations(String... packageNamesArr) {
 		Map<String, Reflections> scannerCache = new HashMap<>();
@@ -83,15 +83,15 @@ public class GlobalAnnotationMap {
 					}
 					foundNew = true;
 					log.info("Processing annotation {}", nextAsAnn.getName());
-					MappingAnotation mappingAnotation = new MappingAnotation(nextAsAnn);
-					map.put(nextAsAnn, mappingAnotation);
+					MappingAnnotation mappingAnnotation = new MappingAnnotation(nextAsAnn);
+					map.put(nextAsAnn, mappingAnnotation);
 					// find other stuff annotated with this annotation, and add it to the queue
 					finderQueue.addAll(reflections.getTypesAnnotatedWith(nextAsAnn));
 				}
 			}
 		} while (foundNew);
 
-		for (Map.Entry<Class<? extends Annotation>, MappingAnotation> annClass : map.entrySet()) {
+		for (Map.Entry<Class<? extends Annotation>, MappingAnnotation> annClass : map.entrySet()) {
 			annClass.getValue().fill(this);
 			log.info("Filled annotation now {}", annClass.getValue());
 		}
@@ -101,8 +101,8 @@ public class GlobalAnnotationMap {
 		return map.containsKey(annClass);
 	}
 
-	public MappingAnotation getAnnotation(Class<? extends Annotation> annClass) {
-		MappingAnotation ma = map.get(annClass);
+	public MappingAnnotation getAnnotation(Class<? extends Annotation> annClass) {
+		MappingAnnotation ma = map.get(annClass);
 		if (ma == null) {
 			throw new RuntimeException("Internal error: annotation " + annClass + " was not found during ingest");
 		}
@@ -111,7 +111,7 @@ public class GlobalAnnotationMap {
 	}
 
 	public AnnotationInstance getInstance(Annotation ann) {
-		MappingAnotation ma = getAnnotation(ann.annotationType());
+		MappingAnnotation ma = getAnnotation(ann.annotationType());
 		return ma.createInstance(ann, this);
 	}
 

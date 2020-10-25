@@ -34,7 +34,7 @@ public class AnnotationInstance {
 
 	private static final Logger logger = LoggerFactory.getLogger(AnnotationInstance.class);
 
-	private MappingAnotation baseAnnotation;
+	private MappingAnnotation baseAnnotation;
 
 	private String name;
 
@@ -70,7 +70,7 @@ public class AnnotationInstance {
 		return produces;
 	}
 
-	public AnnotationInstance(MappingAnotation base) {
+	public AnnotationInstance(MappingAnnotation base) {
 		this.baseAnnotation = base;
 	}
 
@@ -79,10 +79,10 @@ public class AnnotationInstance {
 			if (method.getParameterCount() == 0) {
 				try {
 					Object val = method.invoke(myAnnotation);
-					String name = MappingAnotation.namify(myAnnotation.annotationType()) + "." + method.getName();
+					String name = MappingAnnotation.namify(myAnnotation.annotationType()) + "." + method.getName();
 					add(name, val);
 					for (String alias : baseAnnotation.getAliasesFor(
-							MappingAnotation.namify(myAnnotation.annotationType()) + "." + method.getName())) {
+							MappingAnnotation.namify(myAnnotation.annotationType()) + "." + method.getName())) {
 						add(alias, val);
 					}
 				} catch (Exception e) {
@@ -94,19 +94,19 @@ public class AnnotationInstance {
 		if (baseAnnotation.getDefaults() != null) {
 			AnnotationInstance def = baseAnnotation.getDefaults();
 			if (StringUtils.isBlank(this.name)) {
-				this.name = def.name;
+				this.name = def.getName();
 			}
 			if (this.path.isEmpty()) {
-				this.path.addAll(def.path);
+				this.path.addAll(def.getPath());
 			}
 			if (this.method.isEmpty()) {
-				this.method.addAll(def.method);
+				this.method.addAll(def.getMethod());
 			}
 			if (this.consumes.isEmpty()) {
-				this.consumes.addAll(def.consumes);
+				this.consumes.addAll(def.getConsumes());
 			}
 			if (this.produces.isEmpty()) {
-				this.produces.addAll(def.produces);
+				this.produces.addAll(def.getProduces());
 			}
 		}
 	}

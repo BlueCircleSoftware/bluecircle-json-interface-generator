@@ -262,7 +262,7 @@ public class TestCreator {
 		for (int paramNum = 0; paramNum < params.length; paramNum++) {
 			int param = params[paramNum];
 			ParamType paramType = ParamType.values()[param];
-			String p = "";
+			String p;
 			switch (paramType) {
 				case BODY:
 					p = "@RequestBody ";

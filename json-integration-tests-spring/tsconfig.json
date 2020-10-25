@@ -8,9 +8,5 @@
     //    "outDir": "../../../target/generated-javascript/js"
     "allowSyntheticDefaultImports": false,
     "lib": [ "es6", "dom" ]
-  },
-  "awesomeTypescriptLoaderOptions": {
-    "forkChecker": true,
-    "useWebpackText": true
   }
 }

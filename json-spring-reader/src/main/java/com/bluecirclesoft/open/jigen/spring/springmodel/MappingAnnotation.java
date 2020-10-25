@@ -32,9 +32,9 @@ import org.springframework.core.annotation.AliasFor;
 /**
  * TODO document me
  */
-public class MappingAnotation {
+public class MappingAnnotation {
 
-	private static final Logger log = LoggerFactory.getLogger(MappingAnotation.class);
+	private static final Logger log = LoggerFactory.getLogger(MappingAnnotation.class);
 
 	private final Class<? extends Annotation> annotationClass;
 
@@ -43,13 +43,13 @@ public class MappingAnotation {
 	// field specified in annotation -> other fields I should set
 	private final Map<String, Set<String>> aliasMap = new HashMap<>();
 
-	private MappingAnotation parent;
+	private MappingAnnotation parent;
 
 	private boolean filling;
 
 	private boolean filled;
 
-	public MappingAnotation(Class<? extends Annotation> annotationClass) {
+	public MappingAnnotation(Class<? extends Annotation> annotationClass) {
 		this.annotationClass = annotationClass;
 	}
 
@@ -73,7 +73,7 @@ public class MappingAnotation {
 				if (globalAnnotationMap.containsAnnotation(ann.annotationType())) {
 					if (foundMapping) {
 						log.warn("RequestMapping annotation " + ann + " found on annotation class " + annotationClass + ", but another " +
-								"RequestMapping annotation " + parent.annotationClass + " was already found - ignoring this class");
+								"RequestMapping annotation " + parent.getAnnotationClass() + " was already found - ignoring this class");
 					} else {
 						foundMapping = true;
 						log.info("Looking at annotation {}", ann);
@@ -83,26 +83,24 @@ public class MappingAnotation {
 				}
 			}
 			Method[] methods = annotationClass.getDeclaredMethods();
-			if (methods != null) {
-				for (Method method : methods) {
-					if (method.isAnnotationPresent(AliasFor.class)) {
-						AliasFor alias = method.getAnnotation(AliasFor.class);
-						// don't prefix Spring annotations with package name
-						String className = namify(annotationClass);
-						String key = className + "." + method.getName();
-						Set<String> aliasSet = aliasMap.computeIfAbsent(key, (x) -> new HashSet<>());
-						if (StringUtils.isNotBlank(alias.value())) {
-							aliasSet.add(className + "." + alias.value());
-						}
-						if (StringUtils.isNotBlank(alias.attribute())) {
-							aliasSet.add(className + "." + alias.attribute());
-						}
-						if (alias.annotation() != Annotation.class) {
-							String parentName = namify(alias.annotation()) + "." + method.getName();
-							aliasSet.add(parentName);
-							if (parent != null && parent.aliasMap.containsKey(parentName)) {
-								aliasSet.addAll(parent.aliasMap.get(parentName));
-							}
+			for (Method method : methods) {
+				if (method.isAnnotationPresent(AliasFor.class)) {
+					AliasFor alias = method.getAnnotation(AliasFor.class);
+					// don't prefix Spring annotations with package name
+					String className = namify(annotationClass);
+					String key = className + "." + method.getName();
+					Set<String> aliasSet = aliasMap.computeIfAbsent(key, (x) -> new HashSet<>());
+					if (StringUtils.isNotBlank(alias.value())) {
+						aliasSet.add(className + "." + alias.value());
+					}
+					if (StringUtils.isNotBlank(alias.attribute())) {
+						aliasSet.add(className + "." + alias.attribute());
+					}
+					if (alias.annotation() != Annotation.class) {
+						String parentName = namify(alias.annotation()) + "." + method.getName();
+						aliasSet.add(parentName);
+						if (parent != null && parent.getAliasMap().containsKey(parentName)) {
+							aliasSet.addAll(parent.getAliasMap().get(parentName));
 						}
 					}
 				}
@@ -117,7 +115,7 @@ public class MappingAnotation {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder("MappingAnotation{");
+		final StringBuilder sb = new StringBuilder("MappingAnnotation{");
 		sb.append("\n  annotationClass=").append(annotationClass);
 		sb.append(",\n  defaults=").append(defaults);
 		sb.append(",\n  aliasMap=").append(aliasMap);
@@ -146,7 +144,7 @@ public class MappingAnotation {
 		return aliasMap;
 	}
 
-	public MappingAnotation getParent() {
+	public MappingAnnotation getParent() {
 		return parent;
 	}
 
