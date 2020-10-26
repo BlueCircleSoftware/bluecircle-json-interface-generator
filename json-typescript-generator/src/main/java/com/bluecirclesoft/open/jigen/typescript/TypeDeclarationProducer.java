@@ -263,31 +263,69 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			unknownTypeVars = unknownTypeVarsBuilder.toString();
 		}
 
-		boolean hasMakeFunction = StringUtils.isNotBlank(intf.getNewObjectJson());
-		boolean hasCastFunction = intf.getTypeDiscriminatorField() != null;
-		boolean needsNamespace = hasMakeFunction || hasCastFunction;
+		boolean hasNewObjectJson = StringUtils.isNotBlank(intf.getNewObjectJson());
+		boolean hasTypeDiscriminator = intf.getTypeDiscriminatorField() != null;
+
+		boolean needsNamespace = hasNewObjectJson || hasTypeDiscriminator;
 		if (needsNamespace) {
 			String nsLine = "export namespace " + interfaceLabel + " {";
 			writer.line(nsLine);
 			writer.indentIn();
 		}
-		if (hasMakeFunction) {
-			// Copy type variables from definition
-			String makeTypeVars;
-			int anglePos = definterfaceType.indexOf('<');
-			if (anglePos >= 0) {
-				makeTypeVars = definterfaceType.substring(anglePos);
-			} else {
-				makeTypeVars = "";
-			}
 
-			writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " {");
+		// Copy type variables from definition
+		String makeTypeVars;
+		int anglePos = definterfaceType.indexOf('<');
+		if (anglePos >= 0) {
+			makeTypeVars = definterfaceType.substring(anglePos);
+		} else {
+			makeTypeVars = "";
+		}
+
+		if (hasTypeDiscriminator) {
+			writer.line("export function getDiscriminator() : \"" + intf.getTypeDiscriminatorValue() + "\" {");
 			writer.indentIn();
-			writer.line("return " + intf.getNewObjectJson() + ";");
+			writer.line("return \"" + intf.getTypeDiscriminatorValue() + "\";");
 			writer.indentOut();
 			writer.line("}");
 		}
-		if (hasCastFunction && subTypeValues != null) {
+
+		if (hasNewObjectJson) {
+			if (hasTypeDiscriminator) {
+				writer.line("export function make" + makeTypeVars + "(initial?: Omit<" + interfaceLabel + typeVars + ", \"" +
+						intf.getTypeDiscriminatorField() + "\">) : " + interfaceLabel + typeVars + " {");
+				writer.indentIn();
+				writer.line("if (initial) {");
+				writer.indentIn();
+				writer.line("return {" + intf.getTypeDiscriminatorField() + ": getDiscriminator(), ...initial};");
+				writer.indentOut();
+				writer.line("} else {");
+				writer.indentIn();
+				writer.line("return " + intf.getNewObjectJson() + ";");
+				writer.indentOut();
+				writer.line("}");
+				writer.indentOut();
+				writer.line("}");
+			} else {
+				writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " {");
+				writer.indentIn();
+				writer.line("return " + intf.getNewObjectJson() + ";");
+				writer.indentOut();
+				writer.line("}");
+			}
+		} else {
+			if (hasTypeDiscriminator) {
+				writer.line("export function make" + makeTypeVars + "(initial: Omit<" + interfaceLabel + typeVars + ", \"" +
+						intf.getTypeDiscriminatorField() + "\">) : " + interfaceLabel + typeVars + " {");
+				writer.indentIn();
+				writer.line("return {" + intf.getTypeDiscriminatorField() + ": getDiscriminator(), ...initial};");
+				writer.indentOut();
+				writer.line("}");
+
+			}
+		}
+
+		if (hasTypeDiscriminator && subTypeValues != null) {
 			writer.line("const TYPE_REGEX = new RegExp(\"" + createTypeRegex(subTypeValues) + "\");");
 			writer.line(
 					"export function isInstance(obj: " + unknownProducer.getUnknown() + "): obj is " + interfaceLabel + unknownTypeVars +
@@ -299,6 +337,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 		}
+
 		if (needsNamespace) {
 			writer.indentOut();
 			writer.line("}");

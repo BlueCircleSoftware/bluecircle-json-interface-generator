@@ -32,7 +32,7 @@ public class Options {
 
 	private boolean nullIsUndefined;
 
-	private boolean useUnknown;
+	private boolean useUnknown = true;
 
 	private OutputStructure outputStructure = OutputStructure.FILES_IN_ONE_FOLDER;
 

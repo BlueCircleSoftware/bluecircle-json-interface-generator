@@ -216,7 +216,7 @@ stripCommonPackages | boolean | Strip any common leading packages from all produ
 produceImmutables | boolean | Produce immutable wrappers along with interfaces (default: false)
 immutableSuffix | String | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')
 nullIsUndefined | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
-useUnknown | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: false)
+useUnknown | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with
