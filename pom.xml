@@ -77,7 +77,7 @@
 
     <properties>
         <jacoco.version>0.7.9</jacoco.version>
-        <jackson.version>2.12.6.1</jackson.version>
+        <jackson.version>2.13.1</jackson.version>
         <spring.version>5.3.18</spring.version>
         <sl4j.version>1.7.30</sl4j.version>
         <disable.tests>true</disable.tests>
