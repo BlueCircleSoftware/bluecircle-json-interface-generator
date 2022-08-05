@@ -186,15 +186,21 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			required = beanProperty.isRequired();
 		}
 
+		log.debug("Handling property {}.{}", jObject.getName(), name);
 		// declare property now
 		jObject.declareProperty(name);
 		if (annotatedThing.isAnnotationPresent(TypeDiscriminator.class)) {
 			TypeDiscriminator discriminator = annotatedThing.getAnnotation(TypeDiscriminator.class);
 			jObject.setTypeDiscriminatorField(name);
+
 			if (discriminator.discriminatedBy() == DiscriminatedBy.CLASS_NAME) {
-				jObject.setTypeDiscriminatorValue(jObject.getSourceClass().getName());
+				String discriminatorValue = jObject.getSourceClass().getName();
+				log.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
+				jObject.setTypeDiscriminatorValue(discriminatorValue);
 			} else {
-				jObject.setTypeDiscriminatorValue(getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty));
+				String discriminatorValue = getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty);
+				log.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
+				jObject.setTypeDiscriminatorValue(discriminatorValue);
 			}
 			// whatever class is declaring this property, assume it's a superclass that we want to model in the output as a
 			// 'superinterface'

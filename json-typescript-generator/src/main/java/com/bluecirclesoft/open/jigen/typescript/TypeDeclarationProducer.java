@@ -439,14 +439,14 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		while (!queue.isEmpty()) {
 			JObject obj = queue.pollFirst();
 			if (obj == null) {
-				throw new RuntimeException("Internal error: null subclass in subtree of" + intf);
+				throw new RuntimeException("Internal error: null subclass in subtree of" + intf.getName());
 			}
 			String type = obj.getTypeDiscriminatorValue();
 			if (StringUtils.isBlank(type)) {
-				throw new RuntimeException("Type discriminator value is null in " + obj);
+				throw new RuntimeException("Type discriminator value is null in " + obj.getName() + " while processing " + intf.getName());
 			}
 			if (result.contains(type)) {
-				throw new RuntimeException("Duplicate type discriminator in subtree of " + intf);
+				throw new RuntimeException("Duplicate type discriminator in subtree of " + intf.getName());
 			}
 			result.add(type);
 			queue.addAll(obj.getSubclasses().values());
