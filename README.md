@@ -10,7 +10,7 @@ BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript in
 	<dependency>
 		<groupId>com.bluecirclesoft.open</groupId>
 		<artifactId>json-interface-generator</artifactId>
-		<version>0.25</version> <!-- latest version -->
+		<version>0.29-SNAPSHOT</version> <!-- latest version -->
 	</dependency>
 ```
 
@@ -95,55 +95,123 @@ and generates TypeScript like this:
 
 ## Sample usage
 
-This utility needs to be run after your Java is compiled, but before your TypeScript is bundled (if you're doing that).
+Using the Maven plugin:
 
-Currently, you'll need to invoke Java to run the generator utility. TODO - plugin
 ```xml
-            <dependency>
-                <groupId>com.bluecirclesoft.open</groupId>
-                <artifactId>json-jee7-reader</artifactId>
-                <version>0.25</version> <!-- latest version -->
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.bluecirclesoft.open</groupId>
-                <artifactId>json-typescript-generator</artifactId>
-                <version>0.25</version> <!-- latest version -->
-                <scope>test</scope>
-            </dependency>
-	
-			...
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <executions>
-                    <!-- generate TypeScript from JAX-RS classes -->
-                    <execution>
-                        <id>generateInterface</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>java</executable>
-                            <classpathScope>test</classpathScope>
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>com.bluecirclesoft.open.jigen.Main</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
+    <plugin>
+        <groupId>com.bluecirclesoft.open</groupId>
+        <artifactId>json-generator-maven-plugin</artifactId>
+        <version>${json.generator.version}</version>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>generate-interfaces</goal>
+                </goals>
+                <configuration>
+                    <jeeReaders>
+                        <jeeReader>
+                            <packages>
+                                <package>com.foo</package>
+                            </packages>
+                            <includeSubclasses>true</includeSubclasses>
+                        </jeeReader>
+                    </jeeReaders>
+                    <typescriptWriters>
+                        <typescriptWriter>
+                            <outputFile>${project.build.directory}/generated-typescript</outputFile>
+                        </typescriptWriter>
+                    </typescriptWriters>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
 ```
 
 ## Usage and Options
 
-### General
+### Maven
+
+The Maven plugin works as follows:
+1. You specify a number of Java EE and/or Spring reader instances, and a number of TypeScript writer instances.
+2. These reader instances introspect the Java code finding endpoints and classes, and put all these together into one common "model" 
+   (see [Model.java](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/model/Model.java)).
+3. The plugin will then output the entire model using each writer instance.
+
+If you want to output different sets of classes to different folders, or other stuff that doesn't fall into the workflow above, you 
+probably want to have multiple executions of the plugin. Each execution will only ever give you one model, which is written out in its 
+entirety.
+
+To use the Maven plugin, invoke the plugin as usual in your `build/plugins` section:
+
+```xml
+    <plugin>
+        <groupId>com.bluecirclesoft.open</groupId>
+        <artifactId>json-generator-maven-plugin</artifactId>
+        <version>0.29-SNAPSHOT</version> <!-- latest version -->
+        <executions>
+            <execution>
+                <goals>
+                    <goal>generate-interfaces</goal>
+                </goals>
+                <configuration>
+                    <jeeReaders>
+                         <!-- JEE reader configurations, one <jeeReader/> per config -->
+                    </jeeReaders>
+                    <springReaders>
+                        <!-- JEE reader configurations, one <springReader/> per config -->
+                    </springReaders>
+                    <typescriptWriters>
+                        <!-- JEE reader configurations, one <typescriptWriter/> per config -->
+                    </typescriptWriters>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
+```
+### Maven Configuration
+
+### JEE7 Reader:
+
+See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/jigen/jee7/Options.java) for the implementation class.
+
+| Option             | Type                     | Description                                                                                            |
+|--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
+| packages           | List\<String>            | (required) List of packages to recursively scan for JAX-RS annotations.                                |
+| classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
+| defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
+| includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
+
+### Spring Reader:
+
+See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/open/jigen/spring/Options.java) for the implementation class.
+
+| Option             | Type                     | Description                                                                                            |
+|--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
+| packages           | List\<String>            | (required) List of packages to recursively scan for JAX-RS annotations.                                |
+| classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
+| defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
+| includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
+| defaultContentType | String                   | Content type to assume for endpoints if a content type isn't specified                                 |
+
+### TypeScript Generator:
+
+See [TypeScript Options.java](json-typescript-generator/src/main/java/com/bluecirclesoft/open/jigen/typescript/Options.java) for the 
+implementation class.
+
+| Option              | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|---------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| outputFile          | String  | (required) The TypeScript file or folder to generate (path will be created if necessary)                                                                                                                                                                                                                                                                                                                                                                             |
+| outputStructure     | String  | Specify how to map packages to TypeScript files:                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| &nbsp;              | &nbsp;  | FILES_IN_TREE: one file per package, in a folder hierarchy matching the package hierarchy                                                                                                                                                                                                                                                                                                                                                                            |
+| &nbsp;              | &nbsp;  | FILES_IN_ONE_FOLDER: one file per package, but all at the top of the output folder (default)                                                                                                                                                                                                                                                                                                                                                                         |
+| &nbsp;              | &nbsp;  | NAMESPACES: one file for all the output, with namespaces that match the package hierarchy                                                                                                                                                                                                                                                                                                                                                                            |
+| stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. |
+| produceImmutables   | boolean | Produce immutable wrappers along with interfaces (default: false)                                                                                                                                                                                                                                                                                                                                                                                                    |
+| immutableSuffix     | String  | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')                                                                                                                                                                                                                                                                                                                                                                          |
+| nullIsUndefined     | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)                                                                                                                                                                                                                                                                                                                                                           |
+| useUnknown          | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)                                                                                                                                                                                                                                                                                                                                                                                        |
+
+### Command-line + YAML
 
 To launch: 
 
@@ -196,27 +264,45 @@ writers:
 
 ### JEE7 Reader ("readers.jee7"):
 
-Option | Type | Description
--------|------|------------
-packages | List\<String>| (required) Array of packages to recursively scan for JAX-RS annotations.
-classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model.
-defaultStringEnums | boolean | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)
-includeSubclasses | boolean | When modelling a class, also model its subclasses (default: true)
- 
+See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/jigen/jee7/Options.java) for the implementation class.
+
+| Option             | Type                     | Description                                                                                                                          |
+|--------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| packages           | List\<String>            | (required) Array of packages to recursively scan for JAX-RS annotations.                                                             |
+| classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model. |
+| defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
+| includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
+
+### Spring Reader ("readers.spring"):
+
+See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/open/jigen/spring/Options.java) for the implementation class.
+
+| Option             | Type                     | Description                                                                                            |
+|--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
+| packages           | List\<String>            | (required) List of packages to recursively scan for JAX-RS annotations.                                |
+| classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
+| defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
+| includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
+| defaultContentType | String                   | Content type to assume for endpoints if a content type isn't specified                                 |
+
 ### TypeScript Generator ("writers.typescript"):
 
-Option | Type | Description
--------|------|------------
-outputFile | String | (required) The TypeScript file or folder to generate (path will be created if necessary)
-outputStructure | String | Specify how to map packages to TypeScript files: 
- &nbsp; | &nbsp; |   FILES_IN_TREE: one file per package, in a folder hierarchy matching the package hierarchy
- &nbsp; | &nbsp; |   FILES_IN_ONE_FOLDER: one file per package, but all at the top of the output folder (default)
- &nbsp; | &nbsp; |   NAMESPACES: one file for all the output, with namespaces that match the package hierarchy
-stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. 
-produceImmutables | boolean | Produce immutable wrappers along with interfaces (default: false)
-immutableSuffix | String | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')
-nullIsUndefined | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)
-useUnknown | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)
+See [TypeScript Options.java](json-typescript-generator/src/main/java/com/bluecirclesoft/open/jigen/typescript/Options.java) for the
+implementation class.
+
+| Option              | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|---------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| outputFile          | String  | (required) The TypeScript file or folder to generate (path will be created if necessary)                                                                                                                                                                                                                                                                                                                                                                             |
+| outputStructure     | String  | Specify how to map packages to TypeScript files:                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| &nbsp;              | &nbsp;  | FILES_IN_TREE: one file per package, in a folder hierarchy matching the package hierarchy                                                                                                                                                                                                                                                                                                                                                                            |
+| &nbsp;              | &nbsp;  | FILES_IN_ONE_FOLDER: one file per package, but all at the top of the output folder (default)                                                                                                                                                                                                                                                                                                                                                                         |
+| &nbsp;              | &nbsp;  | NAMESPACES: one file for all the output, with namespaces that match the package hierarchy                                                                                                                                                                                                                                                                                                                                                                            |
+| stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. |
+| produceImmutables   | boolean | Produce immutable wrappers along with interfaces (default: false)                                                                                                                                                                                                                                                                                                                                                                                                    |
+| immutableSuffix     | String  | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')                                                                                                                                                                                                                                                                                                                                                                          |
+| nullIsUndefined     | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)                                                                                                                                                                                                                                                                                                                                                           |
+| useUnknown          | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)                                                                                                                                                                                                                                                                                                                                                                                        |
+
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with

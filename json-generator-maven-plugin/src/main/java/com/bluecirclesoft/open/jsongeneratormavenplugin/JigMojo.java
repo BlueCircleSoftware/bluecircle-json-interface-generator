@@ -35,10 +35,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-import com.bluecirclesoft.open.jigen.jee7.Options;
-import com.bluecirclesoft.open.jigen.jee7.Reader;
 import com.bluecirclesoft.open.jigen.model.Model;
-import com.bluecirclesoft.open.jigen.typescript.Writer;
 
 /**
  * Maven plugin to run the interface generator.
@@ -49,13 +46,13 @@ import com.bluecirclesoft.open.jigen.typescript.Writer;
 public class JigMojo extends AbstractMojo {
 
 	@Parameter
-	private Options jeeOptions;
+	private List<com.bluecirclesoft.open.jigen.jee7.Options> jeeReaders;
 
 	@Parameter
-	private com.bluecirclesoft.open.jigen.spring.Options springOptions;
+	private List<com.bluecirclesoft.open.jigen.spring.Options> springReaders;
 
 	@Parameter
-	private com.bluecirclesoft.open.jigen.typescript.Options typescriptOptions;
+	private List<com.bluecirclesoft.open.jigen.typescript.Options> typescriptWriters;
 
 	@Parameter(defaultValue = "${project}", readonly = true, required = true)
 	private MavenProject project;
@@ -76,46 +73,58 @@ public class JigMojo extends AbstractMojo {
 			Thread.currentThread().setContextClassLoader(contextClassLoader);
 
 			Model model = new Model();
+
+			// read any and all Java EE endpoints into the model
 			List<String> errors = new ArrayList<>();
-			if (jeeOptions != null) {
+			if (jeeReaders != null) {
 				getLog().info("Reading Java EE endpoints...");
-				Reader jee7Reader = new Reader();
-				jee7Reader.acceptOptions(jeeOptions, errors);
-				if (!errors.isEmpty()) {
-					for (String error : errors) {
-						getLog().error(error);
+				for (com.bluecirclesoft.open.jigen.jee7.Options jeeOptions : jeeReaders) {
+					com.bluecirclesoft.open.jigen.jee7.Reader jee7Reader = new com.bluecirclesoft.open.jigen.jee7.Reader();
+					jee7Reader.acceptOptions(jeeOptions, errors);
+					if (!errors.isEmpty()) {
+						for (String error : errors) {
+							getLog().error(error);
+						}
+						throw new MojoExecutionException("Errors encountered in JEE processing");
 					}
-					throw new MojoExecutionException("Errors encountered in JEE processing");
+					jee7Reader.model(model);
 				}
-				jee7Reader.model(model);
-			}
-			if (springOptions != null) {
-				getLog().info("Reading Spring endpoints...");
-				com.bluecirclesoft.open.jigen.spring.Reader springReader = new com.bluecirclesoft.open.jigen.spring.Reader();
-				springReader.acceptOptions(springOptions, errors);
-				if (!errors.isEmpty()) {
-					for (String error : errors) {
-						getLog().error(error);
-					}
-					throw new MojoExecutionException("Errors encountered in Spring processing");
-				}
-				springReader.model(model);
 			}
 
+			// read any and all Spring endpoints into the model
+			if (springReaders != null) {
+				getLog().info("Reading Spring endpoints...");
+				for (com.bluecirclesoft.open.jigen.spring.Options springOptions : springReaders) {
+					com.bluecirclesoft.open.jigen.spring.Reader springReader = new com.bluecirclesoft.open.jigen.spring.Reader();
+					springReader.acceptOptions(springOptions, errors);
+					if (!errors.isEmpty()) {
+						for (String error : errors) {
+							getLog().error(error);
+						}
+						throw new MojoExecutionException("Errors encountered in Spring processing");
+					}
+					springReader.model(model);
+				}
+			}
+
+			// fix up the model
 			model.doGlobalCleanups();
 
-			if (typescriptOptions != null) {
+			// write the model out to TypeScript
+			if (typescriptWriters != null) {
 				getLog().info("Writing TypeScript definitions...");
-				Writer tsWriter = new Writer();
-				tsWriter.acceptOptions(typescriptOptions, errors);
-				if (!errors.isEmpty()) {
-					for (String error : errors) {
-						getLog().error(error);
+				for (com.bluecirclesoft.open.jigen.typescript.Options typescriptOptions : typescriptWriters) {
+					com.bluecirclesoft.open.jigen.typescript.Writer tsWriter = new com.bluecirclesoft.open.jigen.typescript.Writer();
+					tsWriter.acceptOptions(typescriptOptions, errors);
+					if (!errors.isEmpty()) {
+						for (String error : errors) {
+							getLog().error(error);
+						}
+						throw new MojoExecutionException("Errors encountered in TypeScript  processing");
 					}
-					throw new MojoExecutionException("Errors encountered in TypeScript  processing");
-				}
 
-				tsWriter.output(model);
+					tsWriter.output(model);
+				}
 			}
 		} catch (DependencyResolutionRequiredException | IOException e) {
 			throw new MojoExecutionException(e);
