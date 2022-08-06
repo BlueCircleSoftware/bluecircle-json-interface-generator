@@ -10,7 +10,7 @@ BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript in
 	<dependency>
 		<groupId>com.bluecirclesoft.open</groupId>
 		<artifactId>json-interface-generator</artifactId>
-		<version>0.29-SNAPSHOT</version> <!-- latest version -->
+		<version>0.30</version> <!-- latest version -->
 	</dependency>
 ```
 
@@ -147,7 +147,7 @@ To use the Maven plugin, invoke the plugin as usual in your `build/plugins` sect
     <plugin>
         <groupId>com.bluecirclesoft.open</groupId>
         <artifactId>json-generator-maven-plugin</artifactId>
-        <version>0.29-SNAPSHOT</version> <!-- latest version -->
+        <version>0.30</version> <!-- latest version -->
         <executions>
             <execution>
                 <goals>
