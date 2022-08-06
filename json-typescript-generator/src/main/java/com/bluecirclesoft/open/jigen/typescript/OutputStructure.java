@@ -23,4 +23,5 @@ package com.bluecirclesoft.open.jigen.typescript;
 public enum OutputStructure {
 	FILES_IN_TREE,
 	FILES_IN_ONE_FOLDER,
-	NAMESPACES;}
+	NAMESPACES;
+}

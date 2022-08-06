@@ -17,7 +17,9 @@
 package com.bluecirclesoft.open.jigen.jacksonModeller;
 
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -121,9 +123,13 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	private static String createEmptyJsonFor(Class<?> clazz) {
 		Object newInstance;
 		try {
-			newInstance = clazz.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+			Constructor<?> ctor = clazz.getConstructor();
+			newInstance = ctor.newInstance();
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			log.warn("Error instantiating class " + clazz.getName(), e);
+			return null;
+		} catch (NoSuchMethodException e) {
+			log.warn("Class {} has no no-arg constructor", clazz.getName());
 			return null;
 		}
 		try {

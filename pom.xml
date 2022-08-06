@@ -34,6 +34,7 @@
         <module>json-jee7-reader</module>
         <module>json-spring-reader</module>
         <module>json-typescript-generator</module>
+        <module>json-generator-maven-plugin</module>
         <module>json-integration-tests-jee7</module>
         <module>json-integration-tests-spring</module>
         <module>json-generator-allin1</module>
@@ -131,7 +132,7 @@
             <dependency>
                 <groupId>org.reflections</groupId>
                 <artifactId>reflections</artifactId>
-                <version>0.9.12</version>
+                <version>0.10.2</version>
             </dependency>
             <dependency>
                 <groupId>com.bluecirclesoft.open</groupId>

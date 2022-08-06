@@ -116,8 +116,8 @@ public class Reader implements ModelCreator<Options> {
 	 * @return a set of all appropriate methods
 	 */
 	private static Set<Method> findJaxRsMethods(Reflections reflections) {
-		Set<Method> resultSet = new TreeSet<>(
-				Comparator.comparing((Method m) -> m.getDeclaringClass().getName()).thenComparing(Method::getName));
+		Set<Method> resultSet =
+				new TreeSet<>(Comparator.comparing((Method m) -> m.getDeclaringClass().getName()).thenComparing(Method::getName));
 		for (Class<? extends Annotation> annotation : annotationHttpMethodMap.keySet()) {
 			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
 		}
@@ -226,11 +226,12 @@ public class Reader implements ModelCreator<Options> {
 	private void createModel(String... packageNames) {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
+			logger.info("Reading package {}", packageName);
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
 					.setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner()));
 
 			for (Method method : findJaxRsMethods(reflections)) {
-				logger.info("Handling method {}", method);
+				logger.info("Reading method {}", method);
 				boolean producer = isProducer(method);
 				if (producer) {
 					annotatedMethods.computeIfAbsent(method, MethodInfo::new).producer = true;
