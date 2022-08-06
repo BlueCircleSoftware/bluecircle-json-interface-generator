@@ -275,14 +275,9 @@
     </build>
 
     <profiles>
+        <!-- Profile for release:prepare (doing this manually in release-me.sh) -->
         <profile>
             <id>release-prepare</id>
-            <activation>
-                <property>
-                    <name>env.PREPARING_RELEASE</name>
-                    <value>true</value>
-                </property>
-            </activation>
             <build>
                 <plugins>
                     <plugin>

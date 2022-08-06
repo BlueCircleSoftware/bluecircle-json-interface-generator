@@ -7,3 +7,5 @@ set -ex
 
 version=$(grep -E "^scm.tag=" <"$1"/release.properties | sed "s/^scm.tag=json-interface-generator-//")
 sed -i "s|<version>.*</version> <!-- latest version -->|<version>${version}</version> <!-- latest version -->|" "$1"/README.md
+git add "$1"/README.md
+git commit -m "Update README release versions"
