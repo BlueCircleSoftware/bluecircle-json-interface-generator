@@ -64,10 +64,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>install</argument>
-                            </arguments>
+                            <executable>${basedir}/../scripts/npm-install.sh</executable>
                         </configuration>
                     </execution>
                     <!-- Execution 2: run webpack -->
