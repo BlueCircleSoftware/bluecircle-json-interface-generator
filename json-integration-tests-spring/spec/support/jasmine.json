@@ -6,6 +6,5 @@
   "helpers": [
     "helpers/**/*.ts"
   ],
-  "stopSpecOnExpectationFailure": false,
   "random": false
 }

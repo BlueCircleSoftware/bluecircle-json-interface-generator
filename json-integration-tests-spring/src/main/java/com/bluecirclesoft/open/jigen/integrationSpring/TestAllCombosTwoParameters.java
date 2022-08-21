@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @RequestMapping("/testAllCombosTwoParameters")
+@CrossOrigin
 @Component
 public class TestAllCombosTwoParameters {
 
@@ -41,22 +43,6 @@ public class TestAllCombosTwoParameters {
 	@Autowired
 	private HttpServletResponse response;
 
-	private void setCORSHeaders() {
-		// Allow cross-site - the test page is served from karma, so accessing wildfly is a cross-site request
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-		response.setHeader("Access-Control-Allow-Headers", "origin, x-csrftoken, content-type, accept");
-	}
-
-	@RequestMapping(method = RequestMethod.OPTIONS,
-			path = "/**",
-			consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_JSON_VALUE},
-			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Void> testAllOptions() {
-		setCORSHeaders();
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-
 	@RequestMapping(method = RequestMethod.GET,
 			path = "/testAllCombosTwoParametersGeFoFo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
@@ -64,7 +50,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeFoFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -75,7 +60,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGePaFo(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGePaFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -86,7 +70,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeQuFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeQuFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -97,7 +80,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeBoFo(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -108,7 +90,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeFoPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeFoPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -119,7 +100,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGePaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGePaPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -130,7 +110,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeQuPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -141,7 +120,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeBoPa(@RequestBody TestDto p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -152,7 +130,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeFoQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeFoQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -163,7 +140,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGePaQu(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGePaQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -174,7 +150,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeQuQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeQuQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -185,7 +160,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeBoQu(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -196,7 +170,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeFoBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeFoBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -207,7 +180,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGePaBo(@PathVariable("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGePaBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -218,7 +190,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeQuBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeQuBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -229,7 +200,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeBoBo(@RequestBody TestDto p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeBoBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -240,7 +210,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoFoFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -251,7 +220,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoPaFo(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoPaFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -262,7 +230,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoQuFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoQuFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -273,7 +240,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoBoFo(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoFo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -284,7 +250,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoFoPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoFoPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -295,7 +260,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoPaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoPaPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -306,7 +270,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoQuPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -317,7 +280,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoBoPa(@RequestBody TestDto p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoPa");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -328,7 +290,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoFoQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoFoQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -339,7 +300,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoPaQu(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoPaQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -350,7 +310,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoQuQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoQuQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -361,7 +320,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoBoQu(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoQu");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -372,7 +330,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoFoBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoFoBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -383,7 +340,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoPaBo(@PathVariable("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoPaBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -394,7 +350,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoQuBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoQuBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 
@@ -405,7 +360,6 @@ public class TestAllCombosTwoParameters {
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersPoBoBo(@RequestBody TestDto p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoBoBo");
-		setCORSHeaders();
 		return MergeHelper.merge(p0, p1);
 	}
 

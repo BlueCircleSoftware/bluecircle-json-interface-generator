@@ -26,18 +26,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
 import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.spring.Options;
 import com.bluecirclesoft.open.jigen.spring.Reader;
+import com.bluecirclesoft.open.jigen.typescript.OutputStructure;
 import com.bluecirclesoft.open.jigen.typescript.Writer;
 
 /**
@@ -45,23 +51,28 @@ import com.bluecirclesoft.open.jigen.typescript.Writer;
  * <p></p>
  * Define some test services, deploy them in WildFly, and try to invoke them through the generated TypeScript.
  */
-//@RunWith(Arquillian.class)
+@RunWith(Arquillian.class)
 public class SpringToTypeScriptTest {
 
 	private static final Logger log = LoggerFactory.getLogger(SpringToTypeScriptTest.class);
 
-	//	@Deployment(testable = false)
+	@Deployment(testable = false)
 	public static WebArchive createDeployment() {
 		try {
 			log.info("Creating Spring deployment");
+			File[] artifacts = resolveArtifacts("org.springframework:spring-web", "org.springframework:spring-webmvc",
+					"org.springframework:spring-beans", "org.springframework:spring-context",
+					"com.fasterxml.jackson.core:jackson-annotations", "com.fasterxml.jackson.core:jackson-databind",
+					"ch.qos.logback:logback-classic");
+			log.info("Artifacts: {}", Arrays.toString(artifacts));
 			WebArchive jar = ShrinkWrap.create(WebArchive.class)
 					.addPackages(true, "com.bluecirclesoft.open.jigen.integrationSpring")
-					.addAsLibraries(resolveArtifacts("org.springframework:spring-web", "org.springframework:spring-webmvc",
-							"org" + ".springframework:spring-beans", "org.springframework:spring-context",
-							"com.fasterxml.jackson.core:jackson-annotations", "com.fasterxml.jackson.core:jackson-databind"))
+					.addAsLibraries(artifacts)
+					.addAsResource("shrinkwrap/logback.xml", "logback.xml")
 					.addAsManifestResource("Beans.xml", "Beans.xml")
 					.addAsWebInfResource("WEB-INF/TestServlet-servlet.xml", "TestServlet-servlet.xml")
 					.addAsWebInfResource("WEB-INF/jboss-web.xml", "jboss-web.xml")
+					.addAsWebInfResource("WEB-INF/jboss-deployment-structure.xml", "jboss-deployment-structure.xml")
 					.setWebXML("WEB-INF/web.xml");
 			log.info("Created Spring deployment: {}", jar.toString(true));
 			return jar;
@@ -80,8 +91,8 @@ public class SpringToTypeScriptTest {
 		return result.toArray(new File[0]);
 	}
 
-	//	@Test
-//	@RunAsClient
+	@Test
+	@RunAsClient
 	public void runTest(@ArquillianResource URL baseUrl) throws IOException {
 		// We've deployed our services to Arquillian at this point
 		// Generate the TypeScript, and run the Jasmine tests
@@ -117,6 +128,7 @@ public class SpringToTypeScriptTest {
 		options.setOutputFile(s);
 		options.setProduceImmutables(true);
 		options.setUseUnknown(true);
+		options.setOutputStructure(OutputStructure.NAMESPACES);
 		return options;
 	}
 

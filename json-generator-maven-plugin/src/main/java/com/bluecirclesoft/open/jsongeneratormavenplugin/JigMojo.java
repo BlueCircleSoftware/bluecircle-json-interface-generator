@@ -35,7 +35,10 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import com.bluecirclesoft.open.jigen.jee7.Options;
+import com.bluecirclesoft.open.jigen.jee7.Reader;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.typescript.Writer;
 
 /**
  * Maven plugin to run the interface generator.
@@ -58,9 +61,11 @@ public class JigMojo extends AbstractMojo {
 	private MavenProject project;
 
 	public void execute() throws MojoExecutionException {
-
 		try {
+			getLog().info("generate-interfaces run starting");
 			Set<URL> urls = new HashSet<>();
+
+			// add user's project classpath to my own
 			List<String> elements = new ArrayList<>(project.getCompileClasspathElements());
 			elements.addAll(project.getRuntimeClasspathElements());
 			for (String element : elements) {
@@ -72,14 +77,16 @@ public class JigMojo extends AbstractMojo {
 
 			Thread.currentThread().setContextClassLoader(contextClassLoader);
 
+			// create the model
 			Model model = new Model();
 
 			// read any and all Java EE endpoints into the model
 			List<String> errors = new ArrayList<>();
 			if (jeeReaders != null) {
-				getLog().info("Reading Java EE endpoints...");
-				for (com.bluecirclesoft.open.jigen.jee7.Options jeeOptions : jeeReaders) {
-					com.bluecirclesoft.open.jigen.jee7.Reader jee7Reader = new com.bluecirclesoft.open.jigen.jee7.Reader();
+				for (int i = 0; i < jeeReaders.size(); i++) {
+					Options jeeOptions = jeeReaders.get(i);
+					getLog().info("Reading Java EE endpoints (configuration " + (i + 1) + ")");
+					Reader jee7Reader = new Reader();
 					jee7Reader.acceptOptions(jeeOptions, errors);
 					if (!errors.isEmpty()) {
 						for (String error : errors) {
@@ -93,8 +100,9 @@ public class JigMojo extends AbstractMojo {
 
 			// read any and all Spring endpoints into the model
 			if (springReaders != null) {
-				getLog().info("Reading Spring endpoints...");
-				for (com.bluecirclesoft.open.jigen.spring.Options springOptions : springReaders) {
+				for (int i = 0; i < springReaders.size(); i++) {
+					com.bluecirclesoft.open.jigen.spring.Options springOptions = springReaders.get(i);
+					getLog().info("Reading Spring endpoints (configuration " + (i + 1) + ")");
 					com.bluecirclesoft.open.jigen.spring.Reader springReader = new com.bluecirclesoft.open.jigen.spring.Reader();
 					springReader.acceptOptions(springOptions, errors);
 					if (!errors.isEmpty()) {
@@ -110,11 +118,15 @@ public class JigMojo extends AbstractMojo {
 			// fix up the model
 			model.doGlobalCleanups();
 
+			getLog().info("Finished reading endpoints; model now has " + model.getEndpointCount() + " endpoints and " +
+					model.getInterfaceCount() + " interfaces");
+
 			// write the model out to TypeScript
 			if (typescriptWriters != null) {
-				getLog().info("Writing TypeScript definitions...");
-				for (com.bluecirclesoft.open.jigen.typescript.Options typescriptOptions : typescriptWriters) {
-					com.bluecirclesoft.open.jigen.typescript.Writer tsWriter = new com.bluecirclesoft.open.jigen.typescript.Writer();
+				for (int i = 0; i < typescriptWriters.size(); i++) {
+					com.bluecirclesoft.open.jigen.typescript.Options typescriptOptions = typescriptWriters.get(i);
+					getLog().info("Writing TypeScript definitions (configuration " + (i + 1) + ")");
+					Writer tsWriter = new Writer();
 					tsWriter.acceptOptions(typescriptOptions, errors);
 					if (!errors.isEmpty()) {
 						for (String error : errors) {
@@ -128,6 +140,8 @@ public class JigMojo extends AbstractMojo {
 			}
 		} catch (DependencyResolutionRequiredException | IOException e) {
 			throw new MojoExecutionException(e);
+		} finally {
+			getLog().info("generate-interfaces run finished");
 		}
 	}
 }

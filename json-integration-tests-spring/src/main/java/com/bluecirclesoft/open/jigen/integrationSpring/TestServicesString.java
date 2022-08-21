@@ -17,6 +17,7 @@
 package com.bluecirclesoft.open.jigen.integrationSpring;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -24,10 +25,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,35 +39,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Services that return String
  */
 @RequestMapping(path = "/testServicesString")
+@CrossOrigin
 @Component
 public class TestServicesString {
 
 	private static final Logger log = LoggerFactory.getLogger(TestServicesString.class);
-
-	@Autowired
-	private HttpServletResponse response;
-
-	private void setCORSHeaders() {
-		// Allow cross-site - the test page is served from karma, so accessing wildfly is a cross-site request
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT");
-	}
-
-	@RequestMapping(method = RequestMethod.OPTIONS,
-			path = "/**",
-			headers = "Accept=*/*",
-			consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_JSON_VALUE},
-			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Void> testAllOptions() {
-		setCORSHeaders();
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-
 
 	@GetMapping(path = "/serviceCheck", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Accept=*/*")
 	public @ResponseBody
@@ -78,7 +66,6 @@ public class TestServicesString {
 	MyStringList doubleUpGetQ(@RequestParam("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
@@ -87,7 +74,6 @@ public class TestServicesString {
 	MyStringList doubleUpGetP(@PathVariable("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info(" x = {}", x);
-		setCORSHeaders();
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
@@ -99,7 +85,6 @@ public class TestServicesString {
 	MyStringList doubleUpPostQ(@RequestParam("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
@@ -108,7 +93,6 @@ public class TestServicesString {
 	MyStringList doubleUpPostF(@RequestParam("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
@@ -117,7 +101,6 @@ public class TestServicesString {
 	MyStringList doubleUpPostP(@PathVariable("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
@@ -126,7 +109,6 @@ public class TestServicesString {
 	MyStringList doubleUpPostPNoVar(String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList("\"" + x + x + "\"", 1);
 	}
 
@@ -135,7 +117,6 @@ public class TestServicesString {
 	MyStringList doubleArrGetQ(@RequestParam("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList(x, 3);
 	}
 
@@ -154,7 +135,6 @@ public class TestServicesString {
 	MyStringList doubleArrGetP(@PathVariable("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList(x, 3);
 	}
 
@@ -166,7 +146,6 @@ public class TestServicesString {
 	MyStringList doubleArrPostQ(@RequestParam("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList(x, 3);
 	}
 
@@ -175,7 +154,6 @@ public class TestServicesString {
 	MyStringList doubleArrPostP(@PathVariable("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList(x, 3);
 	}
 
@@ -184,7 +162,6 @@ public class TestServicesString {
 	MyStringList doubleArrPostF(@RequestParam("x") String x) {
 		log.info("Method: {}", CallerFinder.getMyName());
 		log.info("x = {}", x);
-		setCORSHeaders();
 		return makeList(x, 3);
 	}
 }

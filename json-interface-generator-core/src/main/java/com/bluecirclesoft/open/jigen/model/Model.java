@@ -137,4 +137,12 @@ public class Model implements Serializable {
 	private boolean isInteresting(Class<?> superclass) {
 		return superclass != null && superclass != Object.class;
 	}
+
+	public int getEndpointCount() {
+		return endpoints.size();
+	}
+
+	public int getInterfaceCount() {
+		return interfaces.size();
+	}
 }

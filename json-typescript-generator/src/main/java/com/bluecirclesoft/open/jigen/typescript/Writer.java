@@ -171,21 +171,20 @@ public class Writer implements CodeProducer<Options> {
 		// save off constructed parameters
 		StringBuilder savedParameterList = new StringBuilder(parameterList);
 		boolean[] savedNeedsComma = Arrays.copyOf(needsComma, needsComma.length);
-		// callback style declaration
-		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
-		writer.line("export function " + name + "(" + parameterList.toString() + ") : void;");
+//		// callback style declaration
+//		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
+//		writer.line("export function " + name + "(" + parameterList.toString() + ") : void;");
 		// promise style declaration
 		parameterList = new StringBuilder(savedParameterList);
 		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
-		addParameter(parameterList, needsComma, "options", "jsonInterfaceGenerator" + ".JsonPromiseOptions<" + returnType + ">");
+		addParameter(parameterList, needsComma, "options?", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : Promise<" + returnType + ">;");
 		// real implementation
 		parameterList = new StringBuilder(savedParameterList);
 		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
-		addParameter(parameterList, needsComma, "options",
-				"jsonInterfaceGenerator" + ".JsonOptions<" + returnType + "> | " + "jsonInterfaceGenerator" + ".JsonPromiseOptions<" +
-						returnType + ">");
-		writer.line("export function " + name + "(" + parameterList.toString() + ") : void | Promise<" + returnType + "> {");
+		addParameter(parameterList, needsComma, "options?",
+				"jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
+		writer.line("export function " + name + "(" + parameterList.toString() + ") : Promise<" + returnType + "> {");
 		writer.indentIn();
 
 		// construct AJAX url, encoding any path params

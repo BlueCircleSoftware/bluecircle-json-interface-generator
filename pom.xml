@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.bluecirclesoft.open</groupId>
     <artifactId>json-interface-generator</artifactId>
-    <version>0.31-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>json-interface-generator</name>
     <url>https://github.com/mrami4/bluecircle-json-interface-generator</url>
@@ -77,9 +77,9 @@
     </distributionManagement>
 
     <properties>
-        <jacoco.version>0.7.9</jacoco.version>
+        <jacoco.version>0.8.8</jacoco.version>
         <jackson.version>2.13.3</jackson.version>
-        <spring.version>5.3.18</spring.version>
+        <spring.version>5.3.22</spring.version>
         <sl4j.version>1.7.30</sl4j.version>
         <disable.tests>true</disable.tests>
     </properties>

@@ -4,7 +4,11 @@
     "target": "es5",
     "sourceMap": true,
     "strict": true,
+    "strictNullChecks": true,
     "alwaysStrict": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
     //    "outDir": "../../../target/generated-javascript/js"
     "allowSyntheticDefaultImports": false,
     "lib": [ "es6", "dom" ]

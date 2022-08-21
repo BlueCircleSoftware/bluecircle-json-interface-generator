@@ -28,42 +28,34 @@ function ck<T>(val: T | undefined | null): T {
     return val;
 }
 
-jsonInterfaceGenerator.callAjax = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
+jsonInterfaceGenerator.setCallAjax((url: string,
+                                    method: string,
+                                    data: any,
+                                    isBodyParam: boolean,
+                                    onSuccess: (data: any) => void,
+                                    onFailure: (errorMsg: string) => void) => {
     let error = false;
     const settings: JQueryAjaxSettings = {
-        async: options.hasOwnProperty("async") ? options.async : true,
+        async: true,
         data,
         method,
     };
-    if (options.success) {
-        const fn = options.success;
-        settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
-            fn(responseData);
-        };
-    }
-    if (options.error) {
-        const fn = options.error;
-        settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-            console.error("Error!");
-            console.error("jqXHR: ", jqXHR.status);
-            console.error("textStatus: ", textStatus);
-            error = true;
-            fn(errorThrown);
-        };
-    }
-    if (options.complete) {
-        const fn = options.complete;
-        settings.complete = (jqXHR: JQueryXHR, textStatus: string) => {
-            fn(!error);
-        };
-    }
+    settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+        onSuccess(responseData);
+    };
+    settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+        console.error("Error!");
+        console.error("jqXHR: ", jqXHR.status);
+        console.error("textStatus: ", textStatus);
+        error = true;
+        onFailure(textStatus);
+    };
     if (isBodyParam) {
         settings.headers = {"Content-Type": "application/json; charset=utf-8"};
     }
     settings.dataType = "json";
-    // }
     $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
-};
+});
 
 (window as any).$ = $;
 (window as any).jQuery = $;
@@ -91,35 +83,25 @@ describe("test @JsonProperty on enums", () => {
 describe("test TestServicesString", () => {
 
     // Standard handler
-    function simpleHandler<T>(handler: (x: T) => void): JsonOptions<T> {
-        return {
-            async: false,
-            complete: () => {
-                console.log("complete");
-            },
-            error: (errorThrown: string) => {
-                console.log("errorThrown=", errorThrown);
-            },
-            success: (s: T) => {
-                console.log("success: result ", s);
-                handler(s);
-            },
-        };
+    const simpleHandler: JsonOptions<unknown> = {
+        complete: () => {
+            console.log("complete");
+        },
+        error: (errorThrown: string) => {
+            console.log("errorThrown=", errorThrown);
+        },
+        success: (s: unknown) => {
+            console.log("success: result ", s);
+        },
     }
 
-    it("can execute doubleUpGetQ", () => {
-        let result: string = "";
-        integrationJee7.TestServicesString.doubleUpGetQ("abc", simpleHandler((s: string) => {
-            result = s;
-        }));
+    it("can execute doubleUpGetQ", async () => {
+        let result = await integrationJee7.TestServicesString.doubleUpGetQ("abc", simpleHandler);
         expect(result).toEqual("abcabc");
     });
 
-    it("can execute doubleUpGetP", () => {
-        let result: string = "";
-        integrationJee7.TestServicesString.doubleUpGetP("abc", simpleHandler((s: string) => {
-            result = s;
-        }));
+    it("can execute doubleUpGetP", async () => {
+        let result = await integrationJee7.TestServicesString.doubleUpGetP("abc", simpleHandler);
         expect(result).toEqual("abcabc");
     });
 
@@ -132,35 +114,23 @@ describe("test TestServicesString", () => {
     //     expect(result).toEqual("abcabc");
     // });
 
-    it("can execute doubleUpPostP", () => {
-        let result: string = "";
-        integrationJee7.TestServicesString.doubleUpPostP("abc", simpleHandler((s: string) => {
-            result = s;
-        }));
+    it("can execute doubleUpPostP", async () => {
+        let result = await integrationJee7.TestServicesString.doubleUpPostP("abc", simpleHandler);
         expect(result).toEqual("abcabc");
     });
 
-    it("can execute doubleUpPostF", () => {
-        let result: string = "";
-        integrationJee7.TestServicesString.doubleUpPostF("abc", simpleHandler((s: string) => {
-            result = s;
-        }));
+    it("can execute doubleUpPostF", async () => {
+        let result = await integrationJee7.TestServicesString.doubleUpPostF("abc", simpleHandler);
         expect(result).toEqual("abcabc");
     });
 
-    it("can execute doubleArrGetQ", () => {
-        let result: string[] = [];
-        integrationJee7.TestServicesString.doubleArrGetQ("abc", simpleHandler((s: string[]) => {
-            result = s;
-        }));
+    it("can execute doubleArrGetQ", async () => {
+        let result = await integrationJee7.TestServicesString.doubleArrGetQ("abc", simpleHandler);
         expect(result).toEqual(["abc", "abc", "abc"]);
     });
 
-    it("can execute doubleUpGetP", () => {
-        let result: string[] = [];
-        integrationJee7.TestServicesString.doubleArrGetP("abc", simpleHandler((s: string[]) => {
-            result = s;
-        }));
+    it("can execute doubleUpGetP", async () => {
+        let result = await integrationJee7.TestServicesString.doubleArrGetP("abc", simpleHandler);
         expect(result).toEqual(["abc", "abc", "abc"]);
     });
 
@@ -173,19 +143,13 @@ describe("test TestServicesString", () => {
     //     expect(result).toEqual(["abc", "abc", "abc"]);
     // });
 
-    it("can execute doubleUpPostP", () => {
-        let result: string[] = [];
-        integrationJee7.TestServicesString.doubleArrPostP("abc", simpleHandler((s: string[]) => {
-            result = s;
-        }));
+    it("can execute doubleUpPostP", async () => {
+        let result = await integrationJee7.TestServicesString.doubleArrPostP("abc", simpleHandler);
         expect(result).toEqual(["abc", "abc", "abc"]);
     });
 
-    it("can execute doubleUpPostF", () => {
-        let result: string[] = [];
-        integrationJee7.TestServicesString.doubleArrPostF("abc", simpleHandler((s: string[]) => {
-            result = s;
-        }));
+    it("can execute doubleUpPostF", async () => {
+        let result = await integrationJee7.TestServicesString.doubleArrPostF("abc", simpleHandler);
         expect(result).toEqual(["abc", "abc", "abc"]);
     });
 });
@@ -193,41 +157,33 @@ describe("test TestServicesString", () => {
 describe("test TestServicesObject", () => {
 
     // Standard handler
-    function simpleHandler<T>(handler: (x: T) => void): JsonOptions<T> {
-        return {
-            async: false,
-            complete: () => {
-                console.log("complete");
-            },
-            error: (errorThrown: string) => {
-                console.log("errorThrown=", errorThrown);
-            },
-            success: (s: T) => {
-                console.log("success: result ", s);
-                handler(s);
-            },
-        };
+    const simpleHandler: JsonOptions<unknown> = {
+        complete: () => {
+            console.log("complete");
+        },
+        error: (errorThrown: string) => {
+            console.log("errorThrown=", errorThrown);
+        },
+        success: (s: unknown) => {
+            console.log("success: result ", s);
+        },
     }
 
-    it("can execute doubleUpBody", () => {
+    it("can execute doubleUpBody", async () => {
         console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/doubleUpBody");
 
-        let result: integrationJee7.JsonResponse = {doubleA: null, doubleB: null, doubleBoth: null};
         const arg0 = {
             a: "one",
             b: "two",
         };
         console.log("Data: " + JSON.stringify(arg0));
-        integrationJee7.TestServicesObject.doubleUpBody(arg0, simpleHandler((s: integrationJee7.JsonResponse) => {
-            result = s;
-        }));
+        let result = await integrationJee7.TestServicesObject.doubleUpBody(arg0, simpleHandler);
         expect(result).toEqual({doubleA: "oneone", doubleB: "twotwo", doubleBoth: "onetwoonetwo"});
     });
 
-    it("can execute doubleUpNested", () => {
+    it("can execute doubleUpNested", async () => {
         console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/doubleUpNested");
 
-        let result: integrationJee7.NestedOuter | undefined;
         const arg0: integrationJee7.NestedOuter = {
             a: {a: "ab", b: "cd", c: 1, d: 2, e: [1, 2, 3]},
             b: {a: "ab", b: "cd", c: 1, d: 2, e: [1, 2, 3]},
@@ -235,22 +191,17 @@ describe("test TestServicesObject", () => {
             d: "qwerty",
         };
         console.log("Data: " + JSON.stringify(arg0));
-        integrationJee7.TestServicesObject.doubleUpNested(arg0, simpleHandler((s: integrationJee7.NestedOuter) => {
-            result = s;
-        }));
+        let result = await integrationJee7.TestServicesObject.doubleUpNested(arg0, simpleHandler);
         expect(result).toEqual({...arg0, c: 24, d: "qwertyqwerty"});
     });
 
-    it("can execute getClassB", () => {
+    it("can execute getClassB", async () => {
         console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/getClassB");
 
-        let result: integrationJee7.testPackage2.ClassB | undefined;
-        integrationJee7.TestServicesObject.getClassB(simpleHandler((s: integrationJee7.testPackage2.ClassB) => {
-            result = s;
-        }));
+        let result = await integrationJee7.TestServicesObject.getClassB(simpleHandler);
     });
 
-    it("can use immutables", () => {
+    it("can use immutables", async () => {
         const base: integrationJee7.NestedOuter = {
             a: {a: "ab", b: "cd", c: 1, d: 2, e: [1, 2, 3]},
             b: {a: "ef", b: "gh", c: 3, d: 4, e: [4, 5, 6]},
@@ -334,7 +285,7 @@ describe("test TestServicesObject", () => {
 
     });
 
-    it("can handle subclasses", () => {
+    it("can handle subclasses", async () => {
 
         // These will be compilation errors if something's wrong
         let sub1Instance = integrationJee7.testPackage3.Sub1.make();
@@ -342,13 +293,7 @@ describe("test TestServicesObject", () => {
         let hyperRef: integrationJee7.testPackage3.Hyper = sub1Instance;
 
         console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/getGenericListSupers");
-        let result: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super> | undefined;
-
-        integrationJee7.TestServicesObject.getGenericListSupers(
-            simpleHandler(
-                (s: integrationJee7.testPackage1.GenericList<integrationJee7.testPackage3.Super>) => {
-                    result = ck(s);
-                }));
+        let result = ck(await integrationJee7.TestServicesObject.getGenericListSupers(simpleHandler));
 
         expect(integrationJee7.testPackage3.Sub1.isInstance(ck(ck(result).list)[0])).toBeTruthy();
         expect(integrationJee7.testPackage3.Sub2.isInstance(ck(ck(result).list)[0])).toBeFalsy();
@@ -371,21 +316,17 @@ describe("test TestServicesObject", () => {
 describe("test TestAllCombosTwoParameters", () => {
 
     // Standard handler
-    function simpleHandler<T>(handler: (x: T) => void): JsonOptions<T> {
-        return {
-            async: false,
-            complete: (success: boolean) => {
-                console.log("complete: success ", success);
-            },
-            error: (errorThrown: string) => {
-                console.log("errorThrown=", errorThrown);
-            },
-            success: (s: T) => {
-                console.log("success: result ", s);
-                handler(s);
-            },
-        };
-    }
+    const simpleHandler: JsonOptions<unknown> = {
+        complete: (success: boolean) => {
+            console.log("complete: success ", success);
+        },
+        error: (errorThrown: string) => {
+            console.log("errorThrown=", errorThrown);
+        },
+        success: (s: unknown) => {
+            console.log("success: result ", s);
+        },
+    };
 
     // MALFORMED - no @FormParam on GET
     // it("can execute testAllCombosTwoParametersGeFoFo", () => {
@@ -436,19 +377,13 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
     // });
 
-    it("can execute testAllCombosTwoParametersGePaPa", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaPa("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersGePaPa", async () => {
+        let result: object = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaPa("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersGeQuPa", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuPa("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersGeQuPa", async () => {
+        let result: object = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuPa("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
@@ -474,19 +409,13 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a":"P0P1","b":"P0P1","c":"P0P1"});
     // });
 
-    it("can execute testAllCombosTwoParametersGePaQu", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaQu("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersGePaQu", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaQu("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersGeQuQu", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuQu("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersGeQuQu", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuQu("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
@@ -555,27 +484,18 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a": "ABCABC", "b": "DEFDEF", "c": "GHIGHI"});
     // });
 
-    it("can execute testAllCombosTwoParametersPoFoFo", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoFo("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoFoFo", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoFo("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoPaFo", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaFo("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoPaFo", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaFo("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoQuFo", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuFo("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoQuFo", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuFo("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
@@ -592,75 +512,51 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a": "ABCP1", "b": "DEFP1", "c": "GHIP1"});
     // });
 
-    it("can execute testAllCombosTwoParametersPoFoPa", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoPa("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoFoPa", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoPa("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoPaPa", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaPa("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoPaPa", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaPa("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoQuPa", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuPa("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoQuPa", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuPa("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoBoPa", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoPa({
+    it("can execute testAllCombosTwoParametersPoBoPa", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoPa({
             a: "abc",
             b: "def",
             c: "ghi",
-        }, "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+        }, "p1", simpleHandler);
         expect(result).toEqual({a: "ABCP1", b: "DEFP1", c: "GHIP1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoFoQu", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoQu("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoFoQu", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoQu("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoPaQu", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaQu("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoPaQu", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaQu("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoQuQu", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuQu("p0", "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+    it("can execute testAllCombosTwoParametersPoQuQu", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuQu("p0", "p1", simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
-    it("can execute testAllCombosTwoParametersPoBoQu", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoQu({
+    it("can execute testAllCombosTwoParametersPoBoQu", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoBoQu({
             a: "abc",
             b: "def",
             c: "ghi",
-        }, "p1", simpleHandler((s: object) => {
-            result = s;
-        }));
+        }, "p1", simpleHandler);
         expect(result).toEqual({a: "ABCP1", b: "DEFP1", c: "GHIP1"});
     });
 
@@ -677,27 +573,21 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a": "P0ABC", "b": "P0DEF", "c": "P0GHI"});
     // });
 
-    it("can execute testAllCombosTwoParametersPoPaBo", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaBo("p0", {
+    it("can execute testAllCombosTwoParametersPoPaBo", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoPaBo("p0", {
             a: "abc",
             b: "def",
             c: "ghi",
-        }, simpleHandler((s: object) => {
-            result = s;
-        }));
+        }, simpleHandler);
         expect(result).toEqual({a: "P0ABC", b: "P0DEF", c: "P0GHI"});
     });
 
-    it("can execute testAllCombosTwoParametersPoQuBo", () => {
-        let result: object = {};
-        integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuBo("p0", {
+    it("can execute testAllCombosTwoParametersPoQuBo", async () => {
+        let result = await integrationJee7.TestAllCombosTwoParameters.testAllCombosTwoParametersPoQuBo("p0", {
             a: "abc",
             b: "def",
             c: "ghi",
-        }, simpleHandler((s: object) => {
-            result = s;
-        }));
+        }, simpleHandler);
         expect(result).toEqual({a: "P0ABC", b: "P0DEF", c: "P0GHI"});
     });
 

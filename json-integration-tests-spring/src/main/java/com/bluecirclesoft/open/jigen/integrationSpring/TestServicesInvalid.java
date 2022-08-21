@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,17 +33,10 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 @Component
 @RequestMapping(path = "/testServicesInvalid")
+@CrossOrigin
 public class TestServicesInvalid {
 
 	private static final Logger log = LoggerFactory.getLogger(TestServicesInvalid.class);
-
-	@Autowired
-	private HttpServletResponse response;
-
-	private void setCORSHeaders() {
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT");
-	}
 
 	/**
 	 * WildFly complains "RESTEASY003065: Cannot consume content type".
@@ -50,7 +44,6 @@ public class TestServicesInvalid {
 	@PostMapping(path = "/doubleUpPostF", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String doubleUpPostF(@RequestParam("x") String x) {
 		log.info("Inside doubleUpPostQ, x = {}", x);
-		setCORSHeaders();
 		return "\"" + x + x + "\"";
 	}
 

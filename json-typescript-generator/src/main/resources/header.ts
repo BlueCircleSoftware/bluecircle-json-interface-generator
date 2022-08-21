@@ -23,11 +23,6 @@ export type UnknownType = unknown;
  */
 export interface JsonOptions<R> {
     /**
-     * Is this call async?
-     */
-    async?: boolean;
-
-    /**
      * Completion callback
      * @param {boolean} success true if error() was not called
      */
@@ -46,26 +41,6 @@ export interface JsonOptions<R> {
      * @returns {any}
      */
     success?(data: R): any;
-}
-
-/**
- * Generic options for an AJAX call.  I try to be ajax-lib-agnostic here, but my main dev library is jQuery.
- * TODO more testing to see if this makes sense for, e.g., Axios
- */
-export interface JsonPromiseOptions<R> {
-    /**
-     * Is this call async?
-     */
-    async?: boolean;
-
-    /**
-     * Is this call a promise call?
-     */
-    promise: true;
-}
-
-export function asPromise<R>(): JsonPromiseOptions<R> {
-    return {promise: true};
 }
 
 export function joinPath(...parts: string[]): string {
@@ -125,38 +100,44 @@ export function applyPrefix(following: string): string {
 /**
  * A type for a function that will handle AJAX calls
  */
-type AjaxInvoker = (url: string, method: string, data: UnknownType, isBodyParam: boolean, options: JsonOptions<UnknownType>) => void;
+type AjaxInvoker = (url: string, method: string, data: UnknownType, isBodyParam: boolean, osSuccess: (data: any) => void,
+                    onFailure: (errorMsg: string) => void) => void;
 
 /**
  * The ajax caller used by generated code.
  */
 let callAjaxFn: AjaxInvoker;
 
-function isPromiseOptions(val: JsonOptions<UnknownType> | JsonPromiseOptions<UnknownType>): val is JsonPromiseOptions<UnknownType> {
-    return !!(val as JsonPromiseOptions<any>).promise
-}
-
 export function setCallAjax(newCallAjax: AjaxInvoker): void {
     callAjaxFn = newCallAjax;
 }
 
-export function callAjax(url: string, method: string, data: UnknownType, isBodyParam: boolean, options: JsonOptions<UnknownType> | JsonPromiseOptions<UnknownType>): void | Promise<any> {
-    if (isPromiseOptions(options)) {
-        return new Promise<UnknownType>((resolve, reject) => {
-            const newOptions: JsonOptions<UnknownType> = {
-                async: options.async,
-                success(data: UnknownType): void {
-                    resolve(data);
-                }
-            };
-            newOptions.error = errorThrown => {
-                reject(errorThrown);
-            };
-            callAjaxFn(url, method, data, isBodyParam, newOptions);
-        });
-    } else {
-        callAjaxFn(url, method, data, isBodyParam, options);
-    }
+export function callAjax(url: string,
+                         method: string,
+                         data: UnknownType,
+                         isBodyParam: boolean,
+                         options?: JsonOptions<UnknownType>): Promise<any> {
+    return new Promise<UnknownType>((resolve, reject) => {
+        const onSuccess = (data: UnknownType) => {
+            if (options?.success) {
+                options.success(data);
+            }
+            if (options?.complete) {
+                options.complete(true);
+            }
+            resolve(data);
+        };
+        const onFailure = (errorThrown: string) => {
+            if (options?.error) {
+                options.error(errorThrown);
+            }
+            if (options?.complete) {
+                options.complete(false);
+            }
+            reject(errorThrown);
+        }
+        callAjaxFn(url, method, data, isBodyParam, onSuccess, onFailure);
+    });
 }
 
 export type DebugLoggerType = (args: any[]) => void;
@@ -312,7 +293,9 @@ export class ChangeRoot<T> {
                 return;
             }
             for (const watcher of lastWatchers.watchers) {
-                watcher(this.getVal(changePath, this._history[0], true) as Readonly<UnknownType>, this.getVal(changePath, this._history[1], true) as Readonly<UnknownType>, changePath);
+                watcher(this.getVal(changePath, this._history[0], true) as Readonly<UnknownType>,
+                    this.getVal(changePath, this._history[1], true) as Readonly<UnknownType>,
+                    changePath);
             }
             lastWatchers = lastWatchers.children[elem];
         }
@@ -322,7 +305,9 @@ export class ChangeRoot<T> {
     private notifyRestOfWatchers(startPath: SelectorList, watchers: WatcherTree): void {
         if (watchers) {
             for (const watcher of watchers.watchers) {
-                watcher(this.getVal(startPath, this._history[0], true) as Readonly<UnknownType>, this.getVal(startPath, this._history[1], true) as Readonly<UnknownType>, startPath);
+                watcher(this.getVal(startPath, this._history[0], true) as Readonly<UnknownType>,
+                    this.getVal(startPath, this._history[1], true) as Readonly<UnknownType>,
+                    startPath);
             }
             for (const child of Object.getOwnPropertyNames(watchers.children)) {
                 let nextPath = startPath.slice();

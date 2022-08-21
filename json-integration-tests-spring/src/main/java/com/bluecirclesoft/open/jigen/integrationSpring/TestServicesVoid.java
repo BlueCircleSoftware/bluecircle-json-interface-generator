@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,49 +33,39 @@ import org.springframework.web.bind.annotation.RequestParam;
  * Services that return String
  */
 @RequestMapping("/testServicesVoid")
+@CrossOrigin
 @Component
 public class TestServicesVoid {
 
 	private static final Logger log = LoggerFactory.getLogger(TestServicesVoid.class);
 
-	private void setCORSHeaders(HttpServletResponse response) {
-		// Allow cross-site - the test page is served from karma, so accessing wildfly is a cross-site request
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT");
-	}
-
 	@GetMapping(path = "/voidGetQ", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public void voidGetQ(@RequestParam("x") String x, HttpServletResponse response, VoidTestState voidTestState) {
 		log.info("Inside doubleUpGetQ, x = {}", x);
-		setCORSHeaders(response);
 		voidTestState.addToTotalString(x);
 	}
 
 	@GetMapping(path = "/voidGetP/{x}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public void doubleUpGetP(@PathVariable("x") String x, HttpServletResponse response, VoidTestState voidTestState) {
 		log.info("Inside doubleUpGetP, x = {}", x);
-		setCORSHeaders(response);
 		voidTestState.addToTotalString(x);
 	}
 
 	@PostMapping(path = "/voidPostQ", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public void doubleUpPostQ(@RequestParam("x") String x, HttpServletResponse response, VoidTestState voidTestState) {
 		log.info("Inside doubleUpPostQ, x = {}", x);
-		setCORSHeaders(response);
 		voidTestState.addToTotalString(x);
 	}
 
 	@PostMapping(path = "/voidPostP/{x}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public void doubleUpPostP(@PathVariable("x") String x, HttpServletResponse response, VoidTestState voidTestState) {
 		log.info("Inside doubleUpPostP, x = {}", x);
-		setCORSHeaders(response);
 		voidTestState.addToTotalString(x);
 	}
 
 	@PostMapping(path = "/voidPostF/{x}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public void doubleUpPostF(@RequestParam("x") String x, HttpServletResponse response, VoidTestState voidTestState) {
 		log.info("Inside doubleUpPostP, x = {}", x);
-		setCORSHeaders(response);
 		voidTestState.addToTotalString(x);
 	}
 
