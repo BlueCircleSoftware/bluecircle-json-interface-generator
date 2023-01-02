@@ -18,6 +18,7 @@ import * as $ from "jquery";
 import {com, jsonInterfaceGenerator} from "../../../target/generated-sources/jeeToTypeScript";
 import JsonOptions = jsonInterfaceGenerator.JsonOptions;
 import integrationJee7 = com.bluecirclesoft.open.jigen.integrationJee7;
+import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
 
 declare const __karma__: any;
 
@@ -31,30 +32,46 @@ function ck<T>(val: T | undefined | null): T {
 jsonInterfaceGenerator.setCallAjax((url: string,
                                     method: string,
                                     data: any,
-                                    isBodyParam: boolean,
-                                    onSuccess: (data: any) => void,
-                                    onFailure: (errorMsg: string) => void) => {
-    let error = false;
-    const settings: JQueryAjaxSettings = {
-        async: true,
-        data,
-        method,
-    };
-    settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
-        onSuccess(responseData);
-    };
-    settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-        console.error("Error!");
-        console.error("jqXHR: ", jqXHR.status);
-        console.error("textStatus: ", textStatus);
-        error = true;
-        onFailure(textStatus);
-    };
-    if (isBodyParam) {
-        settings.headers = {"Content-Type": "application/json; charset=utf-8"};
-    }
-    settings.dataType = "json";
-    $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
+                                    bodyType: BodyType,
+                                    consumes: string | null) => {
+    return new Promise((resolve, reject) => {
+        let error = false;
+        const settings: JQueryAjaxSettings = {
+            async: true,
+            data,
+            method,
+        };
+        settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+            resolve(responseData);
+        };
+        settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+            console.error("Error!");
+            console.error("url: ", url);
+            console.error("jqXHR.status: ", jqXHR.status);
+            console.error("jqXHR.readyState: ", jqXHR.readyState);
+            console.error("textStatus: ", textStatus);
+            console.error("errorThrown: ", errorThrown);
+            error = true;
+            reject(new Error(errorThrown));
+        };
+        switch (bodyType) {
+            case "json":
+                if (consumes !== null) {
+                    settings.headers = {"Content-Type": consumes};
+                }
+                settings.dataType = "json";
+                break;
+            case "form":
+                settings.enctype = "application/x-www-form-urlencoded";
+                break;
+            case "none":
+                break;
+            default:
+                throw new Error("unhandled body type " + bodyType);
+        }
+
+        $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
+    });
 });
 
 (window as any).$ = $;

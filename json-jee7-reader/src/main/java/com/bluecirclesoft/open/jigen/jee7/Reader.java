@@ -80,9 +80,9 @@ public class Reader implements ModelCreator<Options> {
 
 	private static class MethodInfo {
 
-		boolean consumer;
+		String consumes;
 
-		boolean producer;
+		String produces;
 
 		Method method;
 
@@ -146,36 +146,61 @@ public class Reader implements ModelCreator<Options> {
 		}
 	}
 
+	/**
+	 * Does this method return JSON and only JSON?
+	 *
+	 * @param produces
+	 * @return
+	 */
 	private static boolean isJsonProducer(Produces produces) {
 		if (produces != null) {
 			for (String val : produces.value()) {
-				if (MediaType.APPLICATION_JSON.equals(val)) {
-					return true;
+				for (String elem : val.split(",")) {
+					if (!MediaType.APPLICATION_JSON.equals(elem.trim())) {
+						return false;
+					}
 				}
 			}
 		}
-		return false;
+		return true;
 	}
 
-	private static boolean isConsumer(Method method) {
+	private static String isConsumer(Method method) {
 		Consumes consumes = method.getAnnotation(Consumes.class);
-		if (isJsonConsumer(consumes)) {
-			return true;
+		String found = getConsumerString(consumes);
+		if (found != null) {
+			return found;
 		} else {
 			consumes = method.getDeclaringClass().getAnnotation(Consumes.class);
-			return isJsonConsumer(consumes);
+			return getConsumerString(consumes);
 		}
 	}
 
-	private static boolean isJsonConsumer(Consumes consumes) {
+	private static String getConsumerString(Consumes consumes) {
+		String found = null;
 		if (consumes != null) {
 			for (String val : consumes.value()) {
-				if (MediaType.APPLICATION_JSON.equals(val)) {
-					return true;
+				for (String elem : val.split(",")) {
+					String trimmedElem = elem.trim();
+					if (MediaType.APPLICATION_JSON.equals(trimmedElem)) {
+						if (found == null || found.equals(MediaType.APPLICATION_JSON)) {
+							found = MediaType.APPLICATION_JSON;
+						} else {
+							return null;
+						}
+					} else if (MediaType.APPLICATION_FORM_URLENCODED.equals(trimmedElem)) {
+						if (found == null || found.equals(MediaType.APPLICATION_FORM_URLENCODED)) {
+							found = MediaType.APPLICATION_FORM_URLENCODED;
+						} else {
+							return null;
+						}
+					} else {
+						return null;
+					}
 				}
 			}
 		}
-		return false;
+		return found;
 	}
 
 	private static String joinPaths(String... pathElements) {
@@ -234,11 +259,11 @@ public class Reader implements ModelCreator<Options> {
 				logger.info("Reading method {}", method);
 				boolean producer = isProducer(method);
 				if (producer) {
-					annotatedMethods.computeIfAbsent(method, MethodInfo::new).producer = true;
+					annotatedMethods.computeIfAbsent(method, MethodInfo::new).produces = MediaType.APPLICATION_JSON;
 				}
-				boolean consumer = isConsumer(method);
-				if (consumer) {
-					annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumer = true;
+				String consumes = isConsumer(method);
+				if (consumes != null) {
+					annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumes = consumes;
 				}
 			}
 
@@ -302,13 +327,13 @@ public class Reader implements ModelCreator<Options> {
 				logger.warn("Cannot handle @BeanParam parameters - skipping method");
 				return;
 			} else {
-				mp.setNetworkType(EndpointParameter.NetworkType.BODY);
+				mp.setNetworkType(EndpointParameter.NetworkType.JSON_BODY);
 				parameters.add(mp);
 			}
 		}
 
 		JType outType;
-		if (methodInfo.producer) {
+		if (methodInfo.produces != null) {
 			outType = modeller.readOneType(model, method.getGenericReturnType());
 		} else {
 			outType = modeller.readOneType(model, String.class);
@@ -333,6 +358,8 @@ public class Reader implements ModelCreator<Options> {
 								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
 			}
 			endpoint.setMethod(httpMethod);
+			endpoint.setConsumes(methodInfo.consumes);
+			endpoint.setProduces(methodInfo.produces);
 
 			// check validity
 			ValidEndpointResponse validity = endpoint.isValid();

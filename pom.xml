@@ -194,16 +194,10 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.19.1</version>
-                    <configuration>
-                        <skipTests>${disable.tests}</skipTests>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>2.20.1</version>
-                    <configuration>
-                        <skipTests>${disable.tests}</skipTests>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

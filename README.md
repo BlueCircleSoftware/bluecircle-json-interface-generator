@@ -10,7 +10,7 @@ BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript in
 	<dependency>
 		<groupId>com.bluecirclesoft.open</groupId>
 		<artifactId>json-interface-generator</artifactId>
-		<version>0.30</version> <!-- latest version -->
+		<version>1.1</version> <!-- latest version -->
 	</dependency>
 ```
 
@@ -76,21 +76,33 @@ It takes Java JAX-RS code like this:
 and generates TypeScript like this:
 
 ```typescript
-	export interface JsonRequest {
-		a: string | null;
-		b: string | null;
-	}
+export interface JsonRequest {
+    a: string | null;
+    b: string | null;
+}
 
-	export interface JsonResponse {
-		doubleA: string | null;
-		doubleB: string | null;
-		doubleBoth: string | null;
-	}
-                    
-	export function doubleUpBody(arg0 : com.bluecirclesoft.open.jigen.integration.JsonRequest, options : jsonInterfaceGenerator.JsonOptions<com.bluecirclesoft.open.jigen.integration.JsonResponse>) : void {
-		const submitData = JSON.stringify(arg0);
-		jsonInterfaceGenerator.callAjax('/testServicesObject/doubleUpBody', 'POST', submitData, true, options);
-	}
+export namespace JsonRequest {
+    export function make(): JsonRequest {
+        return {"a": null, "b": null};
+    }
+}
+
+export interface JsonResponse {
+    doubleA: string | null;
+    doubleB: string | null;
+    doubleBoth: string | null;
+}
+export namespace JsonResponse {
+    export function make() : JsonResponse {
+        return {"doubleA":null,"doubleB":null,"doubleBoth":null};
+    }
+}
+
+export function doubleUpBody(arg0 : JsonRequest, options? : jsonInterfaceGenerator.JsonOptions<JsonResponse>) : Promise<JsonResponse>;
+export function doubleUpBody(arg0 : JsonRequest, options? : jsonInterfaceGenerator.JsonOptions<JsonResponse>) : Promise<JsonResponse> {
+    const submitData = JSON.stringify(arg0);
+    return jsonInterfaceGenerator.callAjax("/testServicesObject/doubleUpBody", "POST", submitData, "json", "application/json", options);
+}
 ```
 
 ## Sample usage
@@ -147,7 +159,7 @@ To use the Maven plugin, invoke the plugin as usual in your `build/plugins` sect
     <plugin>
         <groupId>com.bluecirclesoft.open</groupId>
         <artifactId>json-generator-maven-plugin</artifactId>
-        <version>0.30</version> <!-- latest version -->
+        <version>1.1</version> <!-- latest version -->
         <executions>
             <execution>
                 <goals>
@@ -158,10 +170,10 @@ To use the Maven plugin, invoke the plugin as usual in your `build/plugins` sect
                          <!-- JEE reader configurations, one <jeeReader/> per config -->
                     </jeeReaders>
                     <springReaders>
-                        <!-- JEE reader configurations, one <springReader/> per config -->
+                        <!-- Spring reader configurations, one <springReader/> per config -->
                     </springReaders>
                     <typescriptWriters>
-                        <!-- JEE reader configurations, one <typescriptWriter/> per config -->
+                        <!-- TypeScript writer configurations, one <typescriptWriter/> per config -->
                     </typescriptWriters>
                 </configuration>
             </execution>
@@ -232,10 +244,10 @@ processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --i
 --output.
 
 
-### Configuration
+### YAML Configuration
 
-Configuration is done through a YAML file. By default, this file is "jig-config.yaml" in the current directory, but the file can be 
-overridden by the --config option. The file has the format:
+Command-line configuration is done through a YAML file. By default, this file is "jig-config.yaml" in the current directory, but the file 
+can be overridden by the --config option. The file has the format:
 
 ```yaml
 readers:
@@ -306,78 +318,66 @@ implementation class.
 ## Making AJAX calls
 
 I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with
-the handler you want to use to invoke AJAX calls. The function you'll need to implement looks like this:
- 
+the handler you want to use to invoke AJAX calls.
+
+Your job is to make a function that returns a `Promise` to actually make an AJAX call and resolve to the response object. You may use 
+whatever method you'd like. 
+
 ```typescript
-export interface JsonOptions<R> {
-	/**
-	 * Is this call async?
-	 */
-	async?: boolean;
-
-	/**
-	 * Completion callback
-	 * @param {boolean} success true if error() was not called
-	 */
-	complete? (success: boolean): void;
-
-	/**
-	 * Error callback
-	 * @param {string} errorThrown
-	 * @returns {any}
-	 */
-	error? (errorThrown: string): any;
-
-	/**
-	 * Success callback
-	 * @param {R} data
-	 * @returns {any}
-	 */
-	success? (data: R): any;
-}
-
 /**
  * A type for a function that will handle AJAX calls
+ * @param url the URL to send the request to
+ * @param method the HTTP method
+ * @param data the data to send to the server (will be an empty object for bodyless requests e.g. GET or DELETE)
+ * @param bodyType "json" for JSON, "form" for url-encoded form data, "none" for bodyless requests
+ * @param consumes the endpoint's listed "consumes" MIME type
  */
-type AjaxInvoker = (url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => void;
+type AjaxInvoker<T> = (url: string, method: string, data: UnknownType, bodyType: BodyType, consumes: string | null) => Promise<T>;
+
+export function setCallAjax(newCallAjax: AjaxInvoker<UnknownType>): void {
+    callAjaxFn = newCallAjax;
+}
 ```
 
-Here is the implementation we use for jQuery:
+Here is an example implementation for jQuery:
 
 ```typescript
 
-jsonInterfaceGenerator.setCallAjax((url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
-    let error = false;
-    let settings: JQueryAjaxSettings = {
-        method: method,
-        data: data,
-        async: options.hasOwnProperty("async") ? options.async : true
-    };
-    if (options.success) {
-        let fn = options.success;
-        settings["success"] = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
-            fn(responseData);
+jsonInterfaceGenerator.setCallAjax((url: string,
+                                    method: string,
+                                    data: any,
+                                    bodyType: BodyType,
+                                    consumes: string | null) => {
+    return new Promise((resolve, reject) => {
+        const settings: JQueryAjaxSettings = {
+            async: true,
+            data,
+            method,
         };
-    }
-    if (options.error) {
-        let fn = options.error;
-        settings["error"] = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-            error = true;
-            fn(errorThrown);
+        settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+            resolve(responseData);
         };
-    }
-    if (options.complete) {
-        let fn = options.complete;
-        settings["complete"] = (jqXHR: JQueryXHR, textStatus: string) => {
-            fn(error);
+        settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+            reject(new Error(errorThrown));
         };
-    }
-    if (isBodyParam) {
-        settings["contentType"] = "application/json; charset=utf-8";
-    } else {
-        settings["dataType"] = "json";
-    }
-    $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
+        switch (bodyType) {
+            case "json":
+                if (consumes !== null) {
+                    settings.headers = {"Content-Type": consumes};
+                }
+                settings.dataType = "json";
+                break;
+            case "form":
+                settings.enctype = "application/x-www-form-urlencoded";
+                break;
+            case "none":
+                break;
+            default:
+                throw new Error("unhandled body type " + bodyType);
+        }
+
+        $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
+    });
 });
 ```
 
@@ -389,3 +389,13 @@ If you want to return structured data from a JAX-RS method, you shouldn't return
 provide structure.
 
 See https://github.com/dropwizard/dropwizard/issues/231 for more info.
+
+### Spring content type on GET requests
+
+If you put `consumes = MediaType.APPLICATION_JSON_VALUE` on a GET endpoint, newer versions of Spring _will_ expect you to send the 
+`Content-Type: application/json` header, even though a GET request has no content! Seems like best practice should be to leave off the 
+`consumes` on the server, and the `Content-Type` header on the request, since the header is optional, and conveys no functional meaning in 
+this situation.
+
+The spring-reader package will read When you write your AJAX handler, be sure to use the provided "consumes" parameter to set your 
+Content-Type header when appropriate.

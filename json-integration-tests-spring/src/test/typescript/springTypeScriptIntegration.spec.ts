@@ -18,35 +18,50 @@ import * as $ from "jquery";
 import {com, jsonInterfaceGenerator} from "../../../target/generated-sources/springToTypeScript";
 import JsonOptions = jsonInterfaceGenerator.JsonOptions;
 import integration = com.bluecirclesoft.open.jigen.integrationSpring;
+import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
 
 declare const __karma__: any;
 
 jsonInterfaceGenerator.setCallAjax((url: string,
                                     method: string,
                                     data: any,
-                                    isBodyParam: boolean,
-                                    onSuccess: (data: any) => void,
-                                    onFailure: (errorMsg: string) => void) => {
-    let error = false;
-    const settings: JQueryAjaxSettings = {
-        async: true,
-        data,
-        method,
-    };
-    settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
-        onSuccess(responseData);
-    };
-    settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-        console.error("Error!");
-        console.error("jqXHR: ", jqXHR.status);
-        console.error("textStatus: ", textStatus);
-        console.error("errorThrown: ", errorThrown);
-        error = true;
-        onFailure(textStatus);
-    };
-    settings.headers = {"Content-Type": "application/json"};
-    settings.dataType = "json";
-    $.ajax(jsonInterfaceGenerator.applyPrefix(url), settings);
+                                    bodyType: BodyType,
+                                    consumes: string | null) => {
+    return new Promise((resolve, reject) => {
+        let error = false;
+        const settings: JQueryAjaxSettings = {
+            async: true,
+            data,
+            method,
+        };
+        settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+            resolve(responseData);
+        };
+        settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+            console.error("Error!");
+            console.error("jqXHR: ", jqXHR.status);
+            console.error("textStatus: ", textStatus);
+            console.error("errorThrown: ", errorThrown);
+            error = true;
+            reject(new Error(textStatus));
+        };
+        if (consumes !== null) {
+            settings.headers = {"Content-Type": consumes};
+        }
+        switch (bodyType) {
+            case "json":
+                settings.dataType = "json";
+                break;
+            case "form":
+                settings.enctype = "application/x-www-form-urlencoded";
+                break;
+            case "none":
+                break;
+            default:
+                throw new Error("unhandled body type " + bodyType);
+        }
+        $.ajax(jsonInterfaceGenerator.applyPrefix(url), settings);
+    });
 });
 
 (window as any).$ = $;
@@ -466,10 +481,10 @@ describe("test TestAllCombosTwoParameters", () => {
     // });
 
     // TODO need better handling for application/x-www-form-urlencoded
-    // it("can execute testAllCombosTwoParametersPoFoFo", async () => {
-    //     let result = await integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoFo("p0", "p1", simpleHandler);
-    //     expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
-    // });
+    it("can execute testAllCombosTwoParametersPoFoFo", async () => {
+        let result = await integration.TestAllCombosTwoParameters.testAllCombosTwoParametersPoFoFo("p0", "p1", simpleHandler);
+        expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
+    });
 
     // TODO need better handling for application/x-www-form-urlencoded
     // it("can execute testAllCombosTwoParametersPoPaFo", async () => {

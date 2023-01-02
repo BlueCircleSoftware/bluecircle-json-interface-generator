@@ -29,6 +29,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class Endpoint implements Serializable {
 
+	private String consumes;
+
+	private String produces;
+
 	private final List<EndpointParameter> parameters = new ArrayList<>();
 
 	private String id;
@@ -103,14 +107,27 @@ public class Endpoint implements Serializable {
 		this.namespace = namespace;
 	}
 
+	public String getConsumes() {
+		return consumes;
+	}
+
+	public void setConsumes(String consumes) {
+		this.consumes = consumes;
+	}
+
+	public String getProduces() {
+		return produces;
+	}
+
+	public void setProduces(String produces) {
+		this.produces = produces;
+	}
+
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("id", id)
-				.append("method", method)
-				.append("parameters", parameters)
-				.append("responseBody", responseBody)
-				.append("pathTemplate", pathTemplate)
-				.toString();
+		return "Endpoint{" + "consumes='" + consumes + '\'' + ", produces='" + produces + '\'' + ", parameters=" + parameters + ", id='" +
+				id + '\'' + ", method=" + method + ", responseBody=" + responseBody + ", pathTemplate='" + pathTemplate + '\'' +
+				", namespace=" + namespace + '}';
 	}
 
 	/**
@@ -134,7 +151,7 @@ public class Endpoint implements Serializable {
 	 */
 	public ValidEndpointResponse isValid() {
 		Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = getSortedParameters();
-		List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.BODY);
+		List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.JSON_BODY);
 		boolean isBodyParam = bodyParams != null && bodyParams.size() > 0;
 		boolean isMultipleBodyParam = bodyParams != null && bodyParams.size() > 1;
 		switch (method) {

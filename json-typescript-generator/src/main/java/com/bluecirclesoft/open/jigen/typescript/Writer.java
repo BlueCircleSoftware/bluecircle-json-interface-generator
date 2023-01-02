@@ -182,8 +182,7 @@ public class Writer implements CodeProducer<Options> {
 		// real implementation
 		parameterList = new StringBuilder(savedParameterList);
 		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
-		addParameter(parameterList, needsComma, "options?",
-				"jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
+		addParameter(parameterList, needsComma, "options?", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
 		writer.line("export function " + name + "(" + parameterList.toString() + ") : Promise<" + returnType + "> {");
 		writer.indentIn();
 
@@ -210,17 +209,21 @@ public class Writer implements CodeProducer<Options> {
 		}
 
 		// construct submission body
-		List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.BODY);
-		boolean isBodyParam = bodyParams != null && bodyParams.size() > 0;
+		BodyType bodyType = BodyType.NONE;
+
+		List<EndpointParameter> jsonBody = sortedParams.get(EndpointParameter.NetworkType.JSON_BODY);
+		boolean isJsonBody = jsonBody != null && jsonBody.size() > 0;
 		switch (endpoint.getMethod()) {
 			case POST:
 			case PUT:
 			case OPTIONS:
 			case PATCH:
 				// adding body parameter
-				if (isBodyParam) {
-					writer.line("const submitData = JSON.stringify(" + bodyParams.get(0).getCodeName() + ");");
+				if (isJsonBody) {
+					bodyType = BodyType.JSON;
+					writer.line("const submitData = JSON.stringify(" + jsonBody.get(0).getCodeName() + ");");
 				} else {
+					bodyType = BodyType.FORM;
 					List<EndpointParameter> params = sortedParams.get(EndpointParameter.NetworkType.FORM);
 					createSubmitDataBodyFromParams(params, writer);
 				}
@@ -237,9 +240,14 @@ public class Writer implements CodeProducer<Options> {
 				break;
 		}
 
-		writer.line("return jsonInterfaceGenerator.callAjax(" + url.get() + ", \"" + endpoint.getMethod().name() + "\", submitData, " +
-				isBodyParam +
-						", options);");
+		String consumesValue;
+		if (endpoint.getConsumes() == null) {
+			consumesValue = "null";
+		} else {
+			consumesValue = '"' + endpoint.getConsumes() + '"';
+		}
+		writer.line(String.format("return jsonInterfaceGenerator.callAjax(%s, \"%s\", submitData, \"%s\", %s, options);", url.get(),
+				endpoint.getMethod().name(), bodyType.jsValue, consumesValue));
 		writer.indentOut();
 		writer.line("}");
 	}

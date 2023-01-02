@@ -41,7 +41,7 @@ function ck<T>(val: T | undefined | null): T {
     return val;
 }
 
-jsonInterfaceGenerator.setCallAjax((url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>) => {
+jsonInterfaceGenerator.setCallAjax((url: string, method: string, data: any, isBodyParam: boolean, options: JsonOptions<any>, consumes: string | null) => {
     let error = false;
     const settings: JQueryAjaxSettings = {
         async: options.hasOwnProperty("async") ? options.async : true,
@@ -58,8 +58,11 @@ jsonInterfaceGenerator.setCallAjax((url: string, method: string, data: any, isBo
         const fn = options.error;
         settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
             console.error("Error!");
-            console.error("jqXHR: ", jqXHR.status);
+            console.error("url: ", url);
+            console.error("jqXHR.status: ", jqXHR.status);
+            console.error("jqXHR.readyState: ", jqXHR.readyState);
             console.error("textStatus: ", textStatus);
+            console.error("errorThrown: ", errorThrown);
             error = true;
             fn(errorThrown);
         };
@@ -70,9 +73,9 @@ jsonInterfaceGenerator.setCallAjax((url: string, method: string, data: any, isBo
             fn(!error);
         };
     }
-    if (isBodyParam) {
-        settings.headers = {"Content-Type": "application/json; charset=utf-8"};
-    }
+	if (consumes !== null) {
+		settings.headers = {"Content-Type": consumes};
+	}
     settings.dataType = "json";
     // }
     $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);

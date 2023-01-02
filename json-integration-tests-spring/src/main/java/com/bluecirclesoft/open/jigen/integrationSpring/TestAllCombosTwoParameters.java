@@ -45,7 +45,6 @@ public class TestAllCombosTwoParameters {
 
 	@RequestMapping(method = RequestMethod.GET,
 			path = "/testAllCombosTwoParametersGeFoFo",
-			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
@@ -95,7 +94,6 @@ public class TestAllCombosTwoParameters {
 
 	@RequestMapping(method = RequestMethod.GET,
 			path = "/testAllCombosTwoParametersGePaPa/{p0}/{p1}",
-			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGePaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
@@ -105,7 +103,6 @@ public class TestAllCombosTwoParameters {
 
 	@RequestMapping(method = RequestMethod.GET,
 			path = "/testAllCombosTwoParametersGeQuPa/{p1}",
-			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody
 	TestDto testAllCombosTwoParametersGeQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {

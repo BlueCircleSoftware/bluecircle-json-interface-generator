@@ -116,11 +116,12 @@ public class Reader implements ModelCreator<Options> {
 	private String[] packageNames;
 
 	private static boolean isProducer(Method method, SpringRequestInfo springRequestInfo) {
-		return springRequestInfo.producesJson || method.getGenericReturnType() == Void.TYPE;
+		return springRequestInfo.produces == MediaType.APPLICATION_JSON || method.getGenericReturnType() == Void.TYPE;
 	}
 
 	private static boolean isConsumer(Method method, SpringRequestInfo springRequestInfo) {
-		return springRequestInfo.consumesJson || springRequestInfo.consumesForm;
+		return springRequestInfo.consumes == MediaType.APPLICATION_JSON ||
+				springRequestInfo.consumes == MediaType.APPLICATION_FORM_URLENCODED;
 	}
 
 	private static String joinPaths(String... pathElements) {
@@ -240,8 +241,8 @@ public class Reader implements ModelCreator<Options> {
 	 * @return a set of all appropriate methods
 	 */
 	private Set<Method> findRequestMappingMethods(Reflections reflections) {
-		Set<Method> resultSet = new TreeSet<>(
-				Comparator.comparing((Method m) -> m.getDeclaringClass().getName()).thenComparing(Method::getName));
+		Set<Method> resultSet =
+				new TreeSet<>(Comparator.comparing((Method m) -> m.getDeclaringClass().getName()).thenComparing(Method::getName));
 		for (Class<? extends Annotation> annotation : this.annotationMap.getAllAnnotations()) {
 			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
 		}
@@ -284,7 +285,7 @@ public class Reader implements ModelCreator<Options> {
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(RequestParam.class)) {
 				EndpointParameter.NetworkType netType;
-				if (springRequestInfo.consumesForm) {
+				if (springRequestInfo.consumes == MediaType.APPLICATION_FORM_URLENCODED) {
 					netType = EndpointParameter.NetworkType.FORM;
 				} else {
 					netType = EndpointParameter.NetworkType.QUERY;
@@ -297,7 +298,7 @@ public class Reader implements ModelCreator<Options> {
 				mp.setNetworkType(netType);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(RequestBody.class)) {
-				mp.setNetworkType(EndpointParameter.NetworkType.BODY);
+				mp.setNetworkType(EndpointParameter.NetworkType.JSON_BODY);
 				parameters.add(mp);
 			}
 		}
@@ -313,6 +314,7 @@ public class Reader implements ModelCreator<Options> {
 			outType = modeller.readOneType(model, String.class);
 		}
 
+
 		for (HttpMethod httpMethod : httpMethods) {
 			String suffix = "";
 			SuffixInfo suffixInfo = detector.getSuffixInfo(method, httpMethod);
@@ -325,6 +327,8 @@ public class Reader implements ModelCreator<Options> {
 			Endpoint endpoint = model.createEndpoint(method.getDeclaringClass().getName() + "." + method.getName() + suffix);
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(methodPath);
+			endpoint.setConsumes(springRequestInfo.consumes == null ? null : springRequestInfo.consumes.toString());
+			endpoint.setProduces(springRequestInfo.produces == null ? null : springRequestInfo.produces.toString());
 			for (MethodParameter pathParam : parameters) {
 				JacksonTypeModeller modeller =
 						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
@@ -457,7 +461,7 @@ public class Reader implements ModelCreator<Options> {
 		BiConsumer<SpringRequestInfo, String> producesTest = (result1, contentType) -> {
 			if (contentType != null) {
 				if (contentType.equals(MediaType.APPLICATION_JSON_VALUE)) {
-					result.producesJson = true;
+					result.produces = MediaType.APPLICATION_JSON;
 				}
 			}
 		};
@@ -473,10 +477,12 @@ public class Reader implements ModelCreator<Options> {
 		BiConsumer<SpringRequestInfo, String> consumesTest = (result1, contentType) -> {
 			if (contentType != null) {
 				if (contentType.equals(MediaType.APPLICATION_JSON_VALUE)) {
-					result1.consumesJson = true;
+					assert result1.consumes == null || result1.consumes == MediaType.APPLICATION_JSON;
+					result1.consumes = MediaType.APPLICATION_JSON;
 				}
 				if (contentType.equals(MediaType.APPLICATION_FORM_URLENCODED_VALUE)) {
-					result1.consumesForm = true;
+					assert result1.consumes == null || result1.consumes == MediaType.APPLICATION_FORM_URLENCODED;
+					result1.consumes = MediaType.APPLICATION_FORM_URLENCODED;
 				}
 			}
 		};

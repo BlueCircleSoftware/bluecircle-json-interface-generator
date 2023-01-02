@@ -30,17 +30,17 @@ export interface JsonOptions<R> {
 
     /**
      * Error callback
-     * @param {string} errorThrown
+     * @param {unknown} errorThrown
      * @returns {any}
      */
-    error?(errorThrown: string): any;
+    error?(errorThrown: unknown): void;
 
     /**
      * Success callback
      * @param {R} data
      * @returns {any}
      */
-    success?(data: R): any;
+    success?(data: R): void;
 }
 
 export function joinPath(...parts: string[]): string {
@@ -97,47 +97,51 @@ export function applyPrefix(following: string): string {
     return joinPath(getPrefix(), following);
 }
 
+export type BodyType = "json" | "form" | "none";
+
 /**
  * A type for a function that will handle AJAX calls
+ * @param url the URL to send the request to
+ * @param method the HTTP method
+ * @param data the data to send to the server (will be an empty object for bodyless requests e.g. GET or DELETE)
+ * @param bodyType "json" for JSON, "form" for url-encoded form data, "none" for bodyless requests
+ * @param consumes the endpoint's listed "consumes" MIME type
  */
-type AjaxInvoker = (url: string, method: string, data: UnknownType, isBodyParam: boolean, osSuccess: (data: any) => void,
-                    onFailure: (errorMsg: string) => void) => void;
+type AjaxInvoker<T> = (url: string, method: string, data: UnknownType, bodyType: BodyType, consumes: string | null) => Promise<T>;
 
 /**
  * The ajax caller used by generated code.
  */
-let callAjaxFn: AjaxInvoker;
+let callAjaxFn: AjaxInvoker<UnknownType>;
 
-export function setCallAjax(newCallAjax: AjaxInvoker): void {
+export function setCallAjax(newCallAjax: AjaxInvoker<UnknownType>): void {
     callAjaxFn = newCallAjax;
 }
 
-export function callAjax(url: string,
-                         method: string,
-                         data: UnknownType,
-                         isBodyParam: boolean,
-                         options?: JsonOptions<UnknownType>): Promise<any> {
-    return new Promise<UnknownType>((resolve, reject) => {
-        const onSuccess = (data: UnknownType) => {
-            if (options?.success) {
-                options.success(data);
-            }
-            if (options?.complete) {
-                options.complete(true);
-            }
-            resolve(data);
-        };
-        const onFailure = (errorThrown: string) => {
-            if (options?.error) {
-                options.error(errorThrown);
-            }
-            if (options?.complete) {
-                options.complete(false);
-            }
-            reject(errorThrown);
+export async function callAjax<S, R>(url: string,
+                                     method: string,
+                                     data: S,
+                                     bodyType: BodyType,
+                                     consumes: string | null,
+                                     options?: JsonOptions<R>): Promise<R> {
+    let success = false;
+    try {
+        const result = await (callAjaxFn as AjaxInvoker<R>)(url, method, data, bodyType, consumes);
+        success = true;
+        if (options?.success) {
+            options.success(result);
         }
-        callAjaxFn(url, method, data, isBodyParam, onSuccess, onFailure);
-    });
+        return result;
+    } catch (errorThrown) {
+        if (options?.error) {
+            options.error(errorThrown);
+        }
+        throw errorThrown;
+    } finally {
+        if (options?.complete) {
+            options.complete(success);
+        }
+    }
 }
 
 export type DebugLoggerType = (args: any[]) => void;

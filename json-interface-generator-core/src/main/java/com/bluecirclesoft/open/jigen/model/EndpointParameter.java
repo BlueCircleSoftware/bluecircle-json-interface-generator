@@ -31,7 +31,7 @@ public class EndpointParameter implements Serializable {
 		// parameter to be submitted over urlencoded POST
 		FORM,
 		// body of the submission of a POST
-		BODY
+		JSON_BODY
 	}
 
 	private final String codeName;

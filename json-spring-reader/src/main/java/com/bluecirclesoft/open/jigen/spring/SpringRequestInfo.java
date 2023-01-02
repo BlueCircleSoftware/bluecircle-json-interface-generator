@@ -18,6 +18,8 @@ package com.bluecirclesoft.open.jigen.spring;
 
 import java.util.Set;
 
+import org.springframework.http.MediaType;
+
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
 
 /**
@@ -25,11 +27,15 @@ import com.bluecirclesoft.open.jigen.model.HttpMethod;
  */
 class SpringRequestInfo {
 
-	boolean consumesForm;
+	/**
+	 * Mime type that this service consumes
+	 */
+	MediaType consumes;
 
-	boolean consumesJson;
-
-	boolean producesJson;
+	/**
+	 * Mime type that this service produces
+	 */
+	MediaType produces;
 
 	String path;
 
@@ -42,7 +48,7 @@ class SpringRequestInfo {
 
 	@Override
 	public String toString() {
-		return "SpringRequestInfo{" + "consumesForm=" + consumesForm + ", consumesJson=" + consumesJson + ", producesJson=" + producesJson +
-				", url='" + path + '\'' + ", methods=" + methods + '}';
+		return "SpringRequestInfo{" + "consumes='" + consumes + '\'' + ", produces='" + produces + '\'' + ", path='" + path + '\'' +
+				", methods=" + methods + ", validity='" + validity + '\'' + '}';
 	}
 }
