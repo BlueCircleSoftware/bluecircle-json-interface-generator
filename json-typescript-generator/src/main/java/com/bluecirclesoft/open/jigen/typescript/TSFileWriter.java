@@ -87,7 +87,7 @@ class TSFileWriter {
 			String relPathStr = fromNamespaceParent.relativize(toNamespacePath).toString();
 			// webpack wants relative paths to start with ./
 			if (!relPathStr.startsWith(".")) {
-				relPathStr = "." + File.separator + relPathStr;
+				relPathStr = "./" + relPathStr;
 			}
 			return relPathStr;
 		}
