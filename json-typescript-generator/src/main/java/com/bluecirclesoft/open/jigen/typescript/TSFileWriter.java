@@ -46,7 +46,7 @@ class TSFileWriter {
 
 	public static final Namespace JIG_NAMESPACE = new Namespace(null, "jsonInterfaceGenerator");
 
-	private static final Logger log = LoggerFactory.getLogger(TSFileWriter.class);
+	private static final Logger logger = LoggerFactory.getLogger(TSFileWriter.class);
 
 	private final PrintWriter writer;
 
@@ -87,7 +87,7 @@ class TSFileWriter {
 			String relPathStr = fromNamespaceParent.relativize(toNamespacePath).toString();
 			// webpack wants relative paths to start with ./
 			if (!relPathStr.startsWith(".")) {
-				relPathStr = "./" + relPathStr;
+				relPathStr = "." + File.separator + relPathStr;
 			}
 			return relPathStr;
 		}
@@ -127,7 +127,7 @@ class TSFileWriter {
 		writer.close();
 		String content = stringWriter.toString();
 		if (content.trim().length() > 0 || imports.size() > 0) {
-			log.info("Writing file {}", file);
+			logger.info("Writing file {}", file);
 			try (FileWriter fileWriter = new FileWriter(file)) {
 				for (Map.Entry<String, String> entry : imports.entrySet()) {
 					if (!StringUtils.isBlank(entry.getValue())) {
@@ -135,6 +135,7 @@ class TSFileWriter {
 						if (dest.endsWith(".ts")) {
 							dest = dest.substring(0, dest.length() - 3);
 						}
+						dest = dest.replace(File.separator, "/");
 						fileWriter.write("import * as " + entry.getKey() + " from \"" + dest + "\";");
 						fileWriter.write(System.lineSeparator());
 					}

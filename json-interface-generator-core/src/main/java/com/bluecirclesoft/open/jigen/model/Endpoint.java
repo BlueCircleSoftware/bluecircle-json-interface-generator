@@ -22,18 +22,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Holds information about a REST endpoint (one Java method may generate multiple endpoints, if it is annotated with multiple HTTP methods).
  */
 public class Endpoint implements Serializable {
 
+	private final List<EndpointParameter> parameters = new ArrayList<>();
+
 	private String consumes;
 
 	private String produces;
-
-	private final List<EndpointParameter> parameters = new ArrayList<>();
 
 	private String id;
 
@@ -173,14 +173,13 @@ public class Endpoint implements Serializable {
 				}
 				break;
 		}
-		// TODO figure out exactly why this logic is bugged
-//		List<EndpointParameter> parameters1 = getParameters();
-//		for (int i = 0; i < parameters1.size(); i++) {
-//			EndpointParameter param = parameters1.get(i);
-//			if (StringUtils.isBlank(param.getNetworkName())) {
-//				return new ValidEndpointResponse(false, "No network name for parameter " + i);
-//			}
-//		}
+		List<EndpointParameter> parameters1 = getParameters();
+		for (int i = 0; i < parameters1.size(); i++) {
+			EndpointParameter param = parameters1.get(i);
+			if (param.getNetworkType() != EndpointParameter.NetworkType.JSON_BODY && StringUtils.isBlank(param.getNetworkName())) {
+				return new ValidEndpointResponse(false, "No network name for parameter " + i);
+			}
+		}
 		return new ValidEndpointResponse(true);
 	}
 }

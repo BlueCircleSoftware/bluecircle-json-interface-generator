@@ -36,14 +36,14 @@ import org.slf4j.LoggerFactory;
  */
 public class Model implements Serializable {
 
-	private static final Logger log = LoggerFactory.getLogger(Model.class);
+	private static final Logger logger = LoggerFactory.getLogger(Model.class);
 
 	private final Map<Type, JType> interfaces = new HashMap<>();
 
 	private final Map<String, Endpoint> endpoints = new TreeMap<>();
 
 	public Model() {
-		log.info("New model: " + this);
+		logger.info("New model: " + this);
 	}
 
 	public Collection<JType> getInterfaces() {

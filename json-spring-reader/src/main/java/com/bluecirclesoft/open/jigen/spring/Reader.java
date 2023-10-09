@@ -20,6 +20,8 @@ package com.bluecirclesoft.open.jigen.spring;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -39,7 +41,9 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -52,6 +56,7 @@ import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
 import com.bluecirclesoft.open.jigen.model.HttpMethod;
+import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
@@ -152,7 +157,16 @@ public class Reader implements ModelCreator<Options> {
 		}
 	}
 
-	private static boolean isValidJavaIdentifier(String value) {
+	private static boolean isValidJavaIdentifier(String valueIn) {
+		if (valueIn == null) {
+			// noll is not a valid identifier
+			return false;
+		}
+		String value = valueIn.trim();
+		if (value.isEmpty()) {
+			// the empty string is not a valid identifier
+			return false;
+		}
 		for (int i = 0; i < value.length(); i++) {
 			if (i == 0) {
 				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
@@ -196,14 +210,17 @@ public class Reader implements ModelCreator<Options> {
 					// method had no interesting HTTP methods
 					continue;
 				}
-				logger.info("Handling method {}, Spring info is {}", method, springInfo);
+				logger.debug("Reading method {}", method);
+				logger.debug("Handling method {}, Spring info is {}", method, springInfo);
 				if (springInfo.validity != null) {
 					logger.warn("Problems encountered while reading method {}:", method);
 					logger.warn("error: {}", springInfo.validity);
 					continue;
 				}
 				boolean producer = isProducer(method, springInfo);
+				logger.debug("Method {} - isProducer? {}", method, producer);
 				boolean consumer = isConsumer(method, springInfo);
+				logger.debug("Method {} - isConsumer? {}", method, consumer);
 				if (producer || consumer) {
 					MethodInfo newMethodInfo = annotatedMethods.computeIfAbsent(method, (m) -> new MethodInfo(m, springInfo));
 					newMethodInfo.producer = producer;
@@ -250,8 +267,10 @@ public class Reader implements ModelCreator<Options> {
 	}
 
 	private void readMethod(MethodInfo methodInfo, MethodCollisionDetector detector) {
-		SpringRequestInfo springRequestInfo = methodInfo.springRequestInfo;
 		Method method = methodInfo.method;
+		logger.debug("Analyzing method {}", method);
+
+		SpringRequestInfo springRequestInfo = methodInfo.springRequestInfo;
 		String methodPath = methodInfo.springRequestInfo.path;
 
 		Set<HttpMethod> httpMethods = new HashSet<>(methodInfo.springRequestInfo.methods);
@@ -260,27 +279,42 @@ public class Reader implements ModelCreator<Options> {
 
 		boolean usedMyOneGuess = false;
 		for (Parameter p : method.getParameters()) {
+			logger.debug("Analyzing parameter {}", p);
+
 			MethodParameter mp = new MethodParameter();
 			boolean hasName = p.isNamePresent();
+			logger.debug("has name? {}", hasName);
+			// code name is the name of the argument in Java
 			mp.setCodeName(p.getName());
+			if (hasName) {
+				// network name is the name of the argument in the request - we're defaulting it here to the parameter name, but we may
+				// override it after reading the parameters
+				mp.setNetworkName(p.getName());
+			}
+			logger.debug("parameter code name now {} (from Java parameter name)", mp.getCodeName());
 			mp.setType(p.getParameterizedType());
 			if (p.isAnnotationPresent(PathVariable.class)) {
 				PathVariable pathParam = p.getAnnotation(PathVariable.class);
-				String pp = pathParam.value();
+				String pathVarName = pathParam.value();
 				// Spring will auto-determine the path parameter based on ??
-				if (StringUtils.isBlank(pp)) {
+				if (StringUtils.isBlank(pathVarName)) {
 					if (usedMyOneGuess) {
 						// TODO I don't want to guess more than once since I don't understand Spring's logic yet
-						pp = "/* cannot auto-determine */";
+						pathVarName = "/* cannot auto-determine */";
 					} else {
-						pp = determinePathVariable(springRequestInfo.path);
+						pathVarName = determinePathVariable(springRequestInfo.path);
 						usedMyOneGuess = true;
 					}
 				}
-				if (!hasName && isValidJavaIdentifier(pp)) {
-					mp.setCodeName(pp);
+				if (!hasName && isValidJavaIdentifier(pathVarName)) {
+					// if we don't have a user-specified code name yet, set it
+					mp.setCodeName(pathVarName);
+					logger.debug("parameter code name now {} (from @PathVariable)", mp.getCodeName());
 				}
-				mp.setNetworkName(pp);
+				if (!StringUtils.isBlank(pathVarName)) {
+					// override network name from annotation
+					mp.setNetworkName(pathVarName);
+				}
 				mp.setNetworkType(EndpointParameter.NetworkType.PATH);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(RequestParam.class)) {
@@ -290,11 +324,17 @@ public class Reader implements ModelCreator<Options> {
 				} else {
 					netType = EndpointParameter.NetworkType.QUERY;
 				}
-				RequestParam queryParam = p.getAnnotation(RequestParam.class);
-				if (!hasName && isValidJavaIdentifier(queryParam.value())) {
-					mp.setCodeName(queryParam.value());
+				RequestParam requestParam = p.getAnnotation(RequestParam.class);
+				String reqParName = requestParam.value();
+				if (!hasName && isValidJavaIdentifier(reqParName)) {
+					// if we don't have a parameter name yet, set it
+					mp.setCodeName(reqParName);
+					logger.debug("parameter code name now {} (from @RequestParam)", mp.getCodeName());
 				}
-				mp.setNetworkName(queryParam.value());
+				if (!StringUtils.isBlank(reqParName)) {
+					// override network name from annotation
+					mp.setNetworkName(reqParName);
+				}
 				mp.setNetworkType(netType);
 				parameters.add(mp);
 			} else if (p.isAnnotationPresent(RequestBody.class)) {
@@ -303,11 +343,35 @@ public class Reader implements ModelCreator<Options> {
 			}
 		}
 
-		JType outType;
+		JType outType = null;
 		if (methodInfo.producer) {
 			JacksonTypeModeller modeller =
 					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
-			outType = modeller.readOneType(model, method.getGenericReturnType());
+
+			Type genericReturnType = method.getGenericReturnType();
+			// in Spring, we want to check the return type to see if it extends HttpEntity. In the model, we are concerned about the body
+			// which is going over the wire. Therefore, we unwrap it for the model
+			if (genericReturnType instanceof ParameterizedType) {
+				ParameterizedType pType = (ParameterizedType) genericReturnType;
+				Type rawType = pType.getRawType();
+				if (rawType instanceof Class && HttpEntity.class.isAssignableFrom((Class<?>) rawType)) {
+					// return type is HttpEntity<T>, so treat T as the model return type
+					logger.debug("Method has a ResponseBody<...> return type, unwrapping for model");
+					outType = modeller.readOneType(model, pType.getActualTypeArguments()[0]);
+				}
+			} else if (genericReturnType instanceof Class) {
+				if (genericReturnType == ResponseEntity.class) {
+					// return type is HttpEntity (unspecialized), so we just treat the body as 'any'
+					logger.debug("Method has a ResponseBody return type, unwrapping for model, returning 'any' (to be useful, you want to" +
+							" parameterize this return type)");
+					outType = new JAny();
+				}
+			}
+
+			// if the above logic didn't unwrap a return type, just use the type as specified
+			if (outType == null) {
+				outType = modeller.readOneType(model, genericReturnType);
+			}
 		} else {
 			JacksonTypeModeller modeller =
 					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
@@ -324,7 +388,8 @@ public class Reader implements ModelCreator<Options> {
 			if (suffixInfo.getCount() != null) {
 				suffix = suffix + "_" + suffixInfo.getCount();
 			}
-			Endpoint endpoint = model.createEndpoint(method.getDeclaringClass().getName() + "." + method.getName() + suffix);
+			String endpointName = method.getDeclaringClass().getName() + "." + method.getName() + suffix;
+			Endpoint endpoint = model.createEndpoint(endpointName);
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(methodPath);
 			endpoint.setConsumes(springRequestInfo.consumes == null ? null : springRequestInfo.consumes.toString());
@@ -341,11 +406,13 @@ public class Reader implements ModelCreator<Options> {
 			// check validity
 			ValidEndpointResponse validity = endpoint.isValid();
 			if (!validity.ok) {
-				logger.warn("Problems encountered while reading method {}:", method);
+				logger.warn("Problems encountered while reading endpoint {}:", endpoint);
 				for (String problem : validity.problems) {
 					logger.warn("error: {}", problem);
 				}
 				model.removeEndpoint(endpoint);
+			} else {
+				logger.info("Added endpoint {} at {} method {}", endpointName, endpoint.getPathTemplate(), endpoint.getMethod());
 			}
 		}
 	}
@@ -364,15 +431,15 @@ public class Reader implements ModelCreator<Options> {
 	}
 
 	private SpringRequestInfo getMethodInfo(Method m) {
-		logger.info("Reading method {}", m);
+		logger.debug("Reading method {}", m);
 		Annotation mappingAnn = getMappingAnnotation(m, m.getAnnotations());
 
 		if (mappingAnn == null) {
-			throw new RuntimeException("Cound not find @RequestMapping annotation on method " + m);
+			throw new RuntimeException("Could not find @RequestMapping annotation on method " + m);
 		}
 
 		AnnotationInstance method = annotationMap.getInstance(mappingAnn);
-		logger.info("Read method annotation {}", method);
+		logger.debug("Read method annotation {}", method);
 
 		Class toAdd = m.getDeclaringClass();
 		List<AnnotationInstance> typeHierarchy = new ArrayList<>();
@@ -380,7 +447,7 @@ public class Reader implements ModelCreator<Options> {
 			Annotation classMappingAnn = getMappingAnnotation(toAdd, toAdd.getAnnotations());
 			if (classMappingAnn != null) {
 				AnnotationInstance instance = annotationMap.getInstance(classMappingAnn);
-				logger.info("Read class annotation {}", method);
+				logger.debug("Read class annotation {}", method);
 				typeHierarchy.add(instance);
 			}
 			toAdd = toAdd.getSuperclass();
@@ -435,7 +502,7 @@ public class Reader implements ModelCreator<Options> {
 			if (!inst.getPath().isEmpty()) {
 				String pathFragment = inst.getPath().get(0); // choose one of the path options arbitrarily
 				if (pathFragment.endsWith("testServicesString")) {
-					logger.info("Here");
+					logger.debug("Here");
 				}
 				path = joinPaths(pathFragment, path);
 			}

@@ -27,4 +27,6 @@ if ! type nvm >/dev/null; then
 	fi
 fi
 
+set -exu
+
 npm ci

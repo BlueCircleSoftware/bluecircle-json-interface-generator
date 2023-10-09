@@ -48,7 +48,7 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor
  */
 class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadingVisitor<JObject> {
 
-	private static final Logger log = LoggerFactory.getLogger(JsonObjectReader.class);
+	private static final Logger logger = LoggerFactory.getLogger(JsonObjectReader.class);
 
 	private final JacksonTypeModeller jacksonTypeModeller;
 
@@ -61,6 +61,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 * @param clazz               the class to read
 	 */
 	JsonObjectReader(JacksonTypeModeller jacksonTypeModeller, Class<?> clazz) {
+		logger.debug("Using Jackson to read class {}", clazz.getName());
 		this.jacksonTypeModeller = jacksonTypeModeller;
 		// make a stub type for this class
 		jObject = new JObject(clazz.getName(), clazz);
@@ -79,42 +80,6 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	}
 
 	/**
-	 * Sometimes the generated JSON for an empty object is illegal in the generated model (nullability at least, maybe more in the future).
-	 * After the final model is constructed, re-validate the object, and remove it if it isn't valid anymore.
-	 *
-	 * @param jType the type
-	 */
-	private void doubleCheckEmptyJson(JObject jType, Class<?> clazz) {
-		String newObjectJson = jType.getNewObjectJson();
-		if (newObjectJson != null) {
-			try {
-				ObjectMapper mapper = new ObjectMapper();
-				HashMap<String, Object> map = mapper.readValue(newObjectJson, new TypeReference<HashMap<String, Object>>() {
-				});
-				for (Map.Entry<String, JObject.Field> fieldEntry : jType.getFieldEntries()) {
-					JObject.Field field = fieldEntry.getValue();
-					if (field == null) {
-						log.warn("INTERNAL ERROR: field type is undefined, playing it safe");
-						jType.setNewObjectJson(null);
-						return;
-					}
-					JType fieldType = field.getType();
-					boolean canBeNull = fieldType.canBeNull();
-					boolean canBeUndefined = fieldType.canBeUndefined();
-					String name = field.getName();
-					Object o = map.get(name);
-					if (!canBeNull && !canBeUndefined && o == null) {
-						jType.setNewObjectJson(null);
-						return;
-					}
-				}
-			} catch (Exception e) {
-				log.error("Couldn't read generated new-object JSON for class " + jType.getName(), e);
-			}
-		}
-	}
-
-	/**
 	 * New up an instance of the class, and convert it to JSON
 	 *
 	 * @param clazz the class to consider
@@ -126,10 +91,10 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			Constructor<?> ctor = clazz.getConstructor();
 			newInstance = ctor.newInstance();
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-			log.warn("Error instantiating class " + clazz.getName(), e);
+			logger.warn("Error instantiating class " + clazz.getName(), e);
 			return null;
 		} catch (NoSuchMethodException e) {
-			log.warn("Class {} has no no-arg constructor", clazz.getName());
+			logger.warn("Class {} has no no-arg constructor", clazz.getName());
 			return null;
 		}
 		try {
@@ -138,7 +103,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 			return mapper.writeValueAsString(newInstance);
 		} catch (JsonProcessingException e) {
-			log.warn("Error creating JSON for new " + clazz.getName() + "()", e);
+			logger.warn("Error creating JSON for new " + clazz.getName() + "()", e);
 			return null;
 		}
 	}
@@ -154,14 +119,50 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		try {
 			newInstance = clazz.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
-			log.warn("Error instantiating class " + clazz.getName(), e);
+			logger.warn("Error instantiating class " + clazz.getName(), e);
 			return null;
 		}
 		try {
 			return (String) property.getMember().getValue(newInstance);
 		} catch (Exception e) {
-			log.warn("Error retrieving value of type discriminator", e);
+			logger.warn("Error retrieving value of type discriminator", e);
 			return null;
+		}
+	}
+
+	/**
+	 * Sometimes the generated JSON for an empty object is illegal in the generated model (nullability at least, maybe more in the future).
+	 * After the final model is constructed, re-validate the object, and remove it if it isn't valid anymore.
+	 *
+	 * @param jType the type
+	 */
+	private void doubleCheckEmptyJson(JObject jType, Class<?> clazz) {
+		String newObjectJson = jType.getNewObjectJson();
+		if (newObjectJson != null) {
+			try {
+				ObjectMapper mapper = new ObjectMapper();
+				HashMap<String, Object> map = mapper.readValue(newObjectJson, new TypeReference<HashMap<String, Object>>() {
+				});
+				for (Map.Entry<String, JObject.Field> fieldEntry : jType.getFieldEntries()) {
+					JObject.Field field = fieldEntry.getValue();
+					if (field == null) {
+						logger.warn("INTERNAL ERROR: field type is undefined, playing it safe");
+						jType.setNewObjectJson(null);
+						return;
+					}
+					JType fieldType = field.getType();
+					boolean canBeNull = fieldType.canBeNull();
+					boolean canBeUndefined = fieldType.canBeUndefined();
+					String name = field.getName();
+					Object o = map.get(name);
+					if (!canBeNull && !canBeUndefined && o == null) {
+						jType.setNewObjectJson(null);
+						return;
+					}
+				}
+			} catch (Exception e) {
+				logger.error("Couldn't read generated new-object JSON for class " + jType.getName(), e);
+			}
 		}
 	}
 
@@ -172,6 +173,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 * @param beanProperty the property
 	 */
 	private void handleField(BeanProperty beanProperty) {
+		logger.debug("Handling bean property {} {}", beanProperty.getType(), beanProperty.getName());
 		String name = beanProperty.getName();
 		Type type;
 		AnnotatedElement annotatedThing = beanProperty.getMember().getAnnotated();
@@ -192,7 +194,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			required = beanProperty.isRequired();
 		}
 
-		log.debug("Handling property {}.{}", jObject.getName(), name);
+		logger.debug("Handling property {}.{}", jObject.getName(), name);
 		// declare property now
 		jObject.declareProperty(name);
 		if (annotatedThing.isAnnotationPresent(TypeDiscriminator.class)) {
@@ -201,11 +203,11 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 			if (discriminator.discriminatedBy() == DiscriminatedBy.CLASS_NAME) {
 				String discriminatorValue = jObject.getSourceClass().getName();
-				log.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
+				logger.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
 				jObject.setTypeDiscriminatorValue(discriminatorValue);
 			} else {
 				String discriminatorValue = getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty);
-				log.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
+				logger.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
 				jObject.setTypeDiscriminatorValue(discriminatorValue);
 			}
 			// whatever class is declaring this property, assume it's a superclass that we want to model in the output as a
@@ -225,6 +227,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 */
 	@Override
 	public void property(BeanProperty prop) {
+		logger.debug("Callback property(BeanProperty) {}", prop.getName());
 		handleField(prop);
 
 	}
@@ -236,6 +239,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 */
 	@Override
 	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
+		logger.debug("Callback property(name, handler, propertyTypeHint) {}", name);
 		throw new RuntimeException("not implemented");
 	}
 
@@ -246,6 +250,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 */
 	@Override
 	public void optionalProperty(BeanProperty prop) {
+		logger.debug("Callback optionalProperty(BeanProperty) {}", prop.getName());
 		handleField(prop);
 
 	}
@@ -257,6 +262,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 */
 	@Override
 	public void optionalProperty(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
+		logger.debug("Callback optionalProperty(name, handler, propertyTypeHint) {}", name);
 		throw new RuntimeException("not implemented");
 	}
 

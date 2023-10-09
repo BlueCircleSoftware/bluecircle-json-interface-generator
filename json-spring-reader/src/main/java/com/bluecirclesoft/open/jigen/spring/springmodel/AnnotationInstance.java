@@ -140,7 +140,7 @@ public class AnnotationInstance {
 					this.produces.add((String) thingOrCollection);
 					break;
 				default:
-					logger.info("Ignoring set request on field {}", field);
+					logger.debug("Ignoring set request on field {}", field);
 			}
 		}
 	}

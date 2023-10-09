@@ -348,7 +348,9 @@ public class Reader implements ModelCreator<Options> {
 			} else {
 				suffix = "";
 			}
-			Endpoint endpoint = model.createEndpoint(method.getDeclaringClass().getName() + "." + method.getName() + suffix);
+			String endpointName = method.getDeclaringClass().getName() + "." + method.getName() + suffix;
+
+			Endpoint endpoint = model.createEndpoint(endpointName);
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(
 					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
@@ -369,6 +371,8 @@ public class Reader implements ModelCreator<Options> {
 					logger.warn("error: {}", problem);
 				}
 				model.removeEndpoint(endpoint);
+			} else {
+				logger.info("Added endpoint {} at {} method {}", endpointName, endpoint.getPathTemplate(), endpoint.getMethod());
 			}
 		}
 	}

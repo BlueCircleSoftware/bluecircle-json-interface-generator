@@ -64,7 +64,11 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${basedir}/../scripts/npm-install.sh</executable>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>../scripts/npm-install.sh</argument>
+                            </arguments>
+                            <workingDirectory>${basedir}</workingDirectory>
                         </configuration>
                     </execution>
                     <!-- Execution 2: run webpack -->
@@ -77,9 +81,10 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>../node_modules/.bin/webpack</executable>
+                            <executable>bash</executable>
                             <arguments>
-                                <argument>--bail</argument>
+                                <argument>-c</argument>
+                                <argument>npx webpack --bail</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -93,9 +98,10 @@
                         </goals>
                         <configuration>
                             <skip>${disable.tests}</skip>
-                            <executable>../node_modules/.bin/karma</executable>
+                            <executable>bash</executable>
                             <arguments>
-                                <argument>start</argument>
+                                <argument>-c</argument>
+                                <argument>npx karma start</argument>
                             </arguments>
                         </configuration>
                     </execution>

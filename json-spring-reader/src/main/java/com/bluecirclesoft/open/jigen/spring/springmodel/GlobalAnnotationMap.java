@@ -55,7 +55,7 @@ public class GlobalAnnotationMap {
 		do {
 			foundNew = false;
 			for (String packageName : packageNames) {
-				log.info("Scanning package {} for @RequestMappings", packageName);
+				log.debug("Scanning package {} for @RequestMappings", packageName);
 				Reflections reflections = scannerCache.computeIfAbsent(packageName, (p) -> new Reflections(
 						new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(p))
 								.setScanners(new TypeAnnotationsScanner(), new SubTypesScanner())));
@@ -82,7 +82,7 @@ public class GlobalAnnotationMap {
 						continue;
 					}
 					foundNew = true;
-					log.info("Processing annotation {}", nextAsAnn.getName());
+					log.debug("Processing annotation {}", nextAsAnn.getName());
 					MappingAnnotation mappingAnnotation = new MappingAnnotation(nextAsAnn);
 					map.put(nextAsAnn, mappingAnnotation);
 					// find other stuff annotated with this annotation, and add it to the queue
@@ -93,7 +93,7 @@ public class GlobalAnnotationMap {
 
 		for (Map.Entry<Class<? extends Annotation>, MappingAnnotation> annClass : map.entrySet()) {
 			annClass.getValue().fill(this);
-			log.info("Filled annotation now {}", annClass.getValue());
+			log.debug("Filled annotation now {}", annClass.getValue());
 		}
 	}
 

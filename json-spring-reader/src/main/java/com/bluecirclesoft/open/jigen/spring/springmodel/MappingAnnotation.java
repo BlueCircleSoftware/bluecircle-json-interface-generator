@@ -67,7 +67,7 @@ public class MappingAnnotation {
 				throw new RuntimeException("Circular reference");
 			}
 			filling = true;
-			log.info("Filling {}", annotationClass);
+			log.debug("Filling {}", annotationClass);
 			boolean foundMapping = false;
 			for (Annotation ann : annotationClass.getAnnotations()) {
 				if (globalAnnotationMap.containsAnnotation(ann.annotationType())) {
@@ -76,7 +76,7 @@ public class MappingAnnotation {
 								"RequestMapping annotation " + parent.getAnnotationClass() + " was already found - ignoring this class");
 					} else {
 						foundMapping = true;
-						log.info("Looking at annotation {}", ann);
+						log.debug("Looking at annotation {}", ann);
 						defaults = globalAnnotationMap.getInstance(ann);
 						parent = globalAnnotationMap.getAnnotation(ann.annotationType());
 					}

@@ -17,6 +17,7 @@
 
 package com.bluecirclesoft.open.jigen.typescript;
 
+import java.io.File;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -37,14 +38,18 @@ public class TSFileWriterTest {
 
 		p1 = defaultFs.getPath("./x.txt");
 		p2 = defaultFs.getPath("./y.txt");
-		Assert.assertEquals("./y.txt", TSFileWriter.relativize(p1, p2).toString());
+		Assert.assertEquals(fixPath("./y.txt"), TSFileWriter.relativize(p1, p2).toString());
 
 		p1 = defaultFs.getPath("/a/a/x.txt");
 		p2 = defaultFs.getPath("/a/a/y.txt");
-		Assert.assertEquals("./y.txt", TSFileWriter.relativize(p1, p2).toString());
+		Assert.assertEquals(fixPath("./y.txt"), TSFileWriter.relativize(p1, p2).toString());
 
 		p1 = defaultFs.getPath("/a/a/x.txt");
 		p2 = defaultFs.getPath("/a/b/y.txt");
-		Assert.assertEquals("../b/y.txt", TSFileWriter.relativize(p1, p2).toString());
+		Assert.assertEquals(fixPath("../b/y.txt"), TSFileWriter.relativize(p1, p2).toString());
+	}
+
+	private String fixPath(String s) {
+		return s.replace("/", File.separator);
 	}
 }
