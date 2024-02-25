@@ -15,7 +15,8 @@
   ~
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.bluecirclesoft.open</groupId>
     <artifactId>json-interface-generator</artifactId>
@@ -78,9 +79,9 @@
 
     <properties>
         <jacoco.version>0.8.8</jacoco.version>
-        <jackson.version>2.14.2</jackson.version>
-        <jackson.dataformat.version>2.14.2</jackson.dataformat.version>
-        <spring.version>5.3.27</spring.version>
+        <jackson.version>2.16.1</jackson.version>
+        <jackson.dataformat.version>2.16.1</jackson.dataformat.version>
+        <spring.version>5.3.32</spring.version>
         <sl4j.version>1.7.30</sl4j.version>
         <disable.tests>true</disable.tests>
     </properties>
@@ -193,12 +194,21 @@
                     <version>${jacoco.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.19.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>2.20.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>9.0.9</version>
+                    <configuration>
+                        <failBuildOnCVSS>8</failBuildOnCVSS>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -265,7 +275,18 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>9.0.9</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
