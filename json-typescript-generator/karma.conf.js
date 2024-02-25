@@ -59,7 +59,15 @@ module.exports = function (config) {
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['Chrome'],
+        browsers: ['Firefox', 'ChromeNoSandbox'],
+
+        // need to do this in Jenkins, because it's a Docker image
+        customLaunchers: {
+            ChromeNoSandbox: {
+                base: 'Chrome',
+                flags: ['--no-sandbox']
+            }
+        },
 
 
         // Continuous Integration mode
