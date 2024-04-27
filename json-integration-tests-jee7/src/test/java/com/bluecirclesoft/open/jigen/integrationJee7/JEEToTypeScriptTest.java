@@ -73,7 +73,9 @@ public class JEEToTypeScriptTest {
 		// Generate the TypeScript, and run the Jasmine tests
 
 		String baseRestUrl = (baseUrl + "rest").replace("127.0.0.1", "localhost");
-		log.info("Using base REST url of " + baseRestUrl);
+		log.info("Using base REST url of {}", baseRestUrl);
+		doubleCheckServer(baseRestUrl);
+
 
 		// Create model
 		Reader modeller = new Reader();
@@ -123,7 +125,7 @@ public class JEEToTypeScriptTest {
 	}
 
 	private void doubleCheckServer(String baseRestUrl) {
-		TestHelper.system("curl " + baseRestUrl + "/testServices/serviceCheck");
+		TestHelper.system("curl -v " + baseRestUrl + "/testServices/serviceCheck");
 	}
 
 

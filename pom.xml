@@ -33,10 +33,12 @@
         <module>json-interface-generator-core</module>
         <module>json-jackson-modeller</module>
         <module>json-jee7-reader</module>
+        <module>json-jakartaee-reader</module>
         <module>json-spring-reader</module>
         <module>json-typescript-generator</module>
         <module>json-generator-maven-plugin</module>
         <module>json-integration-tests-jee7</module>
+        <module>json-integration-tests-jakartaee</module>
         <module>json-integration-tests-spring</module>
         <module>json-generator-allin1</module>
     </modules>
@@ -81,9 +83,12 @@
         <jacoco.version>0.8.8</jacoco.version>
         <jackson.version>2.16.1</jackson.version>
         <jackson.dataformat.version>2.16.1</jackson.dataformat.version>
-        <spring.version>5.3.32</spring.version>
+        <spring.version>5.3.34</spring.version>
         <sl4j.version>1.7.30</sl4j.version>
         <disable.tests>true</disable.tests>
+        <wildfly.test.version.jakartaee>32.0.0.Final</wildfly.test.version.jakartaee>
+        <!-- last version of WildFly that supported Java EE (after is Jakarta EE only) -->
+        <wildfly.test.version.javaee>22.0.0.Final</wildfly.test.version.javaee>
     </properties>
 
     <dependencyManagement>

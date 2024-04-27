@@ -148,6 +148,9 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <systemPropertyVariables>
+                        <JBOSS_VERSION>${wildfly.test.version.javaee}</JBOSS_VERSION>
+                    </systemPropertyVariables>
                     <!--<debugForkedProcess>true</debugForkedProcess>-->
                 </configuration>
             </plugin>
@@ -191,7 +194,7 @@
                                 <artifactItem>
                                     <groupId>org.wildfly</groupId>
                                     <artifactId>wildfly-dist</artifactId>
-                                    <version>26.1.1.Final</version>
+                                    <version>${wildfly.test.version.javaee}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}</outputDirectory>

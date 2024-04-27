@@ -274,7 +274,18 @@ writers:
     outputFile: "./target/myOutput.ts"
 ```
 
-### JEE7 Reader ("readers.jee7"):
+### Jakarta EE Reader ("readers.jakartaee"):
+
+See [Jakarta EE Options.java](json-jakartaee-reader/src/main/java/com/bluecirclesoft/open/jigen/jakartaee/Options.java) for the implementation class.
+
+| Option             | Type                     | Description                                                                                                                          |
+|--------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| packages           | List\<String>            | (required) Array of packages to recursively scan for JAX-RS annotations.                                                             |
+| classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model. |
+| defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
+| includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
+
+### Java EE 7 and 8 Reader ("readers.jee7"):
 
 See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/jigen/jee7/Options.java) for the implementation class.
 
@@ -285,7 +296,7 @@ See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/j
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
 
-### Spring Reader ("readers.spring"):
+### Spring 5 Reader ("readers.spring"):
 
 See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/open/jigen/spring/Options.java) for the implementation class.
 

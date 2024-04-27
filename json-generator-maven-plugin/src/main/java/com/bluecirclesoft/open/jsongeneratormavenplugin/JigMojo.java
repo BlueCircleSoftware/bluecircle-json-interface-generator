@@ -52,6 +52,9 @@ public class JigMojo extends AbstractMojo {
 	private List<com.bluecirclesoft.open.jigen.jee7.Options> jeeReaders;
 
 	@Parameter
+	private List<com.bluecirclesoft.open.jigen.jakartaee.Options> jakartaeeReaders;
+
+	@Parameter
 	private List<com.bluecirclesoft.open.jigen.spring.Options> springReaders;
 
 	@Parameter
@@ -95,6 +98,23 @@ public class JigMojo extends AbstractMojo {
 						throw new MojoExecutionException("Errors encountered in JEE processing");
 					}
 					jee7Reader.model(model);
+				}
+			}
+
+			// read any and all Jakarta EE endpoints into the model
+			if (jakartaeeReaders != null) {
+				for (int i = 0; i < jakartaeeReaders.size(); i++) {
+					com.bluecirclesoft.open.jigen.jakartaee.Options jeeOptions = jakartaeeReaders.get(i);
+					getLog().info("Reading Jakarta EE endpoints (configuration " + (i + 1) + ")");
+					com.bluecirclesoft.open.jigen.jakartaee.Reader jakartaee = new com.bluecirclesoft.open.jigen.jakartaee.Reader();
+					jakartaee.acceptOptions(jeeOptions, errors);
+					if (!errors.isEmpty()) {
+						for (String error : errors) {
+							getLog().error(error);
+						}
+						throw new MojoExecutionException("Errors encountered in Jakarta EE processing");
+					}
+					jakartaee.model(model);
 				}
 			}
 

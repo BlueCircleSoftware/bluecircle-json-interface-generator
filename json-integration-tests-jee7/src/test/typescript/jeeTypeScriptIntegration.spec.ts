@@ -16,9 +16,9 @@
 
 import * as $ from "jquery";
 import {com, jsonInterfaceGenerator} from "../../../target/generated-sources/jeeToTypeScript";
+import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
 import JsonOptions = jsonInterfaceGenerator.JsonOptions;
 import integrationJee7 = com.bluecirclesoft.open.jigen.integrationJee7;
-import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
 
 declare const __karma__: any;
 
@@ -35,6 +35,7 @@ jsonInterfaceGenerator.setCallAjax((url: string,
                                     bodyType: BodyType,
                                     consumes: string | null) => {
     return new Promise((resolve, reject) => {
+        console.log("--> Initiating call to ", url, " with method ", method);
         let error = false;
         const settings: JQueryAjaxSettings = {
             async: true,
@@ -78,7 +79,9 @@ jsonInterfaceGenerator.setCallAjax((url: string,
 (window as any).jQuery = $;
 
 // pull base URL from command line
-jsonInterfaceGenerator.init(__karma__.config.baseUrl);
+const baseUrl = __karma__.config.baseUrl;
+console.log("Initializing with base URL of ", baseUrl);
+jsonInterfaceGenerator.init(baseUrl);
 
 describe("test @JsonProperty on enums", () => {
     it("has correct enum names", () => {
