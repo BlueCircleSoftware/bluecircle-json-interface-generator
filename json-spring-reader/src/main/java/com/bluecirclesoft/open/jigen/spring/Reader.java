@@ -391,7 +391,7 @@ public class Reader implements ModelCreator<Options> {
 			String endpointName = method.getDeclaringClass().getName() + "." + method.getName() + suffix;
 			Endpoint endpoint = model.createEndpoint(endpointName);
 			endpoint.setResponseBody(outType);
-			endpoint.setPathTemplate(methodPath);
+			endpoint.setPathTemplate(options.getUrlPrefix() + methodPath);
 			endpoint.setConsumes(springRequestInfo.consumes == null ? null : springRequestInfo.consumes.toString());
 			endpoint.setProduces(springRequestInfo.produces == null ? null : springRequestInfo.produces.toString());
 			for (MethodParameter pathParam : parameters) {
@@ -554,7 +554,7 @@ public class Reader implements ModelCreator<Options> {
 			}
 		};
 
-		if (consumesSet != null && consumesSet.size() > 0) {
+		if (consumesSet != null && !consumesSet.isEmpty()) {
 			for (String contentType : consumesSet) {
 				consumesTest.accept(result, contentType);
 			}

@@ -24,25 +24,35 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Holds information about a REST endpoint (one Java method may generate multiple endpoints, if it is annotated with multiple HTTP methods).
  */
+@Getter
 public class Endpoint implements Serializable {
 
 	private final List<EndpointParameter> parameters = new ArrayList<>();
 
+	@Setter
 	private String consumes;
 
+	@Setter
 	private String produces;
 
+	@Setter
 	private String id;
 
 	private HttpMethod method;
 
+	@Setter
 	private JType responseBody;
 
+	@Setter
 	private String pathTemplate;
 
+	@Setter
 	private Namespace namespace;
 
 	Endpoint(String id) {
@@ -59,68 +69,12 @@ public class Endpoint implements Serializable {
 	private static boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams,
 	                               EndpointParameter.NetworkType type) {
 		List<EndpointParameter> endpointParameters = sortedParams.get(type);
-		return endpointParameters != null && endpointParameters.size() > 0;
-	}
-
-	public HttpMethod getMethod() {
-		return method;
+		return endpointParameters != null && !endpointParameters.isEmpty();
 	}
 
 	public void setMethod(HttpMethod method) {
 		assert method != null;
 		this.method = method;
-	}
-
-	public List<EndpointParameter> getParameters() {
-		return parameters;
-	}
-
-	public JType getResponseBody() {
-		return responseBody;
-	}
-
-	public void setResponseBody(JType responseBody) {
-		this.responseBody = responseBody;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getPathTemplate() {
-		return pathTemplate;
-	}
-
-	public void setPathTemplate(String pathTemplate) {
-		this.pathTemplate = pathTemplate;
-	}
-
-	public Namespace getNamespace() {
-		return namespace;
-	}
-
-	public void setNamespace(Namespace namespace) {
-		this.namespace = namespace;
-	}
-
-	public String getConsumes() {
-		return consumes;
-	}
-
-	public void setConsumes(String consumes) {
-		this.consumes = consumes;
-	}
-
-	public String getProduces() {
-		return produces;
-	}
-
-	public void setProduces(String produces) {
-		this.produces = produces;
 	}
 
 	@Override
@@ -152,7 +106,7 @@ public class Endpoint implements Serializable {
 	public ValidEndpointResponse isValid() {
 		Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = getSortedParameters();
 		List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.JSON_BODY);
-		boolean isBodyParam = bodyParams != null && bodyParams.size() > 0;
+		boolean isBodyParam = bodyParams != null && !bodyParams.isEmpty();
 		boolean isMultipleBodyParam = bodyParams != null && bodyParams.size() > 1;
 		switch (method) {
 			case POST:

@@ -21,10 +21,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.bluecirclesoft.open.jigen.ClassSubstitution;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Options for starting a JEE7 reader (from YAML file)
  */
+@Setter
+@Getter
 public class Options {
 
 	private List<String> packages = new ArrayList<>();
@@ -35,35 +39,5 @@ public class Options {
 
 	private boolean includeSubclasses = true;
 
-	public List<String> getPackages() {
-		return packages;
-	}
-
-	public void setPackages(List<String> packages) {
-		this.packages = packages;
-	}
-
-	public boolean isDefaultStringEnums() {
-		return defaultStringEnums;
-	}
-
-	public void setDefaultStringEnums(boolean defaultStringEnums) {
-		this.defaultStringEnums = defaultStringEnums;
-	}
-
-	public List<ClassSubstitution> getClassSubstitutions() {
-		return classSubstitutions;
-	}
-
-	public void setClassSubstitutions(List<ClassSubstitution> classSubstitutions) {
-		this.classSubstitutions = classSubstitutions;
-	}
-
-	public boolean isIncludeSubclasses() {
-		return includeSubclasses;
-	}
-
-	public void setIncludeSubclasses(boolean includeSubclasses) {
-		this.includeSubclasses = includeSubclasses;
-	}
+	private String urlPrefix = "";
 }

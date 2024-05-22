@@ -19,10 +19,14 @@ package com.bluecirclesoft.open.jigen.jee7;
 import java.lang.reflect.Type;
 
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Holds relevant information about a web service method parameter.
  */
+@Setter
+@Getter
 public class MethodParameter {
 
 	private String codeName;
@@ -33,35 +37,4 @@ public class MethodParameter {
 
 	private EndpointParameter.NetworkType networkType;
 
-	public String getCodeName() {
-		return codeName;
-	}
-
-	public void setCodeName(String codeName) {
-		this.codeName = codeName;
-	}
-
-	public String getNetworkName() {
-		return networkName;
-	}
-
-	public void setNetworkName(String networkName) {
-		this.networkName = networkName;
-	}
-
-	public void setType(Type type) {
-		this.type = type;
-	}
-
-	public Type getType() {
-		return type;
-	}
-
-	public EndpointParameter.NetworkType getNetworkType() {
-		return networkType;
-	}
-
-	public void setNetworkType(EndpointParameter.NetworkType networkType) {
-		this.networkType = networkType;
-	}
 }

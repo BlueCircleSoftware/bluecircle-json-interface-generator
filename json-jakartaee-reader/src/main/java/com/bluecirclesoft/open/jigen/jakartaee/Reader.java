@@ -29,24 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import jakarta.ws.rs.BeanParam;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.CookieParam;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.FormParam;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HEAD;
-import jakarta.ws.rs.HeaderParam;
-import jakarta.ws.rs.MatrixParam;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
@@ -68,6 +50,23 @@ import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.MatrixParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 
 /**
  * Read Java packages and look for JAX-RS methods - convert those into a {@link Model}
@@ -352,7 +351,7 @@ public class Reader implements ModelCreator<Options> {
 
 			Endpoint endpoint = model.createEndpoint(endpointName);
 			endpoint.setResponseBody(outType);
-			endpoint.setPathTemplate(
+			endpoint.setPathTemplate(options.getUrlPrefix() +
 					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
 			for (MethodParameter pathParam : parameters) {
 				endpoint.getParameters()

@@ -353,7 +353,8 @@ public class Reader implements ModelCreator<Options> {
 			Endpoint endpoint = model.createEndpoint(endpointName);
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(
-					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
+					options.getUrlPrefix() + joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null :
+							methodPath.value()));
 			for (MethodParameter pathParam : parameters) {
 				endpoint.getParameters()
 						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),

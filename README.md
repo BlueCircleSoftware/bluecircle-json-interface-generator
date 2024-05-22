@@ -284,6 +284,7 @@ See [Jakarta EE Options.java](json-jakartaee-reader/src/main/java/com/bluecircle
 | classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model. |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
+| urlPrefix          | String                   | Prefix to prepend to the generated URL (i.e., for the context path)                                                                  |
 
 ### Java EE 7 and 8 Reader ("readers.jee7"):
 
@@ -295,6 +296,7 @@ See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/j
 | classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model. |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
+| urlPrefix          | String                   | Prefix to prepend to the generated URL (i.e., for the context path)                                                                  |
 
 ### Spring 5 Reader ("readers.spring"):
 
@@ -307,6 +309,7 @@ See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/op
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
 | defaultContentType | String                   | Content type to assume for endpoints if a content type isn't specified                                 |
+| urlPrefix          | String                   | Prefix to prepend to the generated URL (i.e., for the context path)                                    |
 
 ### TypeScript Generator ("writers.typescript"):
 
