@@ -12,6 +12,7 @@
         <module name="json-generator-maven-plugin" />
         <module name="json-jakartaee-reader" />
         <module name="json-generator-allin1" />
+        <module name="json-integration-tests-jakartaee" />
         <module name="json-interface-generator-annotations" />
         <module name="json-spring-reader" />
         <module name="json-interface-generator-core" />
