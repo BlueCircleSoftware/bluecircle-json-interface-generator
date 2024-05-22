@@ -37,7 +37,6 @@ export interface JsonOptions<R> {
 
     /**
      * Success callback
-     * @param {R} data
      * @returns {any}
      */
     success?(data: R): void;
@@ -174,10 +173,10 @@ export interface EnumReverseLookup<EnumType> {
 
 export type Selector = string | number;
 
-export type SelectorList = Array<Selector>;
+export type SelectorList = Selector[];
 
 export function join(selector: SelectorList, next: Selector) {
-    let result = selector.slice();
+    const result = selector.slice();
     result.push(next);
     return result;
 }
@@ -237,7 +236,7 @@ export class ChangeRoot<T> {
             }
             lastChild = child;
         }
-        let lastWatchers = lastChild.watchers;
+        const lastWatchers = lastChild.watchers;
         if (lastWatchers.indexOf(watcher) < 0) {
             lastWatchers.push(watcher);
         }
@@ -291,7 +290,7 @@ export class ChangeRoot<T> {
 
         // part 2: notify watchers
         let lastWatchers = this._watchers;
-        let changePath: SelectorList = [];
+        const changePath: SelectorList = [];
         for (const elem of selector) {
             if (!lastWatchers) {
                 return;
@@ -314,7 +313,7 @@ export class ChangeRoot<T> {
                     startPath);
             }
             for (const child of Object.getOwnPropertyNames(watchers.children)) {
-                let nextPath = startPath.slice();
+                const nextPath = startPath.slice();
                 nextPath.push(child);
                 this.notifyRestOfWatchers(nextPath, watchers.children[child]);
             }
@@ -323,7 +322,7 @@ export class ChangeRoot<T> {
 }
 
 export class ChangeWrapper<T> {
-    private _selector: SelectorList;
+    private readonly _selector: SelectorList;
     private _extensionCache: { [key: string]: SelectorList } = {};
 
     public constructor(root: ChangeRoot<UnknownType>, selector?: SelectorList) {
@@ -331,7 +330,7 @@ export class ChangeWrapper<T> {
         this._selector = selector ? selector : [];
     }
 
-    private _root: ChangeRoot<UnknownType>;
+    private readonly _root: ChangeRoot<UnknownType>;
 
     public get root(): ChangeRoot<UnknownType> {
         return this._root;
@@ -345,7 +344,7 @@ export class ChangeWrapper<T> {
         if (this._extensionCache.hasOwnProperty(next)) {
             return this._extensionCache[next];
         } else {
-            let nextPath = this._selector.slice();
+            const nextPath = this._selector.slice();
             nextPath.push(next);
             this._extensionCache[next] = nextPath;
             return nextPath;
