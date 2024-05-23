@@ -17,9 +17,14 @@
 
 package com.bluecirclesoft.open.jigen.typescript;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Getter
+@Setter
 public class Options {
 
 	private String outputFile;
@@ -36,59 +41,5 @@ public class Options {
 
 	private OutputStructure outputStructure = OutputStructure.FILES_IN_ONE_FOLDER;
 
-	public String getOutputFile() {
-		return outputFile;
-	}
-
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
-	}
-
-	public boolean isStripCommonPackages() {
-		return stripCommonPackages;
-	}
-
-	public void setStripCommonPackages(boolean stripCommonPackages) {
-		this.stripCommonPackages = stripCommonPackages;
-	}
-
-	public boolean isProduceImmutables() {
-		return produceImmutables;
-	}
-
-	public void setProduceImmutables(boolean produceImmutables) {
-		this.produceImmutables = produceImmutables;
-	}
-
-	public boolean isNullIsUndefined() {
-		return nullIsUndefined;
-	}
-
-	public void setNullIsUndefined(boolean nullIsUndefined) {
-		this.nullIsUndefined = nullIsUndefined;
-	}
-
-	public boolean isUseUnknown() {
-		return useUnknown;
-	}
-
-	public void setUseUnknown(boolean useUnknown) {
-		this.useUnknown = useUnknown;
-	}
-
-	public String getImmutableSuffix() {
-		return immutableSuffix;
-	}
-
-	public void setImmutableSuffix(String immutableSuffix) {
-		this.immutableSuffix = immutableSuffix;
-	}
-
-	public OutputStructure getOutputStructure() {
-		return outputStructure;
-	}
-
-	public void setOutputStructure(OutputStructure outputStructure) {
-		this.outputStructure = outputStructure;
-	}
+	private boolean generateHeader = true;
 }

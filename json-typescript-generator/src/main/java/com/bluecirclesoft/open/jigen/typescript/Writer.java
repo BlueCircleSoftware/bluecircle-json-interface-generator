@@ -310,6 +310,10 @@ public class Writer implements CodeProducer<Options> {
 	}
 
 	private void start() throws IOException {
+		if (!options.isGenerateHeader()) {
+			return;
+		}
+
 		TSFileWriter writer = outputController.getNamespaceHandler(TSFileWriter.JIG_NAMESPACE);
 		try {
 			boolean doingNamespace = options.getOutputStructure() == OutputStructure.NAMESPACES;
@@ -333,6 +337,5 @@ public class Writer implements CodeProducer<Options> {
 		} finally {
 			outputController.close(writer);
 		}
-
 	}
 }
