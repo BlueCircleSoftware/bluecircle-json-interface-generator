@@ -28,6 +28,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,7 +136,7 @@ public class Writer implements CodeProducer<Options> {
 		this.outputController = new OutputController(options);
 		try {
 			Namespace ns = Namespace.namespacifyModel(model, isStripCommonNamespaces());
-			start();
+			start(outputController.getNamespaceHandler(outputController.getJigNamespace()));
 			outputNamespace(ns);
 		} finally {
 			this.outputController.finish();
@@ -166,7 +167,7 @@ public class Writer implements CodeProducer<Options> {
 			addParameter(parameterList, needsComma, parameter.getCodeName(),
 					parameter.getType().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer)));
 		}
-		writer.addImport("jsonInterfaceGenerator", endpoint.getNamespace(), writer.getJIGNamespace());
+		writer.addImport(writer.getJIGNamespace().getName(), endpoint.getNamespace(), writer.getJIGNamespace());
 		String returnType = endpoint.getResponseBody().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer));
 		// save off constructed parameters
 		StringBuilder savedParameterList = new StringBuilder(parameterList);
@@ -252,6 +253,18 @@ public class Writer implements CodeProducer<Options> {
 		writer.line("}");
 	}
 
+	private String removeExtensions(String headerFile) {
+		String[] extensions = new String[]{".js", ".ts"};
+		String out = headerFile;
+		for (String ext : extensions) {
+			if (headerFile.endsWith(ext)) {
+				out = headerFile.substring(0, headerFile.length() - ext.length());
+				break;
+			}
+		}
+		return out;
+	}
+
 	private void createSubmitDataBodyFromParams(List<EndpointParameter> params, TSFileWriter writer) {
 		writer.line("const submitData = {");
 		writer.indentIn();
@@ -309,16 +322,17 @@ public class Writer implements CodeProducer<Options> {
 		return result;
 	}
 
-	private void start() throws IOException {
-		if (!options.isGenerateHeader()) {
+	private void start(TSFileWriter tsFileWriter) throws IOException {
+		if (!options.shouldGenerateHeader()) {
 			return;
 		}
 
-		TSFileWriter writer = outputController.getNamespaceHandler(TSFileWriter.JIG_NAMESPACE);
+		Namespace jigNamespace = tsFileWriter.getJIGNamespace();
+		TSFileWriter writer = outputController.getNamespaceHandler(jigNamespace);
 		try {
 			boolean doingNamespace = options.getOutputStructure() == OutputStructure.NAMESPACES;
 			if (doingNamespace) {
-				writer.line("export namespace jsonInterfaceGenerator {");
+				writer.line("export namespace " + jigNamespace.getName() + " {");
 				writer.indentIn();
 			}
 			Pattern pattern = Pattern.compile("^\\s*export type UnknownType = unknown");

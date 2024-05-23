@@ -17,6 +17,8 @@
 
 package com.bluecirclesoft.open.jigen.typescript;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,5 +43,15 @@ public class Options {
 
 	private OutputStructure outputStructure = OutputStructure.FILES_IN_ONE_FOLDER;
 
-	private boolean generateHeader = true;
+	private Boolean generateHeader;
+
+	private String headerLocation;
+
+	public boolean shouldGenerateHeader() {
+		if (generateHeader != null) {
+			return generateHeader;
+		} else {
+			return !StringUtils.isNotBlank(headerLocation);
+		}
+	}
 }

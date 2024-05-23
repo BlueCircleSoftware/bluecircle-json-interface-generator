@@ -16,33 +16,56 @@
  */
 package com.bluecirclesoft.open.jigen.model;
 
+import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.bluecirclesoft.open.jigen.Regexes;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * This class represents a TypeScript namespace. It may contain other namespaces, or declarations of other types
  */
 public class Namespace implements Serializable {
 
+	@Getter
 	private final List<Namespace> namespaces = new ArrayList<>();
 
 	private final List<JToplevelType> declarations = new ArrayList<>();
 
+	@Getter
 	private final List<Endpoint> endpoints = new ArrayList<>();
 
+	private File file;
+
+	@Setter
+	@Getter
 	private String name;
 
+	@Getter
 	private Namespace containingNamespace;
 
 	public Namespace(Namespace containingNamespace, String name) {
+		this(containingNamespace, name, null);
+	}
+
+	public Namespace(Namespace containingNamespace, String name, File file) {
 		this.containingNamespace = containingNamespace;
 		this.name = name;
+		this.file = file;
+		if (file != null) {
+			if (!file.exists()) {
+				throw new RuntimeException("File " + file.getAbsolutePath() + " does not exist");
+			}
+		}
 	}
 
 	private Namespace() {
@@ -104,22 +127,6 @@ public class Namespace implements Serializable {
 		return newNamespace;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<Namespace> getNamespaces() {
-		return namespaces;
-	}
-
-	public Namespace getContainingNamespace() {
-		return containingNamespace;
-	}
-
 	private void setContainingNamespace(Namespace containingNamespace) {
 		this.containingNamespace = containingNamespace;
 	}
@@ -154,29 +161,22 @@ public class Namespace implements Serializable {
 		endpoint.setNamespace(this);
 	}
 
-
-	public List<Endpoint> getEndpoints() {
-		return endpoints;
+	public File conjoin(File defaultFolder, String separator) {
+		return conjoin(defaultFolder, separator, null);
 	}
 
-
-	public String conjoin(String separator) {
-		String name = this.getName();
-		Namespace containingNamespace = this.getContainingNamespace();
-		if (containingNamespace == null) {
-			if (StringUtils.isBlank(name)) {
-				return "";
-			} else {
-				return name;
-			}
-		} else {
-			String parent = containingNamespace.conjoin(separator);
-			if (StringUtils.isBlank(parent)) {
-				return name;
-			} else {
-				return parent + separator + name;
-			}
+	public File conjoin(File defaultFolder, String separator, String suffix) {
+		if (file != null) {
+			return file;
 		}
+
+		Deque<Namespace> lineage = getContainerLineage();
+
+		String joinedName = lineage.stream().map(n -> n.name).collect(Collectors.joining(separator));
+		if (suffix != null) {
+			joinedName = joinedName + suffix;
+		}
+		return new File(defaultFolder, joinedName);
 	}
 
 	@Override
@@ -202,5 +202,23 @@ public class Namespace implements Serializable {
 		int result = getName().hashCode();
 		result = 31 * result + (getContainingNamespace() != null ? getContainingNamespace().hashCode() : 0);
 		return result;
+	}
+
+	public String conjoin(String separator) {
+		Deque<Namespace> lineage = getContainerLineage();
+
+		return lineage.stream().map(n -> n.name).collect(Collectors.joining(separator));
+	}
+
+	private Deque<Namespace> getContainerLineage() {
+		Deque<Namespace> lineage = new ArrayDeque<>();
+		Namespace ns = this;
+		while (ns != null) {
+			if (StringUtils.isNotBlank(ns.name)) {
+				lineage.addFirst(ns);
+			}
+			ns = ns.containingNamespace;
+		}
+		return lineage;
 	}
 }

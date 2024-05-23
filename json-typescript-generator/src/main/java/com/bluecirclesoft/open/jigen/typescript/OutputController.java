@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.bluecirclesoft.open.jigen.model.Namespace;
+import lombok.Getter;
 
 /**
  * Produces correct OutputHandlers based on the selected options.
@@ -36,13 +37,18 @@ public class OutputController {
 
 	private final File outputFileAbsolute;
 
+	@Getter
+	private final Namespace jigNamespace;
+
 	public OutputController(Options options) {
 		this.options = options;
+		this.jigNamespace = new Namespace(null, "jsonInterfaceGenerator",
+				options.getHeaderLocation() == null ? null : new File(options.getHeaderLocation()));
 		outputFileAbsolute = new File(options.getOutputFile()).getAbsoluteFile();
 		switch (options.getOutputStructure()) {
 			case NAMESPACES:
 				outputDir = outputFileAbsolute.getParentFile();
-				theOneHandler = new TSFileWriter(this, outputFileAbsolute);
+				theOneHandler = new TSFileWriter(this, outputFileAbsolute, jigNamespace);
 				break;
 			case FILES_IN_ONE_FOLDER:
 			case FILES_IN_TREE: {
@@ -65,7 +71,7 @@ public class OutputController {
 			case NAMESPACES:
 				return theOneHandler;
 			default:
-				return new TSFileWriter(this, getFile(namespace));
+				return new TSFileWriter(this, getFile(namespace), jigNamespace);
 		}
 	}
 
@@ -100,10 +106,9 @@ public class OutputController {
 			case NAMESPACES:
 				return outputFileAbsolute;
 			case FILES_IN_ONE_FOLDER:
-				String oneFolderName = namespace.conjoin("_") + ".ts";
-				return new File(outputDir, oneFolderName);
+				return namespace.conjoin(outputDir, "_", ".ts");
 			case FILES_IN_TREE:
-				File treeName = new File(outputDir, namespace.conjoin(File.separator) + ".ts");
+				File treeName = namespace.conjoin(outputDir, File.separator, ".ts");
 				treeName.getParentFile().mkdirs();
 				return treeName;
 			default:

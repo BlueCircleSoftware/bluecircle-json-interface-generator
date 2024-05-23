@@ -44,8 +44,6 @@ import com.bluecirclesoft.open.jigen.model.Namespace;
  */
 class TSFileWriter {
 
-	public static final Namespace JIG_NAMESPACE = new Namespace(null, "jsonInterfaceGenerator");
-
 	private static final Logger logger = LoggerFactory.getLogger(TSFileWriter.class);
 
 	private final PrintWriter writer;
@@ -62,8 +60,11 @@ class TSFileWriter {
 
 	private int indentLevel = 0;
 
-	TSFileWriter(OutputController outputController, File file) {
+	private final Namespace jigNamespace;
+
+	TSFileWriter(OutputController outputController, File file, Namespace jigNamespace) {
 		this.file = file;
+		this.jigNamespace = jigNamespace;
 		this.stringWriter = new StringWriter();
 		this.writer = new PrintWriter(this.stringWriter);
 		this.outputController = outputController;
@@ -126,7 +127,7 @@ class TSFileWriter {
 		writer.flush();
 		writer.close();
 		String content = stringWriter.toString();
-		if (content.trim().length() > 0 || imports.size() > 0) {
+		if (!content.trim().isEmpty() || !imports.isEmpty()) {
 			logger.info("Writing file {}", file);
 			try (FileWriter fileWriter = new FileWriter(file)) {
 				for (Map.Entry<String, String> entry : imports.entrySet()) {
@@ -176,7 +177,7 @@ class TSFileWriter {
 	}
 
 	public Namespace getJIGNamespace() {
-		return JIG_NAMESPACE;
+		return jigNamespace;
 	}
 
 	public String getReferencePrefix(Namespace fromNamespace, Namespace toNamespace) {
