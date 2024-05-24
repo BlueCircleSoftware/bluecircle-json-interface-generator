@@ -49,6 +49,7 @@ import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.model.SourcedType;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
@@ -266,8 +267,9 @@ public class Reader implements ModelCreator<Options> {
 				}
 			}
 
+			SourcedType generatedSource = new SourcedType(null, "@Generate annotation search", null);
 			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
-				modeller.readOneType(model, generatedClass);
+				modeller.readOneType(model, new SourcedType(generatedClass, String.valueOf(generatedClass), generatedSource));
 			}
 		}
 
@@ -283,6 +285,8 @@ public class Reader implements ModelCreator<Options> {
 
 	private void readMethod(MethodInfo methodInfo) {
 		Method method = methodInfo.method;
+		SourcedType methodSource = new SourcedType(null, "Method " + method, null);
+
 		final Path methodPath = method.getAnnotation(Path.class);
 		final Path classPath = method.getDeclaringClass().getAnnotation(Path.class);
 
@@ -333,9 +337,9 @@ public class Reader implements ModelCreator<Options> {
 
 		JType outType;
 		if (methodInfo.produces != null) {
-			outType = modeller.readOneType(model, method.getGenericReturnType());
+			outType = modeller.readOneType(model, new SourcedType(method.getGenericReturnType(), "Return type", methodSource));
 		} else {
-			outType = modeller.readOneType(model, String.class);
+			outType = modeller.readOneType(model, new SourcedType(String.class, "Return type", methodSource));
 		}
 
 		boolean appendHttpMethodName = httpMethods.size() > 1;
@@ -353,10 +357,12 @@ public class Reader implements ModelCreator<Options> {
 			endpoint.setResponseBody(outType);
 			endpoint.setPathTemplate(options.getUrlPrefix() +
 					joinPaths(classPath == null ? null : classPath.value(), methodPath == null ? null : methodPath.value()));
-			for (MethodParameter pathParam : parameters) {
+			for (MethodParameter methodParameter : parameters) {
 				endpoint.getParameters()
-						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
-								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
+						.add(new EndpointParameter(methodParameter.getCodeName(), methodParameter.getNetworkName(),
+								modeller.readOneType(model,
+										new SourcedType(methodParameter.getType(), "Parameter " + methodParameter.getCodeName(),
+												methodSource)), methodParameter.getNetworkType()));
 			}
 			endpoint.setMethod(httpMethod);
 			endpoint.setConsumes(methodInfo.consumes);

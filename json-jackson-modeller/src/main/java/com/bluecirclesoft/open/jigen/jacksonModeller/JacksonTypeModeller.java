@@ -53,6 +53,7 @@ import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.PropertyEnumerator;
+import com.bluecirclesoft.open.jigen.model.SourcedType;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -71,6 +72,7 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonNumberFormatVisitor
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonStringFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat;
+import lombok.Getter;
 
 /**
  * <p>The JacksonTypeModeller coordinates the reading of a set of Java types, producing TypeScript types from them, and collecting the
@@ -92,6 +94,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private static class FixupQueueItem implements Comparable<FixupQueueItem> {
 
+		@Getter
 		private final Type type;
 
 		private final int priority;
@@ -117,9 +120,6 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			return priority;
 		}
 
-		public Type getType() {
-			return type;
-		}
 	}
 
 	/**
@@ -169,7 +169,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	/**
 	 * Queue of pending types to process
 	 */
-	private final ArrayDeque<Type> typesToProcess = new ArrayDeque<>();
+	private final ArrayDeque<SourcedType> typesToProcess = new ArrayDeque<>();
 
 	/**
 	 * List of fixups to run after ingesting.
@@ -239,34 +239,38 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	/**
 	 * Queue a type for future processing
 	 *
-	 * @param type
+	 * @param sourcedType
 	 */
-	void queueType(Type type) {
-		typesToProcess.add(type);
+	void queueType(SourcedType sourcedType) {
+		typesToProcess.add(sourcedType);
 	}
 
 	/**
 	 * Read Java types into the model.
 	 *
-	 * @param model the model
-	 * @param types the types to add
+	 * @param model        the model
+	 * @param sourcedTypes the types to add
 	 * @return a list of TS types added this run
 	 */
 	@Override
-	public List<JType> readTypes(Model model, Type... types) {
+	public List<JType> readTypes(Model model, SourcedType... sourcedTypes) {
 
 		// enqueue start types
-		Collections.addAll(typesToProcess, types);
+		Collections.addAll(typesToProcess, sourcedTypes);
 
 		// drain the queue
 		while (!typesToProcess.isEmpty()) {
-			Type type = typesToProcess.pollFirst();
-			if (model.hasType(type)) {
-				logger.debug("Type {} already seen", type);
+			SourcedType sourcedType = typesToProcess.pollFirst();
+			if (model.hasType(sourcedType.getType())) {
+				logger.debug("Type {} already seen", sourcedType);
 				continue;
 			}
-			logger.debug("Type {} being added", type);
-			model.addType(type, handleType(type));
+			logger.debug("Type {} being added", sourcedType);
+			try {
+				model.addType(sourcedType.getType(), handleType(sourcedType));
+			} catch (Throwable t) {
+				throw new RuntimeException("Exception while processing " + sourcedType.fullDescription());
+			}
 		}
 		// apply fixups
 		applyFixups(model, typeFixups);
@@ -282,9 +286,9 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 
 		// find all the TS types created for the type parameters, and return them, in the same order (necessary for #readOneType)
-		List<JType> result = new ArrayList<>(types.length);
-		for (Type type : types) {
-			result.add(model.getType(type));
+		List<JType> result = new ArrayList<>(sourcedTypes.length);
+		for (SourcedType sourcedType : sourcedTypes) {
+			result.add(model.getType(sourcedType.getType()));
 		}
 		return result;
 	}
@@ -303,16 +307,17 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	 * Convenience method to process just one type. This may, of course trigger the processing of other types by reference, and they'll
 	 * be added to the model, but the other TS types won't be returned.
 	 *
-	 * @param model the model
-	 * @param type  the Java type
+	 * @param model       the model
+	 * @param sourcedType the Java type
 	 * @return the TS type
 	 */
 	@Override
-	public JType readOneType(Model model, Type type) {
-		return readTypes(model, type).get(0);
+	public JType readOneType(Model model, SourcedType sourcedType) {
+		return readTypes(model, sourcedType).get(0);
 	}
 
-	private JType handleType(Type type) {
+	private JType handleType(SourcedType sourcedType) {
+		Type type = sourcedType.getType();
 		logger.debug("Handling {}", type);
 		if (type instanceof TypeVariable) {
 			// Case 1: type variable
@@ -328,7 +333,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 					final int finalI = i;
 					Type bound = variable.getBounds()[i];
 					jVariable.getIntersectionBounds().add(null);
-					queueType(bound);
+					queueType(new SourcedType(bound, "Type variable " + (i + 1), sourcedType));
 					addFixup(bound, jType -> jVariable.getIntersectionBounds().set(finalI, jType));
 				}
 			}
@@ -344,24 +349,24 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				JArray result = new JArray();
 				result.setIndexType(new JNumber());
 				addFixup(pt.getActualTypeArguments()[0], result::setElementType);
-				queueType(pt.getActualTypeArguments()[0]);
+				queueType(new SourcedType(pt.getActualTypeArguments()[0], "Collection value type", sourcedType));
 				return result;
 			} else if (isMap(base)) {
 				// Map<String, T> -> { [key: string]: T }
 				JMap result = new JMap();
 				addFixup(pt.getActualTypeArguments()[1], result::setValueType);
-				queueType(pt.getActualTypeArguments()[1]);
+				queueType(new SourcedType(pt.getActualTypeArguments()[1], "Map value type", sourcedType));
 				return result;
 			} else {
 				// everything else: A<B> -> A<B>
 				JSpecialization jSpecialization = new JSpecialization();
 				jSpecialization.setParameters(new JType[pt.getActualTypeArguments().length]);
 				addFixup(pt.getRawType(), jSpecialization::setBase);
-				queueType(pt.getRawType());
+				queueType(new SourcedType(pt.getRawType(), "Base type", sourcedType));
 				for (int i = 0; i < pt.getActualTypeArguments().length; i++) {
 					final int finalI = i;
 					addFixup(pt.getActualTypeArguments()[i], jType -> jSpecialization.getParameters()[finalI] = jType);
-					queueType(pt.getActualTypeArguments()[i]);
+					queueType(new SourcedType(pt.getActualTypeArguments()[i], "Type argument " + (i + 1), sourcedType));
 				}
 				return jSpecialization;
 			}
@@ -377,7 +382,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				jWildcard.getUpperBounds().add(null);
 				final int idx = i;
 				addFixup(upper, (f) -> jWildcard.getUpperBounds().set(idx, f));
-				queueType(upper);
+				queueType(new SourcedType(upper, "Upper bound " + (i + 1), sourcedType));
 			}
 			Type[] lowerBounds = pt.getLowerBounds();
 			for (int i = 0; i < lowerBounds.length; i++) {
@@ -385,7 +390,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				jWildcard.getLowerBounds().add(null);
 				final int idx = i;
 				addFixup(lower, (f) -> jWildcard.getLowerBounds().set(idx, f));
-				queueType(lower);
+				queueType(new SourcedType(lower, "Lower bound " + (i + 1), sourcedType));
 			}
 			return jWildcard;
 		} else if (type instanceof Class) {
@@ -398,13 +403,13 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				JArray result = new JArray();
 				result.setIndexType(new JNumber());
 				addFixup(cl.getComponentType(), result::setElementType);
-				queueType(cl.getComponentType());
+				queueType(new SourcedType(cl.getComponentType(), "Array element type", sourcedType));
 				return result;
 			} else {
 				if (classOverrides.containsKey(cl)) {
 					// substitute class.  If the user created a cycle, sorry.
 					Class classOverride = classOverrides.get(cl);
-					return handleType(classOverride);
+					return handleType(new SourcedType(classOverride, "Class override of " + cl, sourcedType));
 				} else if (FUNDAMENTAL_TYPES.containsKey(type)) {
 					// built-in type: int -> number, etc
 					logger.debug("is fundamental type");
@@ -413,9 +418,9 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 					// everything else -> interface
 					logger.debug("is user-defined class");
 					if (includeSubclasses) {
-						enqueueSubclasses((Class) type);
+						enqueueSubclasses((Class) type, sourcedType);
 					}
-					return handleUserDefinedClass((Class) type);
+					return handleUserDefinedClass((Class) type, sourcedType);
 				}
 			}
 		} else {
@@ -423,12 +428,12 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 	}
 
-	private void enqueueSubclasses(Class<?> type) {
+	private void enqueueSubclasses(Class<?> type, SourcedType parent) {
 		if (subclassFinder != null) {
 			if (type != Object.class) {
 				Set<Class<?>> subtypes = subclassFinder.getSubTypesOf((Class<Object>) type);
 				for (Class<?> cl : subtypes) {
-					queueType(cl);
+					queueType(new SourcedType(cl, "Subclass of " + type, parent));
 				}
 			}
 		}
@@ -454,12 +459,12 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		return base instanceof Class && Collection.class.isAssignableFrom((Class<?>) base);
 	}
 
-	private JType handleUserDefinedClass(Class type) {
+	private JType handleUserDefinedClass(Class type, SourcedType parent) {
 
 		// Run a Jackson JsonFormatVisitor over our class, let it process all the object properties, and return the resulting JType.
 		TypeReadingVisitor<?> reader;
 		try {
-			ClassReader wrapper = new ClassReader();
+			ClassReader wrapper = new ClassReader(parent);
 			ObjectMapper objectMapper = new ObjectMapper();
 			objectMapper.acceptJsonFormatVisitor(type, wrapper);
 			reader = wrapper.getReader();
@@ -479,6 +484,12 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	private class ClassReader extends JsonFormatVisitorWrapper.Base {
 
 		private TypeReadingVisitor<?> reader;
+
+		private final SourcedType parent;
+
+		public ClassReader(SourcedType parent) {
+			this.parent = parent;
+		}
 
 		TypeReadingVisitor<?> getReader() {
 			return reader;
@@ -573,7 +584,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 		@Override
 		public JsonObjectFormatVisitor expectObjectFormat(JavaType type) {
-			JsonObjectReader myReader = new JsonObjectReader(JacksonTypeModeller.this, type.getRawClass());
+			JsonObjectReader myReader = new JsonObjectReader(JacksonTypeModeller.this, type.getRawClass(), parent);
 			reader = myReader;
 			return myReader;
 		}
@@ -606,14 +617,13 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 				if (usedValues.containsKey(enumConstantValue)) {
 					logger.warn("Computed serialized value of {} to be {}, but that value was also used for {} " +
-									"- keeping first definition only",
-							new Object[]{enumConstant, enumConstantValue, usedValues.get(enumConstantValue)});
+							"- keeping first definition only", enumConstant, enumConstantValue, usedValues.get(enumConstantValue));
 				} else {
 					usedValues.put(enumConstantValue, enumConstant);
 				}
 				entries.add(new JEnum.EnumDeclaration(enumConstant.name(), enumConstant.ordinal(), enumConstantValue));
 			} catch (JsonProcessingException e) {
-				logger.warn("Couldn not serialize " + enumConstant + ", skipping");
+				logger.warn("Could not serialize {}, skipping", enumConstant);
 			}
 		}
 		return new JEnum(rawClass.getName(), enumType == null ? defaultEnumType : enumType, entries);

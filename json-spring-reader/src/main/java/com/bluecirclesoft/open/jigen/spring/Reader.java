@@ -60,6 +60,7 @@ import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.model.SourcedType;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 import com.bluecirclesoft.open.jigen.spring.springmodel.AnnotationInstance;
 import com.bluecirclesoft.open.jigen.spring.springmodel.GlobalAnnotationMap;
@@ -210,7 +211,6 @@ public class Reader implements ModelCreator<Options> {
 					// method had no interesting HTTP methods
 					continue;
 				}
-				logger.debug("Reading method {}", method);
 				logger.debug("Handling method {}, Spring info is {}", method, springInfo);
 				if (springInfo.validity != null) {
 					logger.warn("Problems encountered while reading method {}:", method);
@@ -228,10 +228,11 @@ public class Reader implements ModelCreator<Options> {
 				}
 			}
 
+			SourcedType generatedSource = new SourcedType(null, "@Generate annotation search", null);
 			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
 				JacksonTypeModeller modeller =
 						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
-				modeller.readOneType(model, generatedClass);
+				modeller.readOneType(model, new SourcedType(generatedClass, String.valueOf(generatedClass), generatedSource));
 			}
 		}
 
@@ -269,6 +270,8 @@ public class Reader implements ModelCreator<Options> {
 	private void readMethod(MethodInfo methodInfo, MethodCollisionDetector detector) {
 		Method method = methodInfo.method;
 		logger.debug("Analyzing method {}", method);
+
+		SourcedType methodSource = new SourcedType(null, "Method " + method, null);
 
 		SpringRequestInfo springRequestInfo = methodInfo.springRequestInfo;
 		String methodPath = methodInfo.springRequestInfo.path;
@@ -357,7 +360,9 @@ public class Reader implements ModelCreator<Options> {
 				if (rawType instanceof Class && HttpEntity.class.isAssignableFrom((Class<?>) rawType)) {
 					// return type is HttpEntity<T>, so treat T as the model return type
 					logger.debug("Method has a ResponseBody<...> return type, unwrapping for model");
-					outType = modeller.readOneType(model, pType.getActualTypeArguments()[0]);
+					outType = modeller.readOneType(model,
+							new SourcedType(pType.getActualTypeArguments()[0], "Unwrapped ResponseBody " + genericReturnType,
+									methodSource));
 				}
 			} else if (genericReturnType instanceof Class) {
 				if (genericReturnType == ResponseEntity.class) {
@@ -370,12 +375,12 @@ public class Reader implements ModelCreator<Options> {
 
 			// if the above logic didn't unwrap a return type, just use the type as specified
 			if (outType == null) {
-				outType = modeller.readOneType(model, genericReturnType);
+				outType = modeller.readOneType(model, new SourcedType(genericReturnType, "Return type of method " + method, methodSource));
 			}
 		} else {
 			JacksonTypeModeller modeller =
 					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
-			outType = modeller.readOneType(model, String.class);
+			outType = modeller.readOneType(model, new SourcedType(String.class, "Return type of method " + method, methodSource));
 		}
 
 
@@ -394,12 +399,14 @@ public class Reader implements ModelCreator<Options> {
 			endpoint.setPathTemplate(options.getUrlPrefix() + methodPath);
 			endpoint.setConsumes(springRequestInfo.consumes == null ? null : springRequestInfo.consumes.toString());
 			endpoint.setProduces(springRequestInfo.produces == null ? null : springRequestInfo.produces.toString());
-			for (MethodParameter pathParam : parameters) {
+			for (MethodParameter methodParameter : parameters) {
 				JacksonTypeModeller modeller =
 						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
 				endpoint.getParameters()
-						.add(new EndpointParameter(pathParam.getCodeName(), pathParam.getNetworkName(),
-								modeller.readOneType(model, pathParam.getType()), pathParam.getNetworkType()));
+						.add(new EndpointParameter(methodParameter.getCodeName(), methodParameter.getNetworkName(),
+								modeller.readOneType(model, new SourcedType(methodParameter.getType(),
+										"Parameter " + methodParameter.getCodeName() + " of method " + methodInfo.method, methodSource)),
+								methodParameter.getNetworkType()));
 			}
 			endpoint.setMethod(httpMethod);
 

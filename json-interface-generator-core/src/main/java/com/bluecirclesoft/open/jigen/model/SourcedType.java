@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2024 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,39 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.model;
 
-import java.util.List;
+import java.lang.reflect.Type;
+import java.util.ArrayDeque;
 
-public interface PropertyEnumerator {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.ToString;
 
-	List<JType> readTypes(Model model, SourcedType... sourcedTypes);
+/**
+ * TODO document me
+ */
+@Data
+@AllArgsConstructor
+@ToString
+public class SourcedType {
 
-	JType readOneType(Model mode, SourcedType sourcedType);
+	private Type type;
+
+	private String description;
+
+	private SourcedType parent;
+
+	public String fullDescription() {
+		ArrayDeque<String> descQueue = new ArrayDeque<>();
+		SourcedType st = this;
+		while (st != null) {
+			descQueue.addFirst(st.description);
+			st = st.parent;
+		}
+		return String.join(" -> ", descQueue);
+	}
 }

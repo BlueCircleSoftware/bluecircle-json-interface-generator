@@ -34,6 +34,7 @@ import com.bluecirclesoft.open.jigen.annotations.TypeDiscriminator;
 import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
+import com.bluecirclesoft.open.jigen.model.SourcedType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.BeanProperty;
@@ -54,14 +55,17 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 	private final JObject jObject;
 
+	private SourcedType parent;
+
 	/**
 	 * Prepare to read a class and determine the resulting object properties
 	 *
 	 * @param jacksonTypeModeller the type modeller that contains the total model
 	 * @param clazz               the class to read
 	 */
-	JsonObjectReader(JacksonTypeModeller jacksonTypeModeller, Class<?> clazz) {
+	JsonObjectReader(JacksonTypeModeller jacksonTypeModeller, Class<?> clazz, SourcedType parent) {
 		logger.debug("Using Jackson to read class {}", clazz.getName());
+		this.parent = parent;
 		this.jacksonTypeModeller = jacksonTypeModeller;
 		// make a stub type for this class
 		jObject = new JObject(clazz.getName(), clazz);
@@ -71,7 +75,8 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		for (int i = 0; i < clazz.getTypeParameters().length; i++) {
 			final int finalI = i;
 			jObject.getTypeVariables().add(null);
-			jacksonTypeModeller.queueType(clazz.getTypeParameters()[i]);
+			jacksonTypeModeller.queueType(
+					new SourcedType(clazz.getTypeParameters()[i], "Type parameter " + (i + 1) + " of " + clazz, parent));
 			jacksonTypeModeller.addFixup(clazz.getTypeParameters()[i],
 					jType -> jObject.getTypeVariables().set(finalI, (JTypeVariable) jType));
 		}
@@ -212,12 +217,13 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			}
 			// whatever class is declaring this property, assume it's a superclass that we want to model in the output as a
 			// 'superinterface'
-			jacksonTypeModeller.queueType(((Member) annotatedThing).getDeclaringClass());
+			jacksonTypeModeller.queueType(new SourcedType(((Member) annotatedThing).getDeclaringClass(),
+					"@TypeDiscriminator of property " + beanProperty.getFullName(), parent));
 		}
 		// actually define property at fixup time
 		jacksonTypeModeller.addFixup(type, jType -> jObject.makeProperty(name, jType, required));
 		// queue this property's type for processing
-		jacksonTypeModeller.queueType(type);
+		jacksonTypeModeller.queueType(new SourcedType(type, "type of property " + beanProperty.getFullName(), parent));
 	}
 
 	/**
