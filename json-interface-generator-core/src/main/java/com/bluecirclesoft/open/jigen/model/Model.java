@@ -123,7 +123,16 @@ public class Model implements Serializable {
 					for (Class<?> superClass : supers) {
 						if (interfaces.containsKey(superClass)) {
 							JObject jSuper = (JObject) interfaces.get(superClass);
+							if (jSuper == null) {
+								logger.warn("INTERNAL: Could not find JObject for superclass {}", superClass);
+								continue;
+							}
 							JObject jSub = (JObject) interfaces.get(subClass);
+							if (jSub == null) {
+								logger.warn("INTERNAL: Could not find JObject for subclass {}", subClass);
+								continue;
+							}
+
 							jSuper.getSubclasses().put(subClass.getName(), jSub);
 							jSub.getSuperclasses().put(superClass.getName(), jSuper);
 						}

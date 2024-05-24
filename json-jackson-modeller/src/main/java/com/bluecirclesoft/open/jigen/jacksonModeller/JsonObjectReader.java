@@ -55,7 +55,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 	private final JObject jObject;
 
-	private SourcedType parent;
+	private final SourcedType parent;
 
 	/**
 	 * Prepare to read a class and determine the resulting object properties
@@ -70,7 +70,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		// make a stub type for this class
 		jObject = new JObject(clazz.getName(), clazz);
 		// create a new instance, if possible
-		jObject.setNewObjectJson(createEmptyJsonFor(clazz));
+		jObject.setNewObjectJson(createEmptyJsonFor(clazz, parent));
 		// read through the type parameters, and see if we need to queue up any other classes for reading
 		for (int i = 0; i < clazz.getTypeParameters().length; i++) {
 			final int finalI = i;
@@ -90,16 +90,16 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 * @param clazz the class to consider
 	 * @return a JSON string, or {@code null} if the JSON could not be produced.
 	 */
-	private static String createEmptyJsonFor(Class<?> clazz) {
+	private static String createEmptyJsonFor(Class<?> clazz, SourcedType parent) {
 		Object newInstance;
 		try {
 			Constructor<?> ctor = clazz.getConstructor();
 			newInstance = ctor.newInstance();
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-			logger.warn("Error instantiating class " + clazz.getName(), e);
+			logger.warn("Error instantiating class {} (path {})", clazz.getName(), parent.fullDescription(), e);
 			return null;
 		} catch (NoSuchMethodException e) {
-			logger.warn("Class {} has no no-arg constructor", clazz.getName());
+			logger.warn("Class {} has no no-arg constructor (path {})", clazz.getName(), parent.fullDescription());
 			return null;
 		}
 		try {
@@ -108,7 +108,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 			return mapper.writeValueAsString(newInstance);
 		} catch (JsonProcessingException e) {
-			logger.warn("Error creating JSON for new " + clazz.getName() + "()", e);
+			logger.warn("Error creating JSON for new {} (path {})", clazz.getName(), parent.fullDescription(), e);
 			return null;
 		}
 	}
@@ -124,7 +124,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		try {
 			newInstance = clazz.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
-			logger.warn("Error instantiating class " + clazz.getName(), e);
+			logger.warn("Error instantiating class {}", clazz.getName(), e);
 			return null;
 		}
 		try {
@@ -166,7 +166,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 					}
 				}
 			} catch (Exception e) {
-				logger.error("Couldn't read generated new-object JSON for class " + jType.getName(), e);
+				logger.error("Couldn't read generated new-object JSON for class {}", jType.getName(), e);
 			}
 		}
 	}
@@ -206,15 +206,14 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			TypeDiscriminator discriminator = annotatedThing.getAnnotation(TypeDiscriminator.class);
 			jObject.setTypeDiscriminatorField(name);
 
+			String discriminatorValue;
 			if (discriminator.discriminatedBy() == DiscriminatedBy.CLASS_NAME) {
-				String discriminatorValue = jObject.getSourceClass().getName();
-				logger.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
-				jObject.setTypeDiscriminatorValue(discriminatorValue);
+				discriminatorValue = jObject.getSourceClass().getName();
 			} else {
-				String discriminatorValue = getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty);
-				logger.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
-				jObject.setTypeDiscriminatorValue(discriminatorValue);
+				discriminatorValue = getTypeDiscriminatorValueFor(jObject.getSourceClass(), beanProperty);
 			}
+			logger.debug("Setting discriminator value on {} to {}", jObject, discriminatorValue);
+			jObject.setTypeDiscriminatorValue(discriminatorValue);
 			// whatever class is declaring this property, assume it's a superclass that we want to model in the output as a
 			// 'superinterface'
 			jacksonTypeModeller.queueType(new SourcedType(((Member) annotatedThing).getDeclaringClass(),
