@@ -31,7 +31,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @EnableWebMvc
 @Configuration
-@ComponentScan({"com.bluecirclesoft"})
+@ComponentScan("com.bluecirclesoft")
 public class AppConfig implements WebMvcConfigurer {
 
 	@Override

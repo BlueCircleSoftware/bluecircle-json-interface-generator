@@ -20,9 +20,14 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Corresponds to TypeScript {@code Array<elementType>}.
  */
+@Setter
+@Getter
 public class JArray extends JType {
 
 	/**
@@ -32,25 +37,14 @@ public class JArray extends JType {
 
 	private JType elementType;
 
-	public JType getIndexType() {
-		return indexType;
-	}
-
-	public void setIndexType(JType indexType) {
-		this.indexType = indexType;
-	}
-
-	public JType getElementType() {
-		return elementType;
-	}
-
-	public void setElementType(JType elementType) {
-		this.elementType = elementType;
-	}
-
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override

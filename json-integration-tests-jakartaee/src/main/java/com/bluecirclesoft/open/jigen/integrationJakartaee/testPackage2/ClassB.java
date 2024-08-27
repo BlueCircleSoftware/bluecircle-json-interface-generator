@@ -17,9 +17,14 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage2;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class ClassB {
 
 	private ClassA one;
@@ -32,43 +37,4 @@ public class ClassB {
 
 	private ClassA[] five;
 
-	public ClassA getOne() {
-		return one;
-	}
-
-	public void setOne(ClassA one) {
-		this.one = one;
-	}
-
-	public ClassA getTwo() {
-		return two;
-	}
-
-	public void setTwo(ClassA two) {
-		this.two = two;
-	}
-
-	public ClassC<Integer, String> getThree() {
-		return three;
-	}
-
-	public void setThree(ClassC<Integer, String> three) {
-		this.three = three;
-	}
-
-	public ClassC<Integer, Integer> getFour() {
-		return four;
-	}
-
-	public void setFour(ClassC<Integer, Integer> four) {
-		this.four = four;
-	}
-
-	public ClassA[] getFive() {
-		return five;
-	}
-
-	public void setFive(ClassA[] five) {
-		this.five = five;
-	}
 }

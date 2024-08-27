@@ -16,20 +16,17 @@
 
 package testp1.p12;
 
+import lombok.Getter;
+import lombok.Setter;
 import testp1.p11.ClassA;
 
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class ClassB {
 
 	private ClassA a;
 
-	public ClassA getA() {
-		return a;
-	}
-
-	public void setA(ClassA a) {
-		this.a = a;
-	}
 }

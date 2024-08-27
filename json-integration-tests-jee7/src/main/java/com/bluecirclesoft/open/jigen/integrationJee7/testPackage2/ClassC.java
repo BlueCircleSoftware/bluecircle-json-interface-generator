@@ -16,9 +16,14 @@
 
 package com.bluecirclesoft.open.jigen.integrationJee7.testPackage2;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class ClassC<T, U> {
 
 	private T t;
@@ -33,19 +38,4 @@ public class ClassC<T, U> {
 		this.u = u;
 	}
 
-	public T getT() {
-		return t;
-	}
-
-	public void setT(T t) {
-		this.t = t;
-	}
-
-	public U getU() {
-		return u;
-	}
-
-	public void setU(U u) {
-		this.u = u;
-	}
 }

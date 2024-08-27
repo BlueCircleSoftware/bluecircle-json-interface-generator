@@ -27,6 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
@@ -34,41 +37,23 @@ public class AnnotationInstance {
 
 	private static final Logger logger = LoggerFactory.getLogger(AnnotationInstance.class);
 
-	private MappingAnnotation baseAnnotation;
+	private final MappingAnnotation baseAnnotation;
 
+	@Setter
+	@Getter
 	private String name;
 
+	@Getter
 	private final List<String> path = new ArrayList<>();
 
+	@Getter
 	private final List<RequestMethod> method = new ArrayList<>();
 
+	@Getter
 	private final List<String> consumes = new ArrayList<>();
 
+	@Getter
 	private final List<String> produces = new ArrayList<>();
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<String> getPath() {
-		return path;
-	}
-
-	public List<RequestMethod> getMethod() {
-		return method;
-	}
-
-	public List<String> getConsumes() {
-		return consumes;
-	}
-
-	public List<String> getProduces() {
-		return produces;
-	}
 
 	public AnnotationInstance(MappingAnnotation base) {
 		this.baseAnnotation = base;
@@ -86,7 +71,7 @@ public class AnnotationInstance {
 						add(alias, val);
 					}
 				} catch (Exception e) {
-					logger.warn("Got exception invoking method " + method + "; ignoring", e);
+					logger.warn("Got exception invoking method {}; ignoring", method, e);
 				}
 			}
 		}
@@ -113,7 +98,7 @@ public class AnnotationInstance {
 
 	public void add(String field, Object thingOrCollection) {
 		if (thingOrCollection instanceof Collection) {
-			Collection coll = (Collection) thingOrCollection;
+			Iterable<?> coll = (Collection<?>) thingOrCollection;
 			for (Object thing : coll) {
 				add(field, thing);
 			}

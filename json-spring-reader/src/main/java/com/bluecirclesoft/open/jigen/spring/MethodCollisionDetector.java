@@ -18,7 +18,6 @@ package com.bluecirclesoft.open.jigen.spring;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +29,9 @@ import com.bluecirclesoft.open.jigen.model.HttpMethod;
  */
 public class MethodCollisionDetector {
 
-	private Map<String, Map<HttpMethod, List<Method>>> map = new LinkedHashMap<>();
+	private final Map<String, Map<HttpMethod, List<Method>>> map = new LinkedHashMap<>();
 
-	public void addMethod(Method method, Collection<HttpMethod> httpMethods) {
+	public void addMethod(Method method, Iterable<HttpMethod> httpMethods) {
 		String name = nameMethod(method);
 		for (HttpMethod httpMethod : httpMethods) {
 			map.computeIfAbsent(name, (n) -> new LinkedHashMap<>()).computeIfAbsent(httpMethod, (m) -> new ArrayList<>()).add(method);
@@ -59,7 +58,7 @@ public class MethodCollisionDetector {
 		}
 	}
 
-	private String nameMethod(Method method) {
+	private static String nameMethod(Method method) {
 		return method.getDeclaringClass().getName() + "." + method.getName();
 	}
 }

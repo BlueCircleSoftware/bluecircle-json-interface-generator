@@ -38,9 +38,9 @@ public final class TestHelper {
 
 	public static class EnvPair {
 
-		String name;
+		final String name;
 
-		String value;
+		final String value;
 
 		public EnvPair(String name, String value) {
 			this.name = name;

@@ -21,9 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,11 +41,9 @@ public class TestAllCombosTwoParameters {
 	@Autowired
 	private HttpServletResponse response;
 
-	@RequestMapping(method = RequestMethod.GET,
-			path = "/testAllCombosTwoParametersGeFoFo",
-			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@RequestMapping(method = RequestMethod.GET, path = "/testAllCombosTwoParametersGeFoFo", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeFoFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -56,8 +52,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGePaFo/{p0}",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGePaFo(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGePaFo(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGePaFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -66,8 +62,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeQuFo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeQuFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeQuFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeQuFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -76,8 +72,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeBoFo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeBoFo(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeBoFo(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -86,8 +82,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeFoPa/{p1}",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeFoPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeFoPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeFoPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -95,8 +91,8 @@ public class TestAllCombosTwoParameters {
 	@RequestMapping(method = RequestMethod.GET,
 			path = "/testAllCombosTwoParametersGePaPa/{p0}/{p1}",
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGePaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGePaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGePaPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -104,8 +100,8 @@ public class TestAllCombosTwoParameters {
 	@RequestMapping(method = RequestMethod.GET,
 			path = "/testAllCombosTwoParametersGeQuPa/{p1}",
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeQuPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -114,8 +110,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeBoPa/{p1}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeBoPa(@RequestBody TestDto p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeBoPa(@RequestBody TestDto p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -124,8 +120,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeFoQu",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeFoQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeFoQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeFoQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -134,8 +130,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGePaQu/{p0}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGePaQu(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGePaQu(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGePaQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -144,8 +140,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeQuQu",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeQuQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeQuQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeQuQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -154,8 +150,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeBoQu",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeBoQu(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeBoQu(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersGeBoQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -164,8 +160,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeFoBo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeFoBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeFoBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeFoBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -174,8 +170,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGePaBo/{p0}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGePaBo(@PathVariable("p0") String p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGePaBo(@PathVariable("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGePaBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -184,8 +180,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeQuBo",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeQuBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeQuBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeQuBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -194,8 +190,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersGeBoBo",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersGeBoBo(@RequestBody TestDto p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersGeBoBo(@RequestBody TestDto p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersGeBoBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -204,8 +200,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoFoFo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoFoFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoFoFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -214,8 +210,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoPaFo/{p0}",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoPaFo(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoPaFo(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoPaFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -224,8 +220,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoQuFo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoQuFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoQuFo(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoQuFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -234,8 +230,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoBoFo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoBoFo(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoBoFo(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoFo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -244,8 +240,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoFoPa/{p1}",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoFoPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoFoPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoFoPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -254,8 +250,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoPaPa/{p0}/{p1}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoPaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoPaPa(@PathVariable("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoPaPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -264,8 +260,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoQuPa/{p1}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoQuPa(@RequestParam("p0") String p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoQuPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -274,8 +270,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoBoPa/{p1}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoBoPa(@RequestBody TestDto p0, @PathVariable("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoBoPa(@RequestBody TestDto p0, @PathVariable("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoPa");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -284,8 +280,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoFoQu",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoFoQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoFoQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoFoQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -294,8 +290,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoPaQu/{p0}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoPaQu(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoPaQu(@PathVariable("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoPaQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -304,8 +300,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoQuQu",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoQuQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoQuQu(@RequestParam("p0") String p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoQuQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -314,8 +310,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoBoQu",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoBoQu(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoBoQu(@RequestBody TestDto p0, @RequestParam("p1") String p1) {
 		log.info("Called testAllCombosTwoParametersPoBoQu");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -324,8 +320,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoFoBo",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoFoBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoFoBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoFoBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -334,8 +330,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoPaBo/{p0}",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoPaBo(@PathVariable("p0") String p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoPaBo(@PathVariable("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoPaBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -344,8 +340,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoQuBo",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoQuBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoQuBo(@RequestParam("p0") String p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoQuBo");
 		return MergeHelper.merge(p0, p1);
 	}
@@ -354,8 +350,8 @@ public class TestAllCombosTwoParameters {
 			path = "/testAllCombosTwoParametersPoBoBo",
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	TestDto testAllCombosTwoParametersPoBoBo(@RequestBody TestDto p0, @RequestBody TestDto p1) {
+	@ResponseBody
+	public TestDto testAllCombosTwoParametersPoBoBo(@RequestBody TestDto p0, @RequestBody TestDto p1) {
 		log.info("Called testAllCombosTwoParametersPoBoBo");
 		return MergeHelper.merge(p0, p1);
 	}

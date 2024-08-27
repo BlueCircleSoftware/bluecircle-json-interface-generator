@@ -21,9 +21,14 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Corresponds to a map - if 'valueType' is V, then this represents the TypeScript type {@code {[key:string]:V} }
  */
+@Setter
+@Getter
 public class JMap extends JType {
 
 	private JType valueType;
@@ -35,17 +40,14 @@ public class JMap extends JType {
 		this.valueType = valueType;
 	}
 
-	public JType getValueType() {
-		return valueType;
-	}
-
-	public void setValueType(JType valueType) {
-		this.valueType = valueType;
-	}
-
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override

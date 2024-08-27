@@ -17,18 +17,16 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage3;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class Sub3 extends Super {
 
 	private int c = 3;
 
-	public int getC() {
-		return c;
-	}
-
-	public void setC(int c) {
-		this.c = c;
-	}
 }

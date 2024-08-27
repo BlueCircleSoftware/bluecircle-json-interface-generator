@@ -17,7 +17,10 @@
 
 package com.bluecirclesoft.open.jigen.jacksonModeller;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,14 +28,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Cache to hold on to Reflections scanners, since they can be very time consuming to build (see {@link Reflections})
+ * Cache to hold on to Reflections scanners, since they can be very time-consuming to build (see {@link Reflections})
  */
 class ReflectionsCache {
 
@@ -46,12 +49,21 @@ class ReflectionsCache {
 		if (cache.containsKey(packages)) {
 			return cache.get(packages);
 		} else {
-			logger.info("Creating new Reflections scanner for package set " + packages);
-			Set<URL> urls = new HashSet<>();
+			logger.info("Creating new Reflections scanner for package set {}", packages);
+
+			// doing this map rigmarole to avoid using URL.equals()
+			Map<URI, URL> urls = new HashMap<>();
 			for (String p : packagesToScan) {
-				urls.addAll(ClasspathHelper.forPackage(p));
+				Collection<URL> urlsIn = ClasspathHelper.forPackage(p);
+				for (URL urlIn : urlsIn) {
+					try {
+						urls.put(urlIn.toURI(), urlIn);
+					} catch (URISyntaxException e) {
+						throw new RuntimeException("Problem converting classpath URL to URI", e);
+					}
+				}
 			}
-			Reflections subclassFinder = new Reflections(new ConfigurationBuilder().setUrls(urls).setScanners(new SubTypesScanner()));
+			Reflections subclassFinder = new Reflections(new ConfigurationBuilder().setUrls(urls.values()).setScanners(Scanners.SubTypes));
 			cache.put(packages, subclassFinder);
 			return subclassFinder;
 		}

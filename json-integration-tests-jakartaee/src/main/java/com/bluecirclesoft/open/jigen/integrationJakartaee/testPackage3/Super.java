@@ -17,18 +17,16 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage3;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
-abstract public class Super extends Hyper {
+@Setter
+@Getter
+public abstract class Super extends Hyper {
 
 	private int superInt;
 
-	public int getSuperInt() {
-		return superInt;
-	}
-
-	public void setSuperInt(int superInt) {
-		this.superInt = superInt;
-	}
 }

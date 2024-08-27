@@ -18,9 +18,9 @@
 package com.bluecirclesoft.open.jigen;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +36,7 @@ class ConfigurationReader {
 	private Map<String, Object> config;
 
 	void read(File file) throws IOException {
-		read(file == null ? null : new FileInputStream(file));
+		read(file == null ? null : Files.newInputStream(file.toPath()));
 	}
 
 	void read(InputStream configFile) throws IOException {
@@ -44,21 +44,21 @@ class ConfigurationReader {
 
 		Map<String, Object> config = null;
 		if (configFile != null) {
-			config = mapper.readValue(configFile, Map.class);
+			config = checkIsJsonObject(mapper.readValue(configFile, Map.class));
 		}
 
 		this.config = config;
 
 	}
 
-	public void configureOneProcessor(List<String> errors, ConfigurableProcessor processor, String readerWriter, String configLabel)
-			throws IOException {
+	public void configureOneProcessor(List<? super String> errors, ConfigurableProcessor<?> processor, String readerWriter,
+	                                  String configLabel) throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
 
 		Class<?> optionsClass = processor.getOptionsClass();
 		Object configMap = null;
 		if (config != null) {
-			configMap = ((Map<String, Object>) config.get(readerWriter)).get(configLabel);
+			configMap = ((Map<?, ?>) config.get(readerWriter)).get(configLabel);
 		}
 		if (configMap == null) {
 			configMap = new HashMap<String, Object>();
@@ -71,7 +71,7 @@ class ConfigurationReader {
 	public Map<String, Object> getReaderEntries() {
 		Map<String, Object> readers = null;
 		if (config != null) {
-			readers = (Map<String, Object>) config.get("readers");
+			readers = checkIsJsonObject(config.get("readers"));
 		}
 		if (readers == null) {
 			readers = new HashMap<>();
@@ -79,10 +79,26 @@ class ConfigurationReader {
 		return readers;
 	}
 
+	private static Map<String, Object> checkIsJsonObject(Object obj) {
+		if (obj == null) {
+			return null;
+		} else if (obj instanceof Map) {
+			for (Object key : ((Map<?, ?>) obj).keySet()) {
+				if (!(key instanceof String)) {
+					throw new RuntimeException("Object key not a string: " + key);
+				}
+			}
+			//noinspection unchecked
+			return (Map<String, Object>) obj;
+		} else {
+			throw new RuntimeException("Object is not a Map: " + obj);
+		}
+	}
+
 	public Map<String, Object> getWriterEntries() {
 		Map<String, Object> writers = null;
 		if (config != null) {
-			writers = (Map<String, Object>) config.get("writers");
+			writers = checkIsJsonObject(config.get("writers"));
 		}
 		if (writers == null) {
 			writers = new HashMap<>();

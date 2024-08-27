@@ -67,12 +67,10 @@ public class OutputController {
 	}
 
 	public TSFileWriter getNamespaceHandler(Namespace namespace) {
-		switch (options.getOutputStructure()) {
-			case NAMESPACES:
-				return theOneHandler;
-			default:
-				return new TSFileWriter(this, getFile(namespace), jigNamespace);
+		if (Objects.requireNonNull(options.getOutputStructure()) == OutputStructure.NAMESPACES) {
+			return theOneHandler;
 		}
+		return new TSFileWriter(this, getFile(namespace), jigNamespace);
 	}
 
 	public void close(TSFileWriter writer) throws IOException {
@@ -112,7 +110,7 @@ public class OutputController {
 				treeName.getParentFile().mkdirs();
 				return treeName;
 			default:
-				throw new RuntimeException("Unhandled output structure " + this);
+				throw new RuntimeException("Unhandled output structure " + options.getOutputStructure());
 		}
 	}
 
@@ -121,11 +119,10 @@ public class OutputController {
 			case NAMESPACES:
 				return false;
 			case FILES_IN_ONE_FOLDER:
-				return true;
 			case FILES_IN_TREE:
 				return true;
 			default:
-				throw new RuntimeException("Unhandled output structure " + this);
+				throw new RuntimeException("Unhandled output structure " + options.getOutputStructure());
 		}
 	}
 
@@ -145,7 +142,7 @@ public class OutputController {
 					return referencedNamespace.conjoin("_");
 				}
 			default:
-				throw new RuntimeException("Unhandled output structure " + this);
+				throw new RuntimeException("Unhandled output structure " + options.getOutputStructure());
 		}
 	}
 }

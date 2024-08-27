@@ -61,7 +61,6 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 
 	@Override
 	public String visit(JObject jObject) {
-		StringBuilder sb = new StringBuilder();
 		String name;
 		switch (this.location) {
 			case DEFINITION:
@@ -74,6 +73,7 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 			default:
 				throw new RuntimeException("Unhandled location: " + this.location);
 		}
+		StringBuilder sb = new StringBuilder();
 		sb.append(name);
 		if (immutableSuffix != null) {
 			sb.append(immutableSuffix);

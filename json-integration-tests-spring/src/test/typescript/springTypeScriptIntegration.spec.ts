@@ -16,9 +16,9 @@
 
 import * as $ from "jquery";
 import {com, jsonInterfaceGenerator} from "../../../target/generated-sources/springToTypeScript";
+import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
 import JsonOptions = jsonInterfaceGenerator.JsonOptions;
 import integration = com.bluecirclesoft.open.jigen.integrationSpring;
-import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
 
 declare const __karma__: any;
 

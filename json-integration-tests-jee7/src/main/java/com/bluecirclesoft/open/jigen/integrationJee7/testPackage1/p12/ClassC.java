@@ -16,18 +16,16 @@
 
 package com.bluecirclesoft.open.jigen.integrationJee7.testPackage1.p12;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class ClassC {
 
 	private ClassB b;
 
-	public ClassB getB() {
-		return b;
-	}
-
-	public void setB(ClassB b) {
-		this.b = b;
-	}
 }

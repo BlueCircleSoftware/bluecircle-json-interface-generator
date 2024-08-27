@@ -17,9 +17,14 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class NestedInner {
 
 	private String a;
@@ -32,43 +37,4 @@ public class NestedInner {
 
 	private int[] e;
 
-	public String getA() {
-		return a;
-	}
-
-	public void setA(String a) {
-		this.a = a;
-	}
-
-	public String getB() {
-		return b;
-	}
-
-	public void setB(String b) {
-		this.b = b;
-	}
-
-	public int getC() {
-		return c;
-	}
-
-	public void setC(int c) {
-		this.c = c;
-	}
-
-	public int getD() {
-		return d;
-	}
-
-	public void setD(int d) {
-		this.d = d;
-	}
-
-	public int[] getE() {
-		return e;
-	}
-
-	public void setE(int[] e) {
-		this.e = e;
-	}
 }

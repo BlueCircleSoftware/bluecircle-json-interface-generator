@@ -42,7 +42,7 @@ import com.bluecirclesoft.open.jigen.model.Namespace;
 /**
  * TODO document me
  */
-class TSFileWriter {
+public class TSFileWriter {
 
 	private static final Logger logger = LoggerFactory.getLogger(TSFileWriter.class);
 
@@ -112,7 +112,7 @@ class TSFileWriter {
 	private void indent() {
 		StringBuilder sb = new StringBuilder();
 		indent(sb);
-		writer.print(sb.toString());
+		writer.print(sb);
 	}
 
 	void indentIn() {
@@ -146,7 +146,7 @@ class TSFileWriter {
 		}
 	}
 
-	void writeResource(String resourcePath, Function<String, String> substitution) {
+	void writeResource(String resourcePath, Function<? super String, String> substitution) {
 		InputStream fileResource = TSFileWriter.class.getResourceAsStream(resourcePath);
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileResource))) {
 			while (true) {

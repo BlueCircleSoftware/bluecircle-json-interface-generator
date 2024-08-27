@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 /**
  * Tag for types (TODO and parameters, return values?) to generate them, even though they're not on a JAX-RS method
  */
-@Target({ElementType.TYPE})
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Generate {
 

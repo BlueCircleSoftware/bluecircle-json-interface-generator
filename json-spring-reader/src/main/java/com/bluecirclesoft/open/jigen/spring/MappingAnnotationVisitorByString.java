@@ -33,11 +33,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 class MappingAnnotationVisitorByString<T> implements MappingAnnotationVisitor {
 
+	private final Class<? extends T> valueClass;
+
 	private final String methodName;
 
-	private final Function<T, Boolean> apply;
+	private final Function<? super T, Boolean> apply;
 
-	public MappingAnnotationVisitorByString(String methodName, Function<T, Boolean> apply) {
+	public MappingAnnotationVisitorByString(Class<? extends T> valueClass, String methodName, Function<? super T, Boolean> apply) {
+		this.valueClass = valueClass;
 		this.methodName = methodName;
 		this.apply = apply;
 	}
@@ -46,7 +49,7 @@ class MappingAnnotationVisitorByString<T> implements MappingAnnotationVisitor {
 		try {
 			Method method = ann.annotationType().getMethod(this.methodName);
 			method.setAccessible(true);
-			T annotationVal = (T) method.invoke(ann);
+			T annotationVal = valueClass.cast(method.invoke(ann));
 			return this.apply.apply(annotationVal);
 		} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
 			throw new RuntimeException(e);

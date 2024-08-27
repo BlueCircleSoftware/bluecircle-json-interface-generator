@@ -20,20 +20,24 @@ package com.bluecirclesoft.open.jigen.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+
 /**
  * Represents the TypeScript union type (i.e., A | B | C | ...)
  */
+@Getter
 public class JUnionType extends JType {
 
 	private final List<JType> members = new ArrayList<>();
 
-	public List<JType> getMembers() {
-		return members;
-	}
-
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override

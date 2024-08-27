@@ -30,6 +30,11 @@ public class JAny extends JType {
 	}
 
 	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
+	}
+
+	@Override
 	public String toString() {
 		return new ToStringBuilder(this).toString();
 	}

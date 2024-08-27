@@ -22,19 +22,18 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 
+import lombok.Getter;
+
 /**
  * Test state for the {@link TestServicesVoid} test methods.  Basically, the test methods cat up a string, and at the end of the test, we
  * retrieve it and test it to make sure that all the methods were invoked properly.
  */
+@Getter
 @Component
 @Scope(WebApplicationContext.SCOPE_SESSION)
 public class VoidTestState implements Serializable {
 
 	private String totalString = "";
-
-	public String getTotalString() {
-		return totalString;
-	}
 
 	public void addToTotalString(String part) {
 		this.totalString += part;

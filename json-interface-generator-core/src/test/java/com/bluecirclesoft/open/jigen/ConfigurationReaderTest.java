@@ -51,6 +51,6 @@ public class ConfigurationReaderTest {
 
 		Assert.assertEquals(1, options.getPackages().size());
 		Assert.assertEquals("com.bluecirclesoft", options.getPackages().get(0));
-		Assert.assertEquals(true, options.isDefaultStringEnums());
+		Assert.assertTrue(options.isDefaultStringEnums());
 	}
 }

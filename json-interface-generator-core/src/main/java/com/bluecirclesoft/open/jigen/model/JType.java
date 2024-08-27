@@ -24,15 +24,17 @@ import java.util.List;
 /**
  * The base JSON type class - all things that are represented in JSON, extend this class.
  */
-abstract public class JType implements Serializable {
+public abstract class JType implements Serializable {
 
 	// TODO debugging only
 
-	public static List<JType> createdTypes = new ArrayList<>();
+	public static final List<JType> createdTypes = new ArrayList<>();
 
-	abstract public <T> T accept(JTypeVisitor<T> visitor);
+	public abstract <T> T accept(JTypeVisitor<T> visitor);
 
-	abstract public boolean needsWrapping();
+	public abstract void accept(JTypeVisitorVoid visitor);
+
+	public abstract boolean needsWrapping();
 
 	public JType getStripped() {
 		return this;

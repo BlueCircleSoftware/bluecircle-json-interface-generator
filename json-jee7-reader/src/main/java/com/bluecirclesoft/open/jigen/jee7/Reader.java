@@ -18,9 +18,11 @@
 package com.bluecirclesoft.open.jigen.jee7;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -49,9 +51,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
 import com.bluecirclesoft.open.jigen.annotations.Generate;
+import com.bluecirclesoft.open.jigen.jacksonModeller.IncludeSubclasses;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -85,7 +86,7 @@ public class Reader implements ModelCreator<Options> {
 
 		String produces;
 
-		Method method;
+		final Method method;
 
 		MethodInfo(Method method) {
 			this.method = method;
@@ -224,7 +225,7 @@ public class Reader implements ModelCreator<Options> {
 		return result;
 	}
 
-	private static boolean isValidJavaIdentifier(String value) {
+	private static boolean isValidJavaIdentifier(CharSequence value) {
 		for (int i = 0; i < value.length(); i++) {
 			if (i == 0) {
 				if (!Character.isJavaIdentifierStart(value.charAt(i))) {
@@ -239,7 +240,7 @@ public class Reader implements ModelCreator<Options> {
 		return true;
 	}
 
-	private static Set<HttpMethod> identifyHttpMethods(Method method) {
+	private static Set<HttpMethod> identifyHttpMethods(AnnotatedElement method) {
 		Set<HttpMethod> result = EnumSet.noneOf(HttpMethod.class);
 		for (Map.Entry<Class<? extends Annotation>, HttpMethod> entry : annotationHttpMethodMap.entrySet()) {
 			if (method.isAnnotationPresent(entry.getKey())) {
@@ -254,7 +255,7 @@ public class Reader implements ModelCreator<Options> {
 		for (String packageName : packageNames) {
 			logger.info("Reading package {}", packageName);
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
-					.setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner()));
+					.setScanners(Scanners.MethodsAnnotated, Scanners.TypesAnnotated, Scanners.SubTypes));
 
 			for (Method method : findJaxRsMethods(reflections)) {
 				logger.info("Reading method {}", method);
@@ -294,7 +295,7 @@ public class Reader implements ModelCreator<Options> {
 
 		Set<HttpMethod> httpMethods = identifyHttpMethods(method);
 
-		List<MethodParameter> parameters = new ArrayList<>();
+		Collection<MethodParameter> parameters = new ArrayList<>();
 
 		for (Parameter p : method.getParameters()) {
 			MethodParameter mp = new MethodParameter();
@@ -398,7 +399,8 @@ public class Reader implements ModelCreator<Options> {
 			defaultEnumType = options.isDefaultStringEnums() ? JEnum.EnumType.STRING : JEnum.EnumType.NUMERIC;
 			String[] packArr = options.getPackages().toArray(new String[0]);
 			classOverrideHandler.ingestOverrides(options.getClassSubstitutions());
-			this.modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packArr);
+			this.modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType,
+					options.isIncludeSubclasses() ? IncludeSubclasses.INCLUDE : IncludeSubclasses.EXCLUDE, packArr);
 			createModel(packArr);
 		} catch (Throwable t) {
 			logger.error("Caught exception creating model: ", t);
@@ -406,10 +408,11 @@ public class Reader implements ModelCreator<Options> {
 		}
 	}
 
+
 	@Override
-	public void acceptOptions(Options options, List<String> errors) {
-		this.options = options;
-		if (options.getPackages() == null || options.getPackages().isEmpty()) {
+	public void acceptOptions(Object options, List<? super String> errors) {
+		this.options = (Options) options;
+		if (this.options.getPackages() == null || this.options.getPackages().isEmpty()) {
 			errors.add("Package name to process is required.");
 		}
 	}

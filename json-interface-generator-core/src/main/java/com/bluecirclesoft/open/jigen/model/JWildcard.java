@@ -20,26 +20,26 @@ package com.bluecirclesoft.open.jigen.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+
 /**
  * Represents a wildcard type (like '? extends MyClass').
  */
+@Getter
 public class JWildcard extends JType {
 
 	private final List<JType> upperBounds = new ArrayList<>();
 
 	private final List<JType> lowerBounds = new ArrayList<>();
 
-	public List<JType> getUpperBounds() {
-		return upperBounds;
-	}
-
-	public List<JType> getLowerBounds() {
-		return lowerBounds;
-	}
-
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override

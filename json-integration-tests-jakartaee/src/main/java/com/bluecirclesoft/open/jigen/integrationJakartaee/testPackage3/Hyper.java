@@ -23,7 +23,7 @@ import com.bluecirclesoft.open.jigen.annotations.TypeDiscriminator;
 /**
  * TODO document me
  */
-public class Hyper {
+public abstract class Hyper {
 
 	@TypeDiscriminator(discriminatedBy = DiscriminatedBy.CLASS_NAME)
 	public String getType() {

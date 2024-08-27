@@ -11,6 +11,9 @@
     "noImplicitAny": true,
     //    "outDir": "../../../target/generated-javascript/js"
     "allowSyntheticDefaultImports": false,
-    "lib": [ "es6", "dom" ]
+    "lib": [
+      "es6",
+      "dom"
+    ]
   }
 }

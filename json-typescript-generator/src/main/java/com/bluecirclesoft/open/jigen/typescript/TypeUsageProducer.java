@@ -94,20 +94,7 @@ class TypeUsageProducer {
 					} else {
 						// not specializing, no type parameters.  TypeScript will require type parameters, so we need to put
 						// the Java equivalent for the type parameters, which is 'any'
-						StringBuilder sb = new StringBuilder();
-						sb.append(refStr);
-						sb.append("<");
-						boolean needsComma = false;
-						int count = jObject.getTypeVariables().size();
-						for (int i = 0; i < count; i++) {
-							if (needsComma) {
-								sb.append(", ");
-							} else {
-								needsComma = true;
-							}
-							sb.append(unknownProducer.getUnknown());
-						}
-						sb.append(">");
+						StringBuilder sb = buildParameterizedType(jObject, refStr);
 						return sb.toString();
 					}
 				}
@@ -222,5 +209,23 @@ class TypeUsageProducer {
 				}
 			}
 		};
+	}
+
+	private StringBuilder buildParameterizedType(JObject jObject, String refStr) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(refStr);
+		sb.append("<");
+		boolean needsComma = false;
+		int count = jObject.getTypeVariables().size();
+		for (int i = 0; i < count; i++) {
+			if (needsComma) {
+				sb.append(", ");
+			} else {
+				needsComma = true;
+			}
+			sb.append(unknownProducer.getUnknown());
+		}
+		sb.append(">");
+		return sb;
 	}
 }

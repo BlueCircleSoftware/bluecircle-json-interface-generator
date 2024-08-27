@@ -20,7 +20,7 @@ package com.bluecirclesoft.open.jigen.typescript;
 /**
  * TODO document me
  */
-class UnknownProducer {
+public class UnknownProducer {
 
 	private final Options options;
 

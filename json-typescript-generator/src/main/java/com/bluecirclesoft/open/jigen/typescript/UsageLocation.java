@@ -21,4 +21,5 @@ package com.bluecirclesoft.open.jigen.typescript;
  */
 public enum UsageLocation {
 	DEFINITION,
-	USAGE}
+	USAGE
+}

@@ -17,13 +17,14 @@
 
 package com.bluecirclesoft.open.jigen.jakartaee;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * TODO document me
@@ -31,27 +32,27 @@ import java.util.Map;
 @Path("/complex")
 public class ComplexService {
 
-    @GET
-    @Path("/getMapSS")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public Map<String, String> getMapSS() {
-        return new HashMap<>();
-    }
+	@GET
+	@Path("/getMapSS")
+	@Consumes("application/json")
+	@Produces("application/json")
+	public Map<String, String> getMapSS() {
+		return new HashMap<>();
+	}
 
-    @GET
-    @Path("/getVoid")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public void getVoid() {
+	@GET
+	@Path("/getVoid")
+	@Consumes("application/json")
+	@Produces("application/json")
+	public void getVoid() {
 
-    }
+	}
 
-    @GET
-    @Path("/getVoid2/{a}/{b}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public void getVoid2(@PathParam("a") int a, @PathParam("b") String b) {
+	@GET
+	@Path("/getVoid2/{a}/{b}")
+	@Consumes("application/json")
+	@Produces("application/json")
+	public void getVoid2(@PathParam("a") int a, @PathParam("b") String b) {
 
-    }
+	}
 }

@@ -18,7 +18,7 @@ package com.bluecirclesoft.open.jigen;
 
 import java.util.regex.Pattern;
 
-public class Regexes {
+public final class Regexes {
 
 	public static final Pattern COMMA_SEPARATOR = Pattern.compile("\\s+,\\s+");
 
@@ -27,4 +27,7 @@ public class Regexes {
 	public static final Pattern SPACE_SEPARATOR = Pattern.compile("\\s+");
 
 	public static final Pattern DOT = Pattern.compile("\\.");
+
+	private Regexes() {
+	}
 }

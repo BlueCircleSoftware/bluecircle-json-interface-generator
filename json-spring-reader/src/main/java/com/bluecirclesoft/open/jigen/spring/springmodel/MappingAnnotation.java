@@ -29,9 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AliasFor;
 
+import lombok.Getter;
+
 /**
  * TODO document me
  */
+@Getter
 public class MappingAnnotation {
 
 	private static final Logger log = LoggerFactory.getLogger(MappingAnnotation.class);
@@ -53,8 +56,8 @@ public class MappingAnnotation {
 		this.annotationClass = annotationClass;
 	}
 
-	public static String namify(Class annotationClass) {
-		return annotationClass.getPackage().getName().equals("org.springframework.web.bind.annotation") ? annotationClass.getSimpleName() :
+	public static String namify(Class<?> annotationClass) {
+		return "org.springframework.web.bind.annotation".equals(annotationClass.getPackage().getName()) ? annotationClass.getSimpleName() :
 				annotationClass.getName();
 	}
 
@@ -72,8 +75,9 @@ public class MappingAnnotation {
 			for (Annotation ann : annotationClass.getAnnotations()) {
 				if (globalAnnotationMap.containsAnnotation(ann.annotationType())) {
 					if (foundMapping) {
-						log.warn("RequestMapping annotation " + ann + " found on annotation class " + annotationClass + ", but another " +
-								"RequestMapping annotation " + parent.getAnnotationClass() + " was already found - ignoring this class");
+						log.warn(
+								"RequestMapping annotation {} found on annotation class {}, but another RequestMapping annotation {} was already found - ignoring this class",
+								ann, annotationClass, parent.getAnnotationClass());
 					} else {
 						foundMapping = true;
 						log.debug("Looking at annotation {}", ann);
@@ -115,45 +119,14 @@ public class MappingAnnotation {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder("MappingAnnotation{");
-		sb.append("\n  annotationClass=").append(annotationClass);
-		sb.append(",\n  defaults=").append(defaults);
-		sb.append(",\n  aliasMap=").append(aliasMap);
-		sb.append(",\n  parent=").append(parent);
-		sb.append(",\n  filling=").append(filling);
-		sb.append(",\n  filled=").append(filled);
-		sb.append("\n}");
-		return sb.toString();
+		return "MappingAnnotation{" + "\n  annotationClass=" + annotationClass + ",\n  defaults=" + defaults + ",\n  aliasMap=" + aliasMap +
+				",\n  parent=" + parent + ",\n  filling=" + filling + ",\n  filled=" + filled + "\n}";
 	}
 
-	public AnnotationInstance createInstance(Annotation ann, GlobalAnnotationMap map) {
+	public static AnnotationInstance createInstance(Annotation ann, GlobalAnnotationMap map) {
 		AnnotationInstance instance = new AnnotationInstance(map.getAnnotation(ann.annotationType()));
 		instance.ingest(ann, map);
 		return instance;
-	}
-
-	public Class<? extends Annotation> getAnnotationClass() {
-		return annotationClass;
-	}
-
-	public AnnotationInstance getDefaults() {
-		return defaults;
-	}
-
-	public Map<String, Set<String>> getAliasMap() {
-		return aliasMap;
-	}
-
-	public MappingAnnotation getParent() {
-		return parent;
-	}
-
-	public boolean isFilling() {
-		return filling;
-	}
-
-	public boolean isFilled() {
-		return filled;
 	}
 
 	public Set<String> getAliasesFor(String s) {

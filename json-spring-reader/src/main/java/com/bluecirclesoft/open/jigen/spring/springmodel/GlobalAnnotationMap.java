@@ -20,16 +20,15 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -46,19 +45,19 @@ public class GlobalAnnotationMap {
 	private final Map<Class<? extends Annotation>, MappingAnnotation> map = new LinkedHashMap<>();
 
 	public void ingestAnnotations(String... packageNamesArr) {
-		Map<String, Reflections> scannerCache = new HashMap<>();
 
-		List<String> packageNames = new ArrayList<>();
+		Collection<String> packageNames = new ArrayList<>();
 		packageNames.add("org.springframework");
 		packageNames.addAll(Arrays.asList(packageNamesArr));
 		boolean foundNew;
+		Map<String, Reflections> scannerCache = new HashMap<>();
 		do {
 			foundNew = false;
 			for (String packageName : packageNames) {
 				log.debug("Scanning package {} for @RequestMappings", packageName);
 				Reflections reflections = scannerCache.computeIfAbsent(packageName, (p) -> new Reflections(
 						new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(p))
-								.setScanners(new TypeAnnotationsScanner(), new SubTypesScanner())));
+								.setScanners(Scanners.TypesAnnotated, Scanners.SubTypes)));
 
 				Deque<Class<?>> finderQueue = new ArrayDeque<>();
 				finderQueue.add(RequestMapping.class);
@@ -112,7 +111,7 @@ public class GlobalAnnotationMap {
 
 	public AnnotationInstance getInstance(Annotation ann) {
 		MappingAnnotation ma = getAnnotation(ann.annotationType());
-		return ma.createInstance(ann, this);
+		return MappingAnnotation.createInstance(ann, this);
 	}
 
 	public Set<Class<? extends Annotation>> getAllAnnotations() {

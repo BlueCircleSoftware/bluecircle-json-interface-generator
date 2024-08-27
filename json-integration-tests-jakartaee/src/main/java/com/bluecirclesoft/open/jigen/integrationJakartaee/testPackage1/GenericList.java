@@ -19,28 +19,18 @@ package com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage1;
 
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * A generic list
  */
+@Setter
+@Getter
 public class GenericList<T> {
 
 	private List<T> list;
 
 	private boolean more;
 
-	public List<T> getList() {
-		return list;
-	}
-
-	public void setList(List<T> list) {
-		this.list = list;
-	}
-
-	public boolean isMore() {
-		return more;
-	}
-
-	public void setMore(boolean more) {
-		this.more = more;
-	}
 }

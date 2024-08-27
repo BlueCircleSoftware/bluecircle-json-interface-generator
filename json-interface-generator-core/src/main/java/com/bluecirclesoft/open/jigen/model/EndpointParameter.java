@@ -18,9 +18,13 @@ package com.bluecirclesoft.open.jigen.model;
 
 import java.io.Serializable;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Holds relevant information about a web service method parameter.
  */
+@Getter
 public class EndpointParameter implements Serializable {
 
 	public enum NetworkType {
@@ -34,12 +38,29 @@ public class EndpointParameter implements Serializable {
 		JSON_BODY
 	}
 
+	/**
+	 * -- GETTER --
+	 * Get the name that should be used for this parameter in code (i.e., JavaScript/TypeScript/whatever parameter name)
+	 */
 	private final String codeName;
 
+	/**
+	 * -- GETTER --
+	 * Get the name for the parameter as it gets transmitted over the network (as a query parameter, form parameter, etc.)
+	 */
 	private final String networkName;
 
+	/**
+	 * -- GETTER --
+	 * Get the type of this parameter
+	 */
+	@Setter
 	private JType type;
 
+	/**
+	 * -- GETTER --
+	 * Get the method that should be used to transmit this parameter over the network
+	 */
 	private final NetworkType networkType;
 
 	public EndpointParameter(String codeName, String networkName, JType type, NetworkType networkType) {
@@ -47,46 +68,6 @@ public class EndpointParameter implements Serializable {
 		this.networkName = networkName;
 		this.type = type;
 		this.networkType = networkType;
-	}
-
-	/**
-	 * Get the name that should be used for this parameter in code (i.e., JavaScript/TypeScript/whatever parameter name)
-	 *
-	 * @return the code name
-	 */
-	public String getCodeName() {
-		return codeName;
-	}
-
-	/**
-	 * Get the name for the parameter as it gets transmitted over the network (as a query parameter, form parameter, etc.)
-	 *
-	 * @return the network name
-	 */
-	public String getNetworkName() {
-		return networkName;
-	}
-
-	public void setType(JType type) {
-		this.type = type;
-	}
-
-	/**
-	 * Get the type of this parameter
-	 *
-	 * @return the type
-	 */
-	public JType getType() {
-		return type;
-	}
-
-	/**
-	 * Get the method that should be used to transmit this parameter over the network
-	 *
-	 * @return the network type
-	 */
-	public NetworkType getNetworkType() {
-		return networkType;
 	}
 
 	@Override

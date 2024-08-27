@@ -18,19 +18,16 @@
 package com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage1.p12;
 
 import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage1.p11.ClassA;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class ClassB {
 
 	private ClassA a;
 
-	public ClassA getA() {
-		return a;
-	}
-
-	public void setA(ClassA a) {
-		this.a = a;
-	}
 }

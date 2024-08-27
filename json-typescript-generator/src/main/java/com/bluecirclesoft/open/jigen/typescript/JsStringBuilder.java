@@ -17,36 +17,45 @@
 package com.bluecirclesoft.open.jigen.typescript;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.lang3.text.translate.AggregateTranslator;
-import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
-import org.apache.commons.lang3.text.translate.EntityArrays;
-import org.apache.commons.lang3.text.translate.JavaUnicodeEscaper;
-import org.apache.commons.lang3.text.translate.LookupTranslator;
+import org.apache.commons.text.translate.AggregateTranslator;
+import org.apache.commons.text.translate.CharSequenceTranslator;
+import org.apache.commons.text.translate.EntityArrays;
+import org.apache.commons.text.translate.JavaUnicodeEscaper;
+import org.apache.commons.text.translate.LookupTranslator;
 
 /**
  * <p>Build a JavaScript/TypeScript string by assembling a bunch of components, some of which may be literals, and some of which may be code
  * snippets.  Adjacent literal components will be concatenated into one large literal.
  * </p>
  * So, for example
- * <code>
+ * {@code
  * JsStringBuilder jsb = new JsStringBuilder();
  * jsb.addCode("a");
  * jsb.addLiteral("b");
  * jsb.addLiteral("c");
  * jsb.addCode("d");
- * </code>
+ * }
  * will produce the following output:
- * <code>
+ * {@code
  * a+"bc"+d
- * </code>
+ * }
  */
 public class JsStringBuilder {
 
+	private static final Map<CharSequence, CharSequence> myXlat = new HashMap<>();
+
+	static {
+		myXlat.put("\"", "\\\"");
+		myXlat.put("\\", "\\\\");
+	}
+
 	private static final CharSequenceTranslator ESCAPE_ECMASCRIPT =
-			new AggregateTranslator(new LookupTranslator(new String[][]{{"\"", "\\\""}, {"\\", "\\\\"}}),
-					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()), JavaUnicodeEscaper.outsideOf(32, 127));
+			new AggregateTranslator(new LookupTranslator(myXlat), new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE),
+					JavaUnicodeEscaper.outsideOf(32, 127));
 
 	/**
 	 * For each component, is it literal?

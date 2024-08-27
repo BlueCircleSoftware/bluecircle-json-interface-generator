@@ -19,9 +19,14 @@ package com.bluecirclesoft.open.jigen.model;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Represents the TypeScript specialization (a type with type variables, that has its variables bound to specific types)
  */
+@Setter
+@Getter
 public class JSpecialization extends JType {
 
 	private JType base;
@@ -33,27 +38,14 @@ public class JSpecialization extends JType {
 		return visitor.visit(this);
 	}
 
-	public JType getBase() {
-		return base;
-	}
-
-	public void setBase(JType base) {
-		this.base = base;
-	}
-
-	public JType[] getParameters() {
-		return parameters;
-	}
-
-	public void setParameters(JType[] parameters) {
-		this.parameters = parameters;
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("base", base)
-				.append("parameters", parameters)
-				.toString();
+		return new ToStringBuilder(this).append("base", base).append("parameters", parameters).toString();
 	}
 
 	@Override

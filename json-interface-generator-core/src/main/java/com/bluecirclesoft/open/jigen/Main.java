@@ -18,7 +18,9 @@ package com.bluecirclesoft.open.jigen;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,15 +41,14 @@ public final class Main {
 	private static void usage() {
 		System.err.println("Usage:");
 		System.err.println("  jigen [--config <config file>]");
-		System.err.println("");
+		System.err.println();
 		System.err.println("  --config <config file>         specify config file (default ./jig-config.yaml)");
-		System.err.println("");
+		System.err.println();
 	}
 
-	public static void main(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
-
-		List<ModelCreator> modellers = new ArrayList<>();
-		List<CodeProducer> producers = new ArrayList<>();
+	public static void main(String[] args)
+			throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException,
+			NoSuchMethodException {
 
 		File configFile = null;
 
@@ -77,27 +78,29 @@ public final class Main {
 
 		// check arguments
 		List<String> errors = new ArrayList<>();
+		Collection<ModelCreator<?>> modellers = new ArrayList<>();
 		for (Map.Entry<String, Object> reader : config.getReaderEntries().entrySet()) {
 			String processorName = reader.getKey();
 			Object o = findClass(processorName, "Reader");
-			ModelCreator modeller = (ModelCreator) o;
+			ModelCreator<?> modeller = (ModelCreator<?>) o;
 			modellers.add(modeller);
 			config.configureOneProcessor(errors, modeller, "readers", reader.getKey());
 		}
 
-		if (modellers.size() == 0) {
+		if (modellers.isEmpty()) {
 			errors.add("No readers specified in config");
 		}
 
+		Collection<CodeProducer<?>> producers = new ArrayList<>();
 		for (Map.Entry<String, Object> reader : config.getWriterEntries().entrySet()) {
 			String processorName = reader.getKey();
 			Object o = findClass(processorName, "Writer");
-			CodeProducer producer = (CodeProducer) o;
+			CodeProducer<?> producer = (CodeProducer<?>) o;
 			producers.add(producer);
 			config.configureOneProcessor(errors, producer, "writers", reader.getKey());
 		}
 
-		if (producers.size() == 0) {
+		if (producers.isEmpty()) {
 			errors.add("No writers specified in config");
 		}
 
@@ -105,11 +108,11 @@ public final class Main {
 
 		Model model = new Model();
 		// apply processors
-		for (ModelCreator modeller : modellers) {
+		for (ModelCreator<?> modeller : modellers) {
 			modeller.model(model);
 		}
 		model.doGlobalCleanups();
-		for (CodeProducer producer : producers) {
+		for (CodeProducer<?> producer : producers) {
 			producer.output(model);
 		}
 	}
@@ -127,23 +130,24 @@ public final class Main {
 	}
 
 	private static Object findClass(String processorName, String className)
-			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		Class creatorClass;
+			throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException,
+			InvocationTargetException {
+		Class<?> creatorClass;
 		if (processorName.indexOf(".") > 0) {
 			creatorClass = Class.forName(processorName);
 		} else {
 			creatorClass = Class.forName(JIG_COMMON_PACKAGE + processorName + "." + className);
 		}
-		return creatorClass.newInstance();
+		return creatorClass.getConstructor().newInstance();
 	}
 
-	private static void handleErrors(List<String> errors) {
-		if (errors.size() > 0) {
+	private static void handleErrors(Collection<String> errors) {
+		if (!errors.isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			for (String err : errors) {
 				builder.append("ERROR: ").append(err).append("\n");
 			}
-			System.err.println(builder.toString());
+			System.err.println(builder);
 			usage();
 			System.exit(1);
 		}

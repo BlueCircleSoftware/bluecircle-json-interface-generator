@@ -22,9 +22,14 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This type is for a named type variable
  */
+@Setter
+@Getter
 public class JTypeVariable extends JType {
 
 	private String name;
@@ -35,25 +40,14 @@ public class JTypeVariable extends JType {
 		this.name = name;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<JType> getIntersectionBounds() {
-		return intersectionBounds;
-	}
-
-	public void setIntersectionBounds(List<JType> intersectionBounds) {
-		this.intersectionBounds = intersectionBounds;
-	}
-
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override

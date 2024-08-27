@@ -17,18 +17,16 @@
 
 package com.bluecirclesoft.open.jigen.integrationJee7.typeVar;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
-abstract public class ABase {
+@Setter
+@Getter
+public abstract class ABase {
 
 	private int x;
 
-	public int getX() {
-		return x;
-	}
-
-	public void setX(int x) {
-		this.x = x;
-	}
 }

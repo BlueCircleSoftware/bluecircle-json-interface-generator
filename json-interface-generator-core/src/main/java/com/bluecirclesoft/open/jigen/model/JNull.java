@@ -28,6 +28,11 @@ public class JNull extends JType {
 	}
 
 	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
+	}
+
+	@Override
 	public boolean needsWrapping() {
 		return false;
 	}

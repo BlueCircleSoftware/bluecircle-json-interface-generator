@@ -23,9 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JArray;
@@ -39,7 +41,7 @@ import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
-import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
+import com.bluecirclesoft.open.jigen.model.JTypeVisitorVoid;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
@@ -47,7 +49,9 @@ import com.bluecirclesoft.open.jigen.model.JWildcard;
 /**
  * TODO document me
  */
-class TypeDeclarationProducer implements JTypeVisitor<Integer> {
+class TypeDeclarationProducer implements JTypeVisitorVoid {
+
+	private static final Pattern DOT = Pattern.compile(".", Pattern.LITERAL);
 
 	private final TSFileWriter writer;
 
@@ -71,28 +75,28 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 	}
 
 	@Override
-	public Integer visit(JObject jObject) {
+	public void visit(JObject jObject) {
 		makeInterfaceDeclaration(jObject);
-		return null;
+
 	}
 
 	@Override
-	public Integer visit(JAny jAny) {
-		return null;
+	public void visit(JAny jAny) {
+
 	}
 
 	@Override
-	public Integer visit(JArray jArray) {
-		return null;
+	public void visit(JArray jArray) {
+
 	}
 
 	@Override
-	public Integer visit(JBoolean jBoolean) {
-		return null;
+	public void visit(JBoolean jBoolean) {
+
 	}
 
 	@Override
-	public Integer visit(JEnum jEnum) {
+	public void visit(JEnum jEnum) {
 		writer.line();
 		String name = jEnum.getName();
 		// emit enum
@@ -125,66 +129,64 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.line(name + "_values[\"" + StringEscapeUtils.escapeEcmaScript(value.getSerializedValue()) + "\"] = " + name + "." +
 					value.getName() + ";");
 		}
-		return null;
+
 	}
 
 	@Override
-	public Integer visit(JNumber jNumber) {
-		return null;
+	public void visit(JNumber jNumber) {
+
 	}
 
 	@Override
-	public Integer visit(JString jString) {
-		return null;
+	public void visit(JString jString) {
+
 	}
 
 	@Override
-	public Integer visit(JVoid jVoid) {
-		return null;
+	public void visit(JVoid jVoid) {
+
 	}
 
 	@Override
-	public Integer visit(JSpecialization jSpecialization) {
-		return null;
+	public void visit(JSpecialization jSpecialization) {
+
 	}
 
 	@Override
-	public Integer visit(JTypeVariable jTypeVariable) {
-		return null;
+	public void visit(JTypeVariable jTypeVariable) {
+
 	}
 
 	@Override
-	public Integer visit(JMap jMap) {
-		return null;
+	public void visit(JMap jMap) {
+
 	}
 
 	@Override
-	public Integer visit(JUnionType jUnionType) {
-		return null;
+	public void visit(JUnionType jUnionType) {
+
 	}
 
 	@Override
-	public Integer visit(JNull jNull) {
-		return null;
+	public void visit(JNull jNull) {
+
 	}
 
 	@Override
-	public Integer visit(JWildcard jWildcard) {
-		return null;
+	public void visit(JWildcard jWildcard) {
+
 	}
 
 
 	private void makeInterfaceDeclaration(JObject intf) {
 		String interfaceLabel = intf.getName();
 
-		Set<String> subTypeValues = null;
-
 		String definterfaceType = intf.accept(
 				new TypeVariableProducer(UsageLocation.DEFINITION, null, unknownProducer, intf.getContainingNamespace(), writer));
 		TypeUsageProducer typeUsageProducer = new TypeUsageProducer(options, TypeUsageProducer.UseImmutableSuffix.NO);
 		writer.line();
 		StringBuilder declLine = new StringBuilder("export interface " + definterfaceType);
-		if (intf.getSuperclasses().size() > 0) {
+		if (!intf.getSuperclasses().isEmpty()) {
 			declLine.append(" extends ");
 			boolean needsComma = false;
 			for (Map.Entry<String, JObject> entry : intf.getSuperclasses().entrySet()) {
@@ -205,6 +207,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		//    doubleA?: string | null | undefined;
 		// where doubleA is specified as undefined by both the question mark and the type union. But
 		// if we don't, it can't propagate down to type parameters, etc.  So I'm okay with it.
+		Set<String> subTypeValues = null;
 		for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
 			String makeOptional = "";
 			String typeString;
@@ -241,8 +244,8 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		String unknownTypeVars = "";
 		if (!intf.getTypeVariables().isEmpty()) {
 			StringBuilder typeVarsBuilder = new StringBuilder();
-			StringBuilder unknownTypeVarsBuilder = new StringBuilder();
 			typeVarsBuilder.append('<');
+			StringBuilder unknownTypeVarsBuilder = new StringBuilder();
 			unknownTypeVarsBuilder.append('<');
 			boolean needsComma = false;
 			for (JTypeVariable var : intf.getTypeVariables()) {
@@ -304,15 +307,13 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 				writer.line("return " + intf.getNewObjectJson() + ";");
 				writer.indentOut();
 				writer.line("}");
-				writer.indentOut();
-				writer.line("}");
 			} else {
 				writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " {");
 				writer.indentIn();
 				writer.line("return " + intf.getNewObjectJson() + ";");
-				writer.indentOut();
-				writer.line("}");
 			}
+			writer.indentOut();
+			writer.line("}");
 		} else {
 			if (hasTypeDiscriminator) {
 				writer.line("export function make" + makeTypeVars + "(initial: Omit<" + interfaceLabel + typeVars + ", \"" +
@@ -408,7 +409,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			writer.indentOut();
 			writer.line("}");
 			for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
-				AccessorProducer accessorProducer = new AccessorProducer(prop.getKey(), writer, options, intf.getContainingNamespace());
+				JTypeVisitorVoid accessorProducer = new AccessorProducer(prop.getKey(), writer, options, intf.getContainingNamespace());
 				prop.getValue().getType().accept(accessorProducer);
 			}
 			writer.indentOut();
@@ -416,7 +417,7 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 		}
 	}
 
-	private String createTypeRegex(Set<String> subTypeStrings) {
+	private static String createTypeRegex(Iterable<String> subTypeStrings) {
 		StringBuilder result = new StringBuilder();
 		result.append("^(");
 		boolean needsBar = false;
@@ -426,16 +427,16 @@ class TypeDeclarationProducer implements JTypeVisitor<Integer> {
 			} else {
 				needsBar = true;
 			}
-			result.append(string.replace(".", "\\."));
+			result.append(DOT.matcher(string).replaceAll(Matcher.quoteReplacement("\\.")));
 		}
 		result.append(")$");
 		return result.toString();
 	}
 
-	private Set<String> collectTypeValues(JObject intf) {
+	private static Set<String> collectTypeValues(JObject intf) {
 		ArrayDeque<JObject> queue = new ArrayDeque<>();
-		Set<String> result = new LinkedHashSet<>();
 		queue.add(intf);
+		Set<String> result = new LinkedHashSet<>();
 		while (!queue.isEmpty()) {
 			JObject obj = queue.pollFirst();
 			if (obj == null) {

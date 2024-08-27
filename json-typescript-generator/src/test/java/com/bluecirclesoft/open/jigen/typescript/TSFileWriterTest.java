@@ -21,6 +21,8 @@ import java.io.File;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,26 +32,26 @@ import org.junit.Test;
  */
 public class TSFileWriterTest {
 
+	private static final Pattern SLASH = Pattern.compile("/", Pattern.LITERAL);
+
 	@Test
 	public void testRelativize() {
 		FileSystem defaultFs = FileSystems.getDefault();
-		Path p1;
-		Path p2;
 
-		p1 = defaultFs.getPath("./x.txt");
-		p2 = defaultFs.getPath("./y.txt");
-		Assert.assertEquals(fixPath("./y.txt"), TSFileWriter.relativize(p1, p2).toString());
+		Path p1 = defaultFs.getPath("./x.txt");
+		Path p2 = defaultFs.getPath("./y.txt");
+		Assert.assertEquals(fixPath("./y.txt"), TSFileWriter.relativize(p1, p2));
 
 		p1 = defaultFs.getPath("/a/a/x.txt");
 		p2 = defaultFs.getPath("/a/a/y.txt");
-		Assert.assertEquals(fixPath("./y.txt"), TSFileWriter.relativize(p1, p2).toString());
+		Assert.assertEquals(fixPath("./y.txt"), TSFileWriter.relativize(p1, p2));
 
 		p1 = defaultFs.getPath("/a/a/x.txt");
 		p2 = defaultFs.getPath("/a/b/y.txt");
-		Assert.assertEquals(fixPath("../b/y.txt"), TSFileWriter.relativize(p1, p2).toString());
+		Assert.assertEquals(fixPath("../b/y.txt"), TSFileWriter.relativize(p1, p2));
 	}
 
-	private String fixPath(String s) {
-		return s.replace("/", File.separator);
+	private static String fixPath(String s) {
+		return SLASH.matcher(s).replaceAll(Matcher.quoteReplacement(File.separator));
 	}
 }

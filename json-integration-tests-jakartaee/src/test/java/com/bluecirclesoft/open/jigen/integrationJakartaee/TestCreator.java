@@ -17,6 +17,8 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee;
 
+import java.util.Objects;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -66,7 +68,6 @@ public class TestCreator {
 
 
 	public static void generate(int pCount, String testName) {
-		StringBuilder serviceClass = new StringBuilder();
 		StringBuilder testClass = new StringBuilder();
 		String serviceName = Character.toUpperCase(testName.charAt(0)) + testName.substring(1);
 		String methodPrefix = Character.toLowerCase(testName.charAt(0)) + testName.substring(1);
@@ -74,6 +75,7 @@ public class TestCreator {
 
 		createTestHeader(serviceName, testClass);
 
+		StringBuilder serviceClass = new StringBuilder();
 		createServiceHeader(serviceClass, serviceName, methodPrefix);
 
 		TestDto testParam = new TestDto();
@@ -101,15 +103,15 @@ public class TestCreator {
 
 		createTestFooter(testClass);
 
-		log.info("Service class:\n{}", serviceClass.toString());
-		log.info("Test class:\n{}", testClass.toString());
+		log.info("Service class:\n{}", serviceClass);
+		log.info("Test class:\n{}", testClass);
 	}
 
 	private static void createServiceHeader(StringBuilder serviceClass, String serviceName, String methodPrefix) {
-		serviceClass.append("@Path(\"/" + methodPrefix + "\")\n");
+		serviceClass.append(String.format("@Path(\"/%s\")\n", methodPrefix));
 		serviceClass.append("@Stateless\n");
-		serviceClass.append("public class " + serviceName + " {\n");
-		serviceClass.append("\tprivate static final Logger log = LoggerFactory.getLogger(" + serviceName + ".class);\n");
+		serviceClass.append(String.format("public class %s {\n", serviceName));
+		serviceClass.append(String.format("\tprivate static final Logger log = LoggerFactory.getLogger(%s.class);\n", serviceName));
 		serviceClass.append("\n");
 		serviceClass.append("\t@Context\n");
 		serviceClass.append("\tprivate HttpServletResponse response;\n");
@@ -147,7 +149,7 @@ public class TestCreator {
 				resultObject.append(paramObject);
 			} else {
 				String pVal = "p" + i;
-				testClass.append("'" + pVal + "'");
+				testClass.append(String.format("'%s'", pVal));
 				resultObject.appendAll(pVal);
 			}
 			testClass.append(", ");
@@ -198,40 +200,37 @@ public class TestCreator {
 		formSearch:
 		for (int param : params) {
 			ParamType paramType = ParamType.values()[param];
-			switch (paramType) {
-				case FORM:
-					hasFormParam = true;
-					break formSearch;
+			if (Objects.requireNonNull(paramType) == ParamType.FORM) {
+				hasFormParam = true;
+				break;
 			}
 		}
 
 		for (int paramNum = 0; paramNum < params.length; paramNum++) {
 			int param = params[paramNum];
 			ParamType paramType = ParamType.values()[param];
-			switch (paramType) {
-				case PATH:
-					path.append("/{p").append(paramNum).append("}");
-					break;
+			if (Objects.requireNonNull(paramType) == ParamType.PATH) {
+				path.append("/{p").append(paramNum).append("}");
 			}
 		}
 		String plist = makeServicesParameterList(params);
 		serviceClass.append("\n");
 		serviceClass.append("\t@OPTIONS\n");
-		serviceClass.append("\t@Path(\"" + path.toString() + "\")\n");
+		serviceClass.append(String.format("\t@Path(\"%s\")\n", path));
 		if (hasFormParam) {
 			serviceClass.append("\t@Consumes(MediaType.APPLICATION_FORM_URLENCODED)\n");
 		} else {
 			serviceClass.append("\t@Consumes(MediaType.APPLICATION_JSON)\n");
 		}
 		serviceClass.append("\t@Produces(MediaType.APPLICATION_JSON)\n");
-		serviceClass.append("\tpublic Response " + testMethod + "Options(" + makeServicesOptionsParameterList(params) + ") {\n");
-		serviceClass.append("\t\tlog.info(\"Called " + testMethod + "Options\");\n");
+		serviceClass.append(String.format("\tpublic Response %sOptions(%s) {\n", testMethod, makeServicesOptionsParameterList(params)));
+		serviceClass.append(String.format("\t\tlog.info(\"Called %sOptions\");\n", testMethod));
 		serviceClass.append("\t\tsetCORSHeaders();\n");
 		serviceClass.append("\t\treturn Response.ok().build();\n");
 		serviceClass.append("\t}\n");
 		serviceClass.append("\n");
 		serviceClass.append("\t@").append(httpMethod.name()).append("\n");
-		serviceClass.append("\t@Path(\"").append(path.toString()).append("\")\n");
+		serviceClass.append("\t@Path(\"").append(path).append("\")\n");
 		if (hasFormParam) {
 			serviceClass.append("\t@Consumes(MediaType.APPLICATION_FORM_URLENCODED)\n");
 		} else {
@@ -241,7 +240,7 @@ public class TestCreator {
 		serviceClass.append("\tpublic TestDto ").append(testMethod).append("(");
 		serviceClass.append(plist);
 		serviceClass.append(") {\n");
-		serviceClass.append("\t\tlog.info(\"Called " + testMethod + "\");\n");
+		serviceClass.append(String.format("\t\tlog.info(\"Called %s\");\n", testMethod));
 		serviceClass.append("\t\tsetCORSHeaders();\n");
 		serviceClass.append("\t\treturn MergeHelper.merge(");
 		boolean needsComma = false;
@@ -262,28 +261,28 @@ public class TestCreator {
 		for (int paramNum = 0; paramNum < params.length; paramNum++) {
 			int param = params[paramNum];
 			ParamType paramType = ParamType.values()[param];
-			String p = "";
+			StringBuilder p = new StringBuilder();
 			switch (paramType) {
 				case BODY:
 					break;
 				case FORM:
-					p = "@FormParam(\"p" + paramNum + "\") ";
+					p.append(String.format("@FormParam(\"p%d\") ", paramNum));
 					break;
 				case PATH:
-					p = "@PathParam(\"p" + paramNum + "\") ";
+					p.append(String.format("@PathParam(\"p%d\") ", paramNum));
 					break;
 				case QUERY:
-					p = "@QueryParam(\"p" + paramNum + "\") ";
+					p.append(String.format("@QueryParam(\"p%d\") ", paramNum));
 					break;
 				default:
 					throw new RuntimeException("Unhandled parameter type " + paramType);
 			}
 			if (paramType.canBeObject) {
-				p += "TestDto p" + paramNum;
+				p.append(String.format("TestDto p%d", paramNum));
 			} else {
-				p += "String p" + paramNum;
+				p.append(String.format("String p%d", paramNum));
 			}
-			comma.add(p);
+			comma.add(p.toString());
 		}
 		return comma.get();
 	}

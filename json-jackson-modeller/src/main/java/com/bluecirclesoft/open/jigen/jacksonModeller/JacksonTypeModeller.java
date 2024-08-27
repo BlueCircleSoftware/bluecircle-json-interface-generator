@@ -72,6 +72,7 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonNumberFormatVisitor
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonStringFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 /**
@@ -92,6 +93,7 @@ import lombok.Getter;
  */
 public class JacksonTypeModeller implements PropertyEnumerator {
 
+	@EqualsAndHashCode
 	private static class FixupQueueItem implements Comparable<FixupQueueItem> {
 
 		@Getter
@@ -137,7 +139,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	/**
 	 * Types that are intrinsic to TypeScript
 	 */
-	private static final Map<Class, Supplier<JType>> FUNDAMENTAL_TYPES = new HashMap<>();
+	private static final Map<Class<?>, Supplier<JType>> FUNDAMENTAL_TYPES = new HashMap<>();
 
 	static {
 		FUNDAMENTAL_TYPES.put(Void.class, JVoid::new);
@@ -182,7 +184,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 	private final ClassOverrideHandler classOverrides;
 
-	private final boolean includeSubclasses;
+	private final IncludeSubclasses includeSubclasses;
 
 	private final String[] packagesToScan;
 
@@ -191,7 +193,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	/**
 	 * Create a modeller.
 	 */
-	public JacksonTypeModeller(ClassOverrideHandler classOverrides, JEnum.EnumType defaultEnumType, boolean includeSubclasses,
+	public JacksonTypeModeller(ClassOverrideHandler classOverrides, JEnum.EnumType defaultEnumType, IncludeSubclasses includeSubclasses,
 	                           String[] packagesToScan) {
 		assert defaultEnumType != null;
 		assert packagesToScan != null;
@@ -202,7 +204,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		this.includeSubclasses = includeSubclasses;
 		this.packagesToScan = packagesToScan;
 
-		if (includeSubclasses) {
+		if (includeSubclasses == IncludeSubclasses.INCLUDE) {
 			subclassFinder = reflectionsCache.getReflections(packagesToScan);
 		} else {
 			subclassFinder = null;
@@ -269,7 +271,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			try {
 				model.addType(sourcedType.getType(), handleType(sourcedType));
 			} catch (Throwable t) {
-				throw new RuntimeException("Exception while processing " + sourcedType.fullDescription());
+				throw new RuntimeException("Exception while processing " + sourcedType.fullDescription(), t);
 			}
 		}
 		// apply fixups
@@ -293,7 +295,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		return result;
 	}
 
-	private void applyFixups(Model model, PriorityQueue<FixupQueueItem> typeCleanups) {
+	private static void applyFixups(Model model, PriorityQueue<? extends FixupQueueItem> typeCleanups) {
 		while (!typeCleanups.isEmpty()) {
 			FixupQueueItem fixup = typeCleanups.poll();
 			if (fixup != null) {
@@ -325,7 +327,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			// MyType<T extends InterfaceA & InterfaceB>, then InterfaceA and InterfaceB will be in the 'intersectionBounds'. This can be
 			// represented in TypeScript, and the syntax is the same.
 			logger.debug("is TypeVariable");
-			TypeVariable variable = (TypeVariable) type;
+			TypeVariable<?> variable = (TypeVariable<?>) type;
 			JTypeVariable jVariable = new JTypeVariable(variable.getName());
 			// if the bound is only Object, we're going to ignore it
 			if (variable.getBounds().length != 1 || variable.getBounds()[0] != Object.class) {
@@ -396,7 +398,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		} else if (type instanceof Class) {
 			// Case 3: class (non-generic, plain vanilla)
 			logger.debug("is Class");
-			Class cl = (Class) type;
+			Class<?> cl = (Class<?>) type;
 			if (cl.isArray()) {
 				// array: A[] -> Array<A>
 				logger.debug("is array");
@@ -408,7 +410,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 			} else {
 				if (classOverrides.containsKey(cl)) {
 					// substitute class.  If the user created a cycle, sorry.
-					Class classOverride = classOverrides.get(cl);
+					Class<?> classOverride = classOverrides.get(cl);
 					return handleType(new SourcedType(classOverride, "Class override of " + cl, sourcedType));
 				} else if (FUNDAMENTAL_TYPES.containsKey(type)) {
 					// built-in type: int -> number, etc
@@ -417,10 +419,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				} else {
 					// everything else -> interface
 					logger.debug("is user-defined class");
-					if (includeSubclasses) {
-						enqueueSubclasses((Class) type, sourcedType);
+					if (includeSubclasses == IncludeSubclasses.INCLUDE) {
+						enqueueSubclasses((Class<?>) type, sourcedType);
 					}
-					return handleUserDefinedClass((Class) type, sourcedType);
+					return handleUserDefinedClass((Class<?>) type, sourcedType);
 				}
 			}
 		} else {
@@ -459,7 +461,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		return base instanceof Class && Collection.class.isAssignableFrom((Class<?>) base);
 	}
 
-	private JType handleUserDefinedClass(Class type, SourcedType parent) {
+	private JType handleUserDefinedClass(Class<?> type, SourcedType parent) {
 
 		// Run a Jackson JsonFormatVisitor over our class, let it process all the object properties, and return the resulting JType.
 		TypeReadingVisitor<?> reader;
@@ -518,7 +520,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				public void enumTypes(Set<String> enums) {
 					reader = () -> {
 						Class<?> rawClass = type.getRawClass();
-						return buildEnum((Class<Enum<?>>) rawClass);
+						return buildEnum(rawClass);
 					};
 				}
 			};
@@ -590,10 +592,10 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		}
 	}
 
-	private JEnum buildEnum(Class<Enum<?>> rawClass) {
+	private JEnum buildEnum(Class<?> rawClass) {
 		JEnum.EnumType enumType = null;
 		List<JEnum.EnumDeclaration> entries = new ArrayList<>();
-		Enum<?>[] constants = rawClass.getEnumConstants();
+		Enum<?>[] constants = (Enum<?>[]) rawClass.getEnumConstants();
 		Map<String, Enum<?>> usedValues = new HashMap<>();
 		for (Enum<?> enumConstant : constants) {
 

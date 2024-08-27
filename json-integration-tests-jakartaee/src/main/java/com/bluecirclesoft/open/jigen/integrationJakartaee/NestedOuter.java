@@ -17,9 +17,14 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class NestedOuter {
 
 	private NestedInner a;
@@ -30,35 +35,4 @@ public class NestedOuter {
 
 	private String d;
 
-	public NestedInner getA() {
-		return a;
-	}
-
-	public void setA(NestedInner a) {
-		this.a = a;
-	}
-
-	public NestedInner getB() {
-		return b;
-	}
-
-	public void setB(NestedInner b) {
-		this.b = b;
-	}
-
-	public int getC() {
-		return c;
-	}
-
-	public void setC(int c) {
-		this.c = c;
-	}
-
-	public String getD() {
-		return d;
-	}
-
-	public void setD(String d) {
-		this.d = d;
-	}
 }

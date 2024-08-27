@@ -39,7 +39,7 @@ public class LogSetupTest {
 		setUpLogging();
 	}
 
-	public void setUpLogging() {
+	public static void setUpLogging() {
 		synchronized (LogSetupTest.class) {
 			if (!setupDone) {
 				setupDone = true;

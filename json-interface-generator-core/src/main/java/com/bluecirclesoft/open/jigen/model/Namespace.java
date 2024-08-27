@@ -71,7 +71,37 @@ public class Namespace implements Serializable {
 	private Namespace() {
 	}
 
-	public static Namespace namespacifyModel(Model model, boolean stripCommonNamespaces) {
+	public static Namespace namespacifyModel(Model model, StripCommonNamespaces stripCommonNamespaces) {
+		Namespace top = getNamespace(model);
+
+		for (Endpoint endpoint : model.getEndpoints()) {
+			String name = endpoint.getId();
+			String[] brokenName = Regexes.DOT.split(name);
+			String finalName = brokenName[brokenName.length - 1];
+			Namespace containingName = top;
+			for (int i = 0; i < brokenName.length - 1; i++) {
+				containingName = containingName.findSubNamespace(brokenName[i]);
+			}
+			endpoint.setId(finalName);
+			containingName.addEndpoint(endpoint);
+		}
+
+		if (stripCommonNamespaces == StripCommonNamespaces.STRIP) {
+			// strip common namespaces
+			while (top.getNamespaces().size() == 1 && top.isDeclarationsEmpty()) {
+				top = top.getNamespaces().get(0);
+			}
+
+			top.setContainingNamespace(null);
+		}
+
+		// Sort namespaces for stability of output
+		top.sort();
+
+		return top;
+	}
+
+	private static Namespace getNamespace(Model model) {
 		Namespace top = new Namespace();
 
 		for (JType thing : model.getInterfaces()) {
@@ -88,31 +118,6 @@ public class Namespace implements Serializable {
 				containingName.addDeclaration(tlType);
 			}
 		}
-
-		for (Endpoint endpoint : model.getEndpoints()) {
-			String name = endpoint.getId();
-			String[] brokenName = Regexes.DOT.split(name);
-			String finalName = brokenName[brokenName.length - 1];
-			Namespace containingName = top;
-			for (int i = 0; i < brokenName.length - 1; i++) {
-				containingName = containingName.findSubNamespace(brokenName[i]);
-			}
-			endpoint.setId(finalName);
-			containingName.addEndpoint(endpoint);
-		}
-
-		if (stripCommonNamespaces) {
-			// strip common namespaces
-			while (top.getNamespaces().size() == 1 && top.isDeclarationsEmpty()) {
-				top = top.getNamespaces().get(0);
-			}
-
-			top.setContainingNamespace(null);
-		}
-
-		// Sort namespaces for stability of output
-		top.sort();
-
 		return top;
 	}
 
@@ -165,14 +170,14 @@ public class Namespace implements Serializable {
 		return conjoin(defaultFolder, separator, null);
 	}
 
-	public File conjoin(File defaultFolder, String separator, String suffix) {
+	public File conjoin(File defaultFolder, CharSequence separator, String suffix) {
 		if (file != null) {
 			return file;
 		}
 
 		Deque<Namespace> lineage = getContainerLineage();
 
-		String joinedName = lineage.stream().map(n -> n.name).collect(Collectors.joining(separator));
+		String joinedName = lineage.stream().map(Namespace::getName).collect(Collectors.joining(separator));
 		if (suffix != null) {
 			joinedName = joinedName + suffix;
 		}
@@ -204,21 +209,26 @@ public class Namespace implements Serializable {
 		return result;
 	}
 
-	public String conjoin(String separator) {
+	public String conjoin(CharSequence separator) {
 		Deque<Namespace> lineage = getContainerLineage();
 
-		return lineage.stream().map(n -> n.name).collect(Collectors.joining(separator));
+		return lineage.stream().map(Namespace::getName).collect(Collectors.joining(separator));
 	}
 
 	private Deque<Namespace> getContainerLineage() {
 		Deque<Namespace> lineage = new ArrayDeque<>();
 		Namespace ns = this;
 		while (ns != null) {
-			if (StringUtils.isNotBlank(ns.name)) {
+			if (StringUtils.isNotBlank(ns.getName())) {
 				lineage.addFirst(ns);
 			}
-			ns = ns.containingNamespace;
+			ns = ns.getContainingNamespace();
 		}
 		return lineage;
+	}
+
+	@Override
+	public String toString() {
+		return "Namespace{" + "name='" + getName() + '\'' + '}';
 	}
 }

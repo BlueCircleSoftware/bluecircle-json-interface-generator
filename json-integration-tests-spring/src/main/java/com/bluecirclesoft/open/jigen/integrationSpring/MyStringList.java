@@ -18,18 +18,16 @@ package com.bluecirclesoft.open.jigen.integrationSpring;
 
 import java.io.Serializable;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class MyStringList implements Serializable {
 
 	private String[] list;
 
-	public String[] getList() {
-		return list;
-	}
-
-	public void setList(String[] list) {
-		this.list = list;
-	}
 }

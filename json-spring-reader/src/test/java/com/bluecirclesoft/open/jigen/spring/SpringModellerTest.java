@@ -16,7 +16,6 @@
 
 package com.bluecirclesoft.open.jigen.spring;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -35,7 +34,7 @@ import com.bluecirclesoft.open.jigen.model.Model;
 public class SpringModellerTest {
 
 	@Test
-	public void testModeller() throws IOException {
+	public void testModeller() {
 
 		ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
 
@@ -63,7 +62,7 @@ public class SpringModellerTest {
 		}
 	}
 
-	private int sizeof(Iterable<?> iterable) {
+	private static int sizeof(Iterable<?> iterable) {
 		if (iterable instanceof Collection) {
 			return ((Collection<?>) iterable).size();
 		} else {

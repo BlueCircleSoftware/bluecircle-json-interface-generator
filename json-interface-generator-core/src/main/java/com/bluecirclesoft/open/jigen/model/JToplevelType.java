@@ -16,9 +16,12 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import lombok.Setter;
+
 /**
  * Base class for types that are defined at top level (namely, objects and enums).
  */
+@Setter
 public abstract class JToplevelType extends JType {
 
 	private Namespace containingNamespace;
@@ -33,12 +36,8 @@ public abstract class JToplevelType extends JType {
 		return containingNamespace;
 	}
 
-	public void setContainingNamespace(Namespace containingNamespace) {
-		this.containingNamespace = containingNamespace;
-	}
+	public abstract String getName();
 
-	abstract public String getName();
-
-	abstract public void setName(String name);
+	public abstract void setName(String name);
 
 }

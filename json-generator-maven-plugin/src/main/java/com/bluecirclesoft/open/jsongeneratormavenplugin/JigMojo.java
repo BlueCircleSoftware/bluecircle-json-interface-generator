@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -66,11 +67,11 @@ public class JigMojo extends AbstractMojo {
 	public void execute() throws MojoExecutionException {
 		try {
 			getLog().info("generate-interfaces run starting");
-			Set<URL> urls = new HashSet<>();
 
 			// add user's project classpath to my own
-			List<String> elements = new ArrayList<>(project.getCompileClasspathElements());
+			Collection<String> elements = new ArrayList<>(project.getCompileClasspathElements());
 			elements.addAll(project.getRuntimeClasspathElements());
+			Set<URL> urls = new HashSet<>();
 			for (String element : elements) {
 				urls.add(new File(element).toURI().toURL());
 			}

@@ -15,9 +15,14 @@
  */
 package com.bluecirclesoft.open.jigen.integrationSpring;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Test json response
  */
+@Setter
+@Getter
 public class JsonResponse {
 
 	private String doubleA;
@@ -26,30 +31,6 @@ public class JsonResponse {
 
 	private String doubleBoth;
 
-
-	public String getDoubleA() {
-		return doubleA;
-	}
-
-	public void setDoubleA(String doubleA) {
-		this.doubleA = doubleA;
-	}
-
-	public String getDoubleB() {
-		return doubleB;
-	}
-
-	public void setDoubleB(String doubleB) {
-		this.doubleB = doubleB;
-	}
-
-	public String getDoubleBoth() {
-		return doubleBoth;
-	}
-
-	public void setDoubleBoth(String doubleBoth) {
-		this.doubleBoth = doubleBoth;
-	}
 
 	@Override
 	public String toString() {

@@ -20,7 +20,10 @@ package com.bluecirclesoft.open.jigen.integrationSpring;
 /**
  * Use the stack to get the name of the current/calling function
  */
-class CallerFinder {
+final class CallerFinder {
+
+	private CallerFinder() {
+	}
 
 	/**
 	 * Get the name of the function that called this function (function is called 'getMyName' because in the context of the caller, the

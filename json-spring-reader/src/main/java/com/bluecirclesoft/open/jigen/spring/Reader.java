@@ -23,9 +23,11 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,9 +36,7 @@ import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -52,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.bluecirclesoft.open.jigen.ClassOverrideHandler;
 import com.bluecirclesoft.open.jigen.ModelCreator;
 import com.bluecirclesoft.open.jigen.annotations.Generate;
+import com.bluecirclesoft.open.jigen.jacksonModeller.IncludeSubclasses;
 import com.bluecirclesoft.open.jigen.jacksonModeller.JacksonTypeModeller;
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.EndpointParameter;
@@ -60,6 +61,7 @@ import com.bluecirclesoft.open.jigen.model.JAny;
 import com.bluecirclesoft.open.jigen.model.JEnum;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.model.PropertyEnumerator;
 import com.bluecirclesoft.open.jigen.model.SourcedType;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
 import com.bluecirclesoft.open.jigen.spring.springmodel.AnnotationInstance;
@@ -72,9 +74,9 @@ public class Reader implements ModelCreator<Options> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
-	private static final Map<RequestMethod, HttpMethod> httpMethodMap = new HashMap<>();
+	private static final Map<RequestMethod, HttpMethod> httpMethodMap = new EnumMap<>(RequestMethod.class);
 
-	private static final Set<HttpMethod> jsonnableMethods = new HashSet<>();
+	private static final Collection<HttpMethod> jsonnableMethods = EnumSet.noneOf(HttpMethod.class);
 
 	private static class MethodInfo {
 
@@ -82,9 +84,9 @@ public class Reader implements ModelCreator<Options> {
 
 		boolean producer;
 
-		Method method;
+		final Method method;
 
-		SpringRequestInfo springRequestInfo;
+		final SpringRequestInfo springRequestInfo;
 
 		MethodInfo(Method method, SpringRequestInfo springRequestInfo) {
 			this.method = method;
@@ -113,7 +115,7 @@ public class Reader implements ModelCreator<Options> {
 
 	private Options options;
 
-	private ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
+	private final ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
 
 	private JEnum.EnumType defaultEnumType = JEnum.EnumType.NUMERIC;
 
@@ -192,7 +194,7 @@ public class Reader implements ModelCreator<Options> {
 		return reflections.getTypesAnnotatedWith(Generate.class);
 	}
 
-	private Model createModel(String... packageNames) {
+	private void createModel(String... packageNames) {
 
 		assert packageNames != null;
 		assert packageNames.length > 0;
@@ -202,7 +204,7 @@ public class Reader implements ModelCreator<Options> {
 		Map<Method, MethodInfo> annotatedMethods = new HashMap<>();
 		for (String packageName : packageNames) {
 			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageName))
-					.setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner()));
+					.setScanners(Scanners.MethodsAnnotated, Scanners.TypesAnnotated, Scanners.SubTypes));
 
 			Set<Method> allMethods = findRequestMappingMethods(reflections);
 			for (Method method : allMethods) {
@@ -230,8 +232,8 @@ public class Reader implements ModelCreator<Options> {
 
 			SourcedType generatedSource = new SourcedType(null, "@Generate annotation search", null);
 			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
-				JacksonTypeModeller modeller =
-						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
+				PropertyEnumerator modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType,
+						options.isIncludeSubclasses() ? IncludeSubclasses.INCLUDE : IncludeSubclasses.EXCLUDE, packageNames);
 				modeller.readOneType(model, new SourcedType(generatedClass, String.valueOf(generatedClass), generatedSource));
 			}
 		}
@@ -249,7 +251,6 @@ public class Reader implements ModelCreator<Options> {
 			}
 		}
 
-		return model;
 	}
 
 	/**
@@ -276,9 +277,9 @@ public class Reader implements ModelCreator<Options> {
 		SpringRequestInfo springRequestInfo = methodInfo.springRequestInfo;
 		String methodPath = methodInfo.springRequestInfo.path;
 
-		Set<HttpMethod> httpMethods = new HashSet<>(methodInfo.springRequestInfo.methods);
+		Iterable<HttpMethod> httpMethods = EnumSet.copyOf(methodInfo.springRequestInfo.methods);
 
-		List<MethodParameter> parameters = new ArrayList<>();
+		Collection<MethodParameter> parameters = new ArrayList<>();
 
 		boolean usedMyOneGuess = false;
 		for (Parameter p : method.getParameters()) {
@@ -348,8 +349,8 @@ public class Reader implements ModelCreator<Options> {
 
 		JType outType = null;
 		if (methodInfo.producer) {
-			JacksonTypeModeller modeller =
-					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
+			PropertyEnumerator modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType,
+					options.isIncludeSubclasses() ? IncludeSubclasses.INCLUDE : IncludeSubclasses.EXCLUDE, packageNames);
 
 			Type genericReturnType = method.getGenericReturnType();
 			// in Spring, we want to check the return type to see if it extends HttpEntity. In the model, we are concerned about the body
@@ -378,20 +379,20 @@ public class Reader implements ModelCreator<Options> {
 				outType = modeller.readOneType(model, new SourcedType(genericReturnType, "Return type of method " + method, methodSource));
 			}
 		} else {
-			JacksonTypeModeller modeller =
-					new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
+			PropertyEnumerator modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType,
+					options.isIncludeSubclasses() ? IncludeSubclasses.INCLUDE : IncludeSubclasses.EXCLUDE, packageNames);
 			outType = modeller.readOneType(model, new SourcedType(String.class, "Return type of method " + method, methodSource));
 		}
 
 
 		for (HttpMethod httpMethod : httpMethods) {
-			String suffix = "";
+			StringBuilder suffix = new StringBuilder();
 			SuffixInfo suffixInfo = detector.getSuffixInfo(method, httpMethod);
 			if (suffixInfo.isNeedsMethod()) {
-				suffix = suffix + "_" + httpMethod.name();
+				suffix.append(String.format("_%s", httpMethod.name()));
 			}
 			if (suffixInfo.getCount() != null) {
-				suffix = suffix + "_" + suffixInfo.getCount();
+				suffix.append(String.format("_%d", suffixInfo.getCount()));
 			}
 			String endpointName = method.getDeclaringClass().getName() + "." + method.getName() + suffix;
 			Endpoint endpoint = model.createEndpoint(endpointName);
@@ -400,8 +401,8 @@ public class Reader implements ModelCreator<Options> {
 			endpoint.setConsumes(springRequestInfo.consumes == null ? null : springRequestInfo.consumes.toString());
 			endpoint.setProduces(springRequestInfo.produces == null ? null : springRequestInfo.produces.toString());
 			for (MethodParameter methodParameter : parameters) {
-				JacksonTypeModeller modeller =
-						new JacksonTypeModeller(classOverrideHandler, defaultEnumType, options.isIncludeSubclasses(), packageNames);
+				PropertyEnumerator modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType,
+						options.isIncludeSubclasses() ? IncludeSubclasses.INCLUDE : IncludeSubclasses.EXCLUDE, packageNames);
 				endpoint.getParameters()
 						.add(new EndpointParameter(methodParameter.getCodeName(), methodParameter.getNetworkName(),
 								modeller.readOneType(model, new SourcedType(methodParameter.getType(),
@@ -424,7 +425,7 @@ public class Reader implements ModelCreator<Options> {
 		}
 	}
 
-	private String determinePathVariable(String path) {
+	private static String determinePathVariable(String path) {
 
 		int start = path.indexOf("{");
 		int end = path.indexOf("}", start);
@@ -448,8 +449,8 @@ public class Reader implements ModelCreator<Options> {
 		AnnotationInstance method = annotationMap.getInstance(mappingAnn);
 		logger.debug("Read method annotation {}", method);
 
-		Class toAdd = m.getDeclaringClass();
-		List<AnnotationInstance> typeHierarchy = new ArrayList<>();
+		Class<?> toAdd = m.getDeclaringClass();
+		Collection<AnnotationInstance> typeHierarchy = new ArrayList<>();
 		while (toAdd != Object.class) {
 			Annotation classMappingAnn = getMappingAnnotation(toAdd, toAdd.getAnnotations());
 			if (classMappingAnn != null) {
@@ -460,7 +461,7 @@ public class Reader implements ModelCreator<Options> {
 			toAdd = toAdd.getSuperclass();
 		}
 
-		List<AnnotationInstance> totalHierarchy = new ArrayList<>();
+		Collection<AnnotationInstance> totalHierarchy = new ArrayList<>();
 		totalHierarchy.add(method);
 		totalHierarchy.addAll(typeHierarchy);
 
@@ -520,7 +521,7 @@ public class Reader implements ModelCreator<Options> {
 			return result;
 		} else {
 			// translate HTTP methods and filter out the ones irrelevant to JSON
-			Set<HttpMethod> methods = new HashSet<>();
+			Set<HttpMethod> methods = EnumSet.noneOf(HttpMethod.class);
 			for (RequestMethod springMethod : methodSet) {
 				HttpMethod hMethod = httpMethodMap.get(springMethod);
 				if (hMethod != null && jsonnableMethods.contains(hMethod)) {
@@ -540,7 +541,7 @@ public class Reader implements ModelCreator<Options> {
 			}
 		};
 
-		if (producesSet != null && producesSet.size() > 0) {
+		if (producesSet != null && !producesSet.isEmpty()) {
 			for (String contentType : producesSet) {
 				producesTest.accept(result, contentType);
 			}
@@ -584,8 +585,8 @@ public class Reader implements ModelCreator<Options> {
 				if (mappingAnn == null) {
 					mappingAnn = ann;
 				} else {
-					logger.warn("Found another RequestMapping annotation on method {}: {}. It will not override the already-found {}",
-							new Object[]{m, ann, mappingAnn});
+					logger.warn("Found another RequestMapping annotation on method {}: {}. It will not override the already-found {}", m,
+							ann, mappingAnn);
 				}
 			}
 		}
@@ -607,18 +608,18 @@ public class Reader implements ModelCreator<Options> {
 	}
 
 	@Override
-	public void acceptOptions(Options options, List<String> errors) {
-		this.options = options;
-		classOverrideHandler.ingestOverrides(options.getClassSubstitutions());
-		if (options.getPackages() == null || options.getPackages().isEmpty()) {
+	public void acceptOptions(Object options, List<? super String> errors) {
+		this.options = (Options) options;
+		classOverrideHandler.ingestOverrides(this.options.getClassSubstitutions());
+		if (this.options.getPackages() == null || this.options.getPackages().isEmpty()) {
 			errors.add("Package name to process is required.");
 		} else {
-			if (options.isDefaultStringEnums()) {
+			if (this.options.isDefaultStringEnums()) {
 				defaultEnumType = JEnum.EnumType.STRING;
 			} else {
 				defaultEnumType = JEnum.EnumType.NUMERIC;
 			}
-			packageNames = options.getPackages().toArray(new String[0]);
+			packageNames = this.options.getPackages().toArray(new String[0]);
 		}
 	}
 }

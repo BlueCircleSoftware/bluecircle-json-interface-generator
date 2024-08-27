@@ -16,30 +16,19 @@
 
 package com.bluecirclesoft.open.jigen.integrationJee7;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Test json request
  */
+@Setter
+@Getter
 public class JsonRequest {
 
 	private String a;
 
 	private String b;
-
-	public String getA() {
-		return a;
-	}
-
-	public void setA(String a) {
-		this.a = a;
-	}
-
-	public String getB() {
-		return b;
-	}
-
-	public void setB(String b) {
-		this.b = b;
-	}
 
 	@Override
 	public String toString() {

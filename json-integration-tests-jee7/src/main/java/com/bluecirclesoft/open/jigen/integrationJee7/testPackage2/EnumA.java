@@ -20,5 +20,7 @@ package com.bluecirclesoft.open.jigen.integrationJee7.testPackage2;
  * TODO document me
  */
 public enum EnumA {
-	ONE, TWO, THREE
+	ONE,
+	TWO,
+	THREE
 }

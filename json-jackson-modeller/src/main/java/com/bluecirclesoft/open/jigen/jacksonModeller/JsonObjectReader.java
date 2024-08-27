@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 
@@ -103,9 +104,8 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			return null;
 		}
 		try {
-			ObjectMapper mapper = new ObjectMapper();
 			// sort for output stability
-			mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+			JsonMapper mapper = JsonMapper.builder().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true).build();
 			return mapper.writeValueAsString(newInstance);
 		} catch (JsonProcessingException e) {
 			logger.warn("Error creating JSON for new {} (path {})", clazz.getName(), parent.fullDescription(), e);
@@ -122,10 +122,12 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	private static String getTypeDiscriminatorValueFor(Class<?> clazz, BeanProperty property) {
 		Object newInstance;
 		try {
-			newInstance = clazz.newInstance();
+			newInstance = clazz.getConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			logger.warn("Error instantiating class {}", clazz.getName(), e);
 			return null;
+		} catch (NoSuchMethodException | InvocationTargetException e) {
+			throw new RuntimeException(e);
 		}
 		try {
 			return (String) property.getMember().getValue(newInstance);
@@ -141,7 +143,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	 *
 	 * @param jType the type
 	 */
-	private void doubleCheckEmptyJson(JObject jType, Class<?> clazz) {
+	private static void doubleCheckEmptyJson(JObject jType, Class<?> clazz) {
 		String newObjectJson = jType.getNewObjectJson();
 		if (newObjectJson != null) {
 			try {
@@ -193,7 +195,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 
 		// if it's a Java primitive, override 'required'
 		boolean required;
-		if (type instanceof Class && ((Class) type).isPrimitive()) {
+		if (type instanceof Class && ((Class<?>) type).isPrimitive()) {
 			required = true;
 		} else {
 			required = beanProperty.isRequired();

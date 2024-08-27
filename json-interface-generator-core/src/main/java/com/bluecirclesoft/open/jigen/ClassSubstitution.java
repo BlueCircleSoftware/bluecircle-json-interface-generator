@@ -18,10 +18,14 @@
 package com.bluecirclesoft.open.jigen;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class ClassSubstitution {
 
 	@JsonProperty(required = true)
@@ -30,19 +34,4 @@ public class ClassSubstitution {
 	@JsonProperty(required = true)
 	private String replaceWith;
 
-	public String getIfSeen() {
-		return ifSeen;
-	}
-
-	public void setIfSeen(String ifSeen) {
-		this.ifSeen = ifSeen;
-	}
-
-	public String getReplaceWith() {
-		return replaceWith;
-	}
-
-	public void setReplaceWith(String replaceWith) {
-		this.replaceWith = replaceWith;
-	}
 }

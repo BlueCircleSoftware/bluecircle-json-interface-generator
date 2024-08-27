@@ -23,11 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -35,7 +32,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.bluecirclesoft.open.jigen.integrationSpring.testPackage1.GenericList;
@@ -55,8 +51,8 @@ public class TestServicesObject {
 	private static final Logger log = LoggerFactory.getLogger(TestServicesObject.class);
 
 	@PostMapping(path = "/doubleUpBody", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	JsonResponse doubleUpBody(@RequestBody JsonRequest x) {
+	@ResponseBody
+	public JsonResponse doubleUpBody(@RequestBody JsonRequest x) {
 		log.info("Inside doubleUpBody, x = {}", x);
 		JsonResponse jsonResponse = new JsonResponse();
 		jsonResponse.setDoubleA(x.getA() + x.getA());
@@ -66,8 +62,8 @@ public class TestServicesObject {
 	}
 
 	@PostMapping(path = "/doubleUpNested", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	NestedOuter doubleUpNested(@RequestBody NestedOuter x) {
+	@ResponseBody
+	public NestedOuter doubleUpNested(@RequestBody NestedOuter x) {
 		log.info("Inside doubleUpNested, x = {}", x);
 		NestedOuter response = new NestedOuter();
 		response.setA(x.getA());
@@ -78,8 +74,8 @@ public class TestServicesObject {
 	}
 
 	@GetMapping(path = "/getClassC", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	ClassC getClassC() {
+	@ResponseBody
+	public ClassC getClassC() {
 		log.info("Inside getClassC");
 		ClassC response = new ClassC();
 		response.setB(new ClassB());
@@ -88,8 +84,8 @@ public class TestServicesObject {
 	}
 
 	@GetMapping(path = "/getClassB", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	com.bluecirclesoft.open.jigen.integrationSpring.testPackage2.ClassB getClassB() {
+	@ResponseBody
+	public com.bluecirclesoft.open.jigen.integrationSpring.testPackage2.ClassB getClassB() {
 		log.info("Inside getClassB");
 
 		com.bluecirclesoft.open.jigen.integrationSpring.testPackage2.ClassA a1 =
@@ -133,8 +129,8 @@ public class TestServicesObject {
 	}
 
 	@GetMapping(path = "/getGenericListOfInt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody
-	GenericList<Integer> getGenericListOfInt() {
+	@ResponseBody
+	public GenericList<Integer> getGenericListOfInt() {
 		log.info("Inside getGenericListOfInt");
 		GenericList<Integer> result = new GenericList<>();
 		List<Integer> l = new ArrayList<>();

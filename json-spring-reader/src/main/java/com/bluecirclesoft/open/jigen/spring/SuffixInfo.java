@@ -16,26 +16,17 @@
 
 package com.bluecirclesoft.open.jigen.spring;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * TODO document me
  */
+@Getter
+@AllArgsConstructor
 public class SuffixInfo {
 
-	private boolean needsMethod;
+	private final boolean needsMethod;
 
-	private Integer count;
-
-	public SuffixInfo(boolean needsMethod, Integer count) {
-		this.needsMethod = needsMethod;
-		this.count = count;
-	}
-
-	public boolean isNeedsMethod() {
-		return needsMethod;
-	}
-
-	public Integer getCount() {
-		return count;
-	}
-
+	private final Integer count;
 }

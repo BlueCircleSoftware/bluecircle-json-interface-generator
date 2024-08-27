@@ -17,7 +17,6 @@
 package com.bluecirclesoft.open.jigen;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -27,13 +26,13 @@ public class ClassOverrideHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ClassOverrideHandler.class);
 
-	private Map<Class, Class> overrideClasses = new HashMap<>();
+	private final Map<Class<?>, Class<?>> overrideClasses = new HashMap<>();
 
-	public void ingestOverrides(List<ClassSubstitution> substitutionList) {
+	public void ingestOverrides(Iterable<? extends ClassSubstitution> substitutionList) {
 		try {
 			for (ClassSubstitution override : substitutionList) {
-				Class fromClass = Class.forName(override.getIfSeen());
-				Class toClass = Class.forName(override.getReplaceWith());
+				Class<?> fromClass = Class.forName(override.getIfSeen());
+				Class<?> toClass = Class.forName(override.getReplaceWith());
 				if (overrideClasses.containsKey(fromClass)) {
 					log.warn("Duplicate class override: {}", fromClass);
 				}
@@ -45,11 +44,11 @@ public class ClassOverrideHandler {
 	}
 
 
-	public boolean containsKey(Class cl) {
+	public boolean containsKey(Class<?> cl) {
 		return overrideClasses.containsKey(cl);
 	}
 
-	public Class get(Class cl) {
+	public Class<?> get(Class<?> cl) {
 		return overrideClasses.get(cl);
 	}
 }

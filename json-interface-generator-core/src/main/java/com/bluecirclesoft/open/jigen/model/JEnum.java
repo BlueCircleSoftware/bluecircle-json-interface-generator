@@ -18,17 +18,22 @@
 package com.bluecirclesoft.open.jigen.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Models a TypeScript enum.
  * <p>There is a semi-weird complication with enums, in that in Jackson, you can use {@code @JsonProperty} to change the serialization
  * value of the enum. What should we do with this information? Here's the executive decision: when building the TypeScript enum, give the
- * enunm constants the same name as their Java counterparts.  When building the reverse-lookup table, use the serialized values.
+ * enum constants the same name as their Java counterparts.  When building the reverse-lookup table, use the serialized values.
  * </p>
  */
+@Getter
 public class JEnum extends JToplevelType {
 
 	/**
@@ -39,6 +44,7 @@ public class JEnum extends JToplevelType {
 		NUMERIC
 	}
 
+	@Getter
 	public static class EnumDeclaration {
 
 		private final String name;
@@ -53,50 +59,29 @@ public class JEnum extends JToplevelType {
 			this.serializedValue = serializedValue;
 		}
 
-		public String getName() {
-			return name;
-		}
-
-		public int getNumericValue() {
-			return numericValue;
-		}
-
-		public String getSerializedValue() {
-			return serializedValue;
-		}
 	}
 
+	@Setter
 	private String name;
 
 	private final EnumType enumType;
 
 	private final List<EnumDeclaration> values = new ArrayList<>();
 
-	public JEnum(String name, EnumType enumType, List<EnumDeclaration> values) {
+	public JEnum(String name, EnumType enumType, Collection<EnumDeclaration> values) {
 		this.name = name;
 		this.enumType = enumType;
 		this.values.addAll(values);
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<EnumDeclaration> getValues() {
-		return values;
-	}
-
-	public EnumType getEnumType() {
-		return enumType;
-	}
-
 	@Override
 	public <T> T accept(JTypeVisitor<T> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public void accept(JTypeVisitorVoid visitor) {
+		visitor.visit(this);
 	}
 
 	@Override

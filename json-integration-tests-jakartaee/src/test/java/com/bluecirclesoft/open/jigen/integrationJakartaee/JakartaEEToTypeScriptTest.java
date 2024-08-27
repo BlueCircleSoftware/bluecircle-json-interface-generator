@@ -44,7 +44,7 @@ import com.bluecirclesoft.open.jigen.typescript.Writer;
 
 /**
  * Test the Java EE -> TypeScript translation.
- * <p></p>
+ * <p>
  * Define some test services, deploy them in WildFly, and try to invoke them through the generated TypeScript.
  */
 @RunWith(Arquillian.class)
@@ -104,7 +104,7 @@ public class JakartaEEToTypeScriptTest {
 		TestHelper.system("../node_modules/.bin/karma start --baseUrl " + baseRestUrl);
 	}
 
-	private com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
+	private static com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
 		com.bluecirclesoft.open.jigen.typescript.Options options = new com.bluecirclesoft.open.jigen.typescript.Options();
 		options.setProduceImmutables(true);
 		options.setUseUnknown(true);
@@ -113,13 +113,13 @@ public class JakartaEEToTypeScriptTest {
 		return options;
 	}
 
-	private Options makeInputOptions(String p) {
+	private static Options makeInputOptions(String p) {
 		Options options = new Options();
 		options.setPackages(Collections.singletonList(p));
 		return options;
 	}
 
-	private void doubleCheckServer(String baseRestUrl) {
+	private static void doubleCheckServer(String baseRestUrl) {
 		TestHelper.system("curl --fail-with-body -v " + baseRestUrl + "/testServicesString/serviceCheck");
 	}
 

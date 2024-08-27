@@ -17,36 +17,21 @@
 
 package com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage2;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ClassC<T, U> {
 
 	private T t;
 
 	private U u;
-
-	public ClassC() {
-	}
-
-	public ClassC(T t, U u) {
-		this.t = t;
-		this.u = u;
-	}
-
-	public T getT() {
-		return t;
-	}
-
-	public void setT(T t) {
-		this.t = t;
-	}
-
-	public U getU() {
-		return u;
-	}
-
-	public void setU(U u) {
-		this.u = u;
-	}
 }

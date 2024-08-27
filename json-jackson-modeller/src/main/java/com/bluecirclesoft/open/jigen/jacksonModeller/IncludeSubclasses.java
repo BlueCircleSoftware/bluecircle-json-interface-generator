@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Blue Circle Software, LLC
+ * Copyright 2024 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package testp1.p12;
+package com.bluecirclesoft.open.jigen.jacksonModeller;
 
 /**
  * TODO document me
  */
-public class ClassC {
-
-	private ClassB b;
-
-	public ClassB getB() {
-		return b;
-	}
-
-	public void setB(ClassB b) {
-		this.b = b;
-	}
+public enum IncludeSubclasses {
+	INCLUDE,
+	EXCLUDE
 }

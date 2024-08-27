@@ -16,43 +16,43 @@ BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript in
 
 ## What is BC-JIG for? What's the intended use case?
 
-BC-JIG eliminates the need to maintain a separate document describing the API of a Java server, by reflecting upon the server and 
+BC-JIG eliminates the need to maintain a separate document describing the API of a Java server, by reflecting upon the server and
 producing stubs in other languages (TypeScript at the moment).
 
-This is highly useful for projects that have a server, written in Java, that has client(s) that are **tightly bound** to 
+This is highly useful for projects that have a server, written in Java, that has client(s) that are **tightly bound** to
 the server. Tightly bound could mean:
 
 * Whenever the server is deployed, the clients are always deployed as well, or
 * You can't imagine multiple clients using different versions of an API, or
 * The server's services are internal to the app. Nobody else would use them, nor would you want them to.
 
-Basically, this project is for RESTful Java services that are meant to be internal, and the client and server are updated in lock-step. 
-The best example consumer of BC-JIG is a single-page app where the backend is Java, the frontend is TypeScript, and the API used by the 
+Basically, this project is for RESTful Java services that are meant to be internal, and the client and server are updated in lock-step.
+The best example consumer of BC-JIG is a single-page app where the backend is Java, the frontend is TypeScript, and the API used by the
 frontend needs to be rebuilt when the Java is rebuilt.
 
 Also, BC-JIG is extensible: you can implement your own
-[ModelCreator](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/ModelCreator.java) that produces a 
-[Model](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/model/Model.java), and/or implement a 
-[CodeProducer](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/CodeProducer.java) that receives the Model and 
-produces stubs in whatever target language you choose. 
+[ModelCreator](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/ModelCreator.java) that produces a
+[Model](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/model/Model.java), and/or implement a
+[CodeProducer](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/CodeProducer.java) that receives the Model and
+produces stubs in whatever target language you choose.
 
 ## What is BC-JIG *not*?
 
-It is most assuredly *not* [Swagger](https://swagger.io/) or OpenAPI. The scope of Swagger is much different and much more broad.  BC-JIG
-is intended as an inside-the-project tool. 
+It is most assuredly *not* [Swagger](https://swagger.io/) or OpenAPI. The scope of Swagger is much different and much more broad. BC-JIG
+is intended as an inside-the-project tool.
 
 It is also not [JSON Schema](https://json-schema.org/). BC-JIG is about producing JSON that maps (more or less) to Java objects. There are
-many things you can express using JSON Schema that Java would not be able to understand, 
+many things you can express using JSON Schema that Java would not be able to understand,
 [and vice versa.](https://github.com/json-schema-org/json-schema-org.github.io/issues/148)
 
 It is also probably not going to be a good fit for servers other than Java, for a couple of reasons:
 
-* The internal model is built on a sort of synthesis of the Java type system, the TypeScript type system, and the capabilities of JSON. 
-Java's and TypeScript's type systems have quite a bit of synergy, especially when it comes to generics. But, the further afield a server 
-language gets from the Java type system, the worse the fit with the internal model.
-* The Java readers rely on reflection to easily determine the endpoints, and [Jackson](https://github.com/FasterXML/jackson) to inspect 
-the parameters/return types and determine the JSON structure to be sent along the wire. If you can't reflect upon the server, then you'll
- spend a lot of time maintaining a separate document that describes the API, and, well, you might as well be using Swagger at that point.
+* The internal model is built on a sort of synthesis of the Java type system, the TypeScript type system, and the capabilities of JSON.
+  Java's and TypeScript's type systems have quite a bit of synergy, especially when it comes to generics. But, the further afield a server
+  language gets from the Java type system, the worse the fit with the internal model.
+* The Java readers rely on reflection to easily determine the endpoints, and [Jackson](https://github.com/FasterXML/jackson) to inspect
+  the parameters/return types and determine the JSON structure to be sent along the wire. If you can't reflect upon the server, then you'll
+  spend a lot of time maintaining a separate document that describes the API, and, well, you might as well be using Swagger at that point.
 
 ## What does it look like?
 
@@ -144,13 +144,14 @@ Using the Maven plugin:
 ### Maven
 
 The Maven plugin works as follows:
+
 1. You specify a number of Java EE and/or Spring reader instances, and a number of TypeScript writer instances.
-2. These reader instances introspect the Java code finding endpoints and classes, and put all these together into one common "model" 
+2. These reader instances introspect the Java code finding endpoints and classes, and put all these together into one common "model"
    (see [Model.java](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/model/Model.java)).
 3. The plugin will then output the entire model using each writer instance.
 
-If you want to output different sets of classes to different folders, or other stuff that doesn't fall into the workflow above, you 
-probably want to have multiple executions of the plugin. Each execution will only ever give you one model, which is written out in its 
+If you want to output different sets of classes to different folders, or other stuff that doesn't fall into the workflow above, you
+probably want to have multiple executions of the plugin. Each execution will only ever give you one model, which is written out in its
 entirety.
 
 To use the Maven plugin, invoke the plugin as usual in your `build/plugins` section:
@@ -180,6 +181,7 @@ To use the Maven plugin, invoke the plugin as usual in your `build/plugins` sect
         </executions>
     </plugin>
 ```
+
 ### Maven Configuration
 
 ### JEE7 Reader:
@@ -207,7 +209,7 @@ See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/op
 
 ### TypeScript Generator:
 
-See [TypeScript Options.java](json-typescript-generator/src/main/java/com/bluecirclesoft/open/jigen/typescript/Options.java) for the 
+See [TypeScript Options.java](json-typescript-generator/src/main/java/com/bluecirclesoft/open/jigen/typescript/Options.java) for the
 implementation class.
 
 | Option              | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -227,28 +229,27 @@ implementation class.
 
 ### Command-line + YAML
 
-To launch: 
+To launch:
 
 ```
 java -cp ... com.bluecirclesoft.open.jigen.Main \
     [ --config <config file> ]
 ```
 
-Specifies a config file with a number of "input" processors to read and create a JSON model, and "output" processors to create output from 
+Specifies a config file with a number of "input" processors to read and create a JSON model, and "output" processors to create output from
 the resulting model.
 
 If the config file is not specified, the file defaults to ```./jig-config.yaml```
 
 The "input" processors are all run first, followed by the "output" processors.
 
-To specify a processor, you can specify a json-interface-generator package, or a fully-qualified class name.  To write your own 
-processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --input or `com.bluecirclesoft.open.jigen.CodeProducer` for 
+To specify a processor, you can specify a json-interface-generator package, or a fully-qualified class name. To write your own
+processor, implement either `com.bluecirclesoft.open.jigen.ModelCreator` for --input or `com.bluecirclesoft.open.jigen.CodeProducer` for
 --output.
-
 
 ### YAML Configuration
 
-Command-line configuration is done through a YAML file. By default, this file is "jig-config.yaml" in the current directory, but the file 
+Command-line configuration is done through a YAML file. By default, this file is "jig-config.yaml" in the current directory, but the file
 can be overridden by the --config option. The file has the format:
 
 ```yaml
@@ -263,9 +264,10 @@ writers:
 ```
 
 The processor class is either a fully qualified class name, or for builtin processors, an abbreviated spec based on the input/output name
- (for example, "jee7")
+(for example, "jee7")
 
 Example:
+
 ```yaml
 readers:
   jee7:
@@ -278,7 +280,8 @@ writers:
 
 ### Jakarta EE Reader ("readers.jakartaee"):
 
-See [Jakarta EE Options.java](json-jakartaee-reader/src/main/java/com/bluecirclesoft/open/jigen/jakartaee/Options.java) for the implementation class.
+See [Jakarta EE Options.java](json-jakartaee-reader/src/main/java/com/bluecirclesoft/open/jigen/jakartaee/Options.java) for the
+implementation class.
 
 | Option             | Type                     | Description                                                                                                                          |
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
@@ -318,28 +321,28 @@ See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/op
 See [TypeScript Options.java](json-typescript-generator/src/main/java/com/bluecirclesoft/open/jigen/typescript/Options.java) for the
 implementation class.
 
-| Option              | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-|---------------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| outputFile          | String  | (required) The TypeScript file or folder to generate (path will be created if necessary)                                                                                                                                                                                                                                                                                                                                                                     |
-| outputStructure     | String  | Specify how to map packages to TypeScript files:                                                                                                                                                                                                                                                                                                                                                                                                             |
-| &nbsp;              | &nbsp;  | FILES_IN_TREE: one file per package, in a folder hierarchy matching the package hierarchy                                                                                                                                                                                                                                                                                                                                                                    |
-| &nbsp;              | &nbsp;  | FILES_IN_ONE_FOLDER: one file per package, but all at the top of the output folder (default)                                                                                                                                                                                                                                                                                                                                                                 |
-| &nbsp;              | &nbsp;  | NAMESPACES: one file for all the output, with namespaces that match the package hierarchy                                                                                                                                                                                                                                                                                                                                                                    |
+| Option              | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|---------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| outputFile          | String  | (required) The TypeScript file or folder to generate (path will be created if necessary)                                                                                                                                                                                                                                                                                                                                                                             |
+| outputStructure     | String  | Specify how to map packages to TypeScript files:                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| &nbsp;              | &nbsp;  | FILES_IN_TREE: one file per package, in a folder hierarchy matching the package hierarchy                                                                                                                                                                                                                                                                                                                                                                            |
+| &nbsp;              | &nbsp;  | FILES_IN_ONE_FOLDER: one file per package, but all at the top of the output folder (default)                                                                                                                                                                                                                                                                                                                                                                         |
+| &nbsp;              | &nbsp;  | NAMESPACES: one file for all the output, with namespaces that match the package hierarchy                                                                                                                                                                                                                                                                                                                                                                            |
 | stripCommonPackages | boolean | Strip any common leading packages from all produced classes. By default, TypeScript interfaces are put into a namespace structure which mirrors the Java packages of the source classes.  If --strip-common-packages is selected, then any top-level packages that only contain one subpackage will be removed. For example, if you have com.foo.a.ClassA and com.foo.b.ClassB, then "com" will be skipped, and "foo" will be the top-level namespace in the output. |
-| produceImmutables   | boolean | Produce immutable wrappers along with interfaces (default: false)                                                                                                                                                                                                                                                                                                                                                                                            |
-| immutableSuffix     | String  | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')                                                                                                                                                                                                                                                                                                                                                                  |
-| nullIsUndefined     | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)                                                                                                                                                                                                                                                                                                                                                   |
-| useUnknown          | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)                                                                                                                                                                                                                                                                                                                                                                                |
-| generateHeader      | String  | Don't generate the "jsonInterfaceGenerator.ts" header (useful for a project with a bunch in independent WARS) (default: true, unless 'headerLocation' specified)                                                                                                                                                                                                                                                                                                                                 |
-| headerLocation      | String  | If specified, use the supplied header file instead of the generated one                                                                                                                                                                                                                                                                                                                                                                                      |
+| produceImmutables   | boolean | Produce immutable wrappers along with interfaces (default: false)                                                                                                                                                                                                                                                                                                                                                                                                    |
+| immutableSuffix     | String  | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')                                                                                                                                                                                                                                                                                                                                                                          |
+| nullIsUndefined     | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)                                                                                                                                                                                                                                                                                                                                                           |
+| useUnknown          | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)                                                                                                                                                                                                                                                                                                                                                                                        |
+| generateHeader      | String  | Don't generate the "jsonInterfaceGenerator.ts" header (useful for a project with a bunch in independent WARS) (default: true, unless 'headerLocation' specified)                                                                                                                                                                                                                                                                                                     |
+| headerLocation      | String  | If specified, use the supplied header file instead of the generated one                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ## Making AJAX calls
 
-I try to be agnostic as to which AJAX library you're using (if any).  So on startup, you'll need to set jsonInterfaceGenerator.callAjax with
+I try to be agnostic as to which AJAX library you're using (if any). So on startup, you'll need to set jsonInterfaceGenerator.callAjax with
 the handler you want to use to invoke AJAX calls.
 
-Your job is to make a function that returns a `Promise` to actually make an AJAX call and resolve to the response object. You may use 
-whatever method you'd like. 
+Your job is to make a function that returns a `Promise` to actually make an AJAX call and resolve to the response object. You may use
+whatever method you'd like.
 
 ```typescript
 /**
@@ -403,17 +406,17 @@ jsonInterfaceGenerator.setCallAjax((url: string,
 
 ### What's up with my methods that return String?
 
-If you want to return structured data from a JAX-RS method, you shouldn't return it as String.  You should return an object, which will 
+If you want to return structured data from a JAX-RS method, you shouldn't return it as String. You should return an object, which will
 provide structure.
 
 See https://github.com/dropwizard/dropwizard/issues/231 for more info.
 
 ### Spring content type on GET requests
 
-If you put `consumes = MediaType.APPLICATION_JSON_VALUE` on a GET endpoint, newer versions of Spring _will_ expect you to send the 
-`Content-Type: application/json` header, even though a GET request has no content! Seems like best practice should be to leave off the 
-`consumes` on the server, and the `Content-Type` header on the request, since the header is optional, and conveys no functional meaning in 
+If you put `consumes = MediaType.APPLICATION_JSON_VALUE` on a GET endpoint, newer versions of Spring _will_ expect you to send the
+`Content-Type: application/json` header, even though a GET request has no content! Seems like best practice should be to leave off the
+`consumes` on the server, and the `Content-Type` header on the request, since the header is optional, and conveys no functional meaning in
 this situation.
 
-The spring-reader package will read When you write your AJAX handler, be sure to use the provided "consumes" parameter to set your 
+The spring-reader package will read When you write your AJAX handler, be sure to use the provided "consumes" parameter to set your
 Content-Type header when appropriate.

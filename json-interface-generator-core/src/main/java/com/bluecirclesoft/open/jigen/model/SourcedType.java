@@ -19,6 +19,7 @@ package com.bluecirclesoft.open.jigen.model;
 
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
+import java.util.Deque;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,11 +40,11 @@ public class SourcedType {
 	private SourcedType parent;
 
 	public String fullDescription() {
-		ArrayDeque<String> descQueue = new ArrayDeque<>();
+		Deque<String> descQueue = new ArrayDeque<>();
 		SourcedType st = this;
 		while (st != null) {
-			descQueue.addFirst(st.description);
-			st = st.parent;
+			descQueue.addFirst(st.getDescription());
+			st = st.getParent();
 		}
 		return String.join(" -> ", descQueue);
 	}

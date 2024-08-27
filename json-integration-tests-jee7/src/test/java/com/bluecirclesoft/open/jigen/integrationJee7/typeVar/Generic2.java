@@ -17,18 +17,16 @@
 
 package com.bluecirclesoft.open.jigen.integrationJee7.typeVar;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * TODO document me
  */
+@Setter
+@Getter
 public class Generic2<Ty extends BBase> {
 
 	private Ty val;
 
-	public Ty getVal() {
-		return val;
-	}
-
-	public void setVal(Ty val) {
-		this.val = val;
-	}
 }

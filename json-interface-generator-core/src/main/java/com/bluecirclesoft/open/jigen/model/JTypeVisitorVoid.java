@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Blue Circle Software, LLC
+ * Copyright 2015 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,40 +12,40 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.bluecirclesoft.open.jigen.model;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
- * Represents the TypeScript 'string' type
+ * Visitor for the different concrete TypeScript types.
  */
-public class JString extends JType {
+public interface JTypeVisitorVoid {
 
-	@Override
-	public <T> T accept(JTypeVisitor<T> visitor) {
-		return visitor.visit(this);
-	}
+	void visit(JObject jObject);
 
-	@Override
-	public void accept(JTypeVisitorVoid visitor) {
-		visitor.visit(this);
-	}
+	void visit(JAny jAny);
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).toString();
-	}
+	void visit(JArray jArray);
 
-	@Override
-	public boolean needsWrapping() {
-		return false;
-	}
+	void visit(JBoolean jBoolean);
 
-	@Override
-	public boolean isSpecializable() {
-		return false;
-	}
+	void visit(JEnum jEnum);
+
+	void visit(JNumber jNumber);
+
+	void visit(JString jString);
+
+	void visit(JVoid jVoid);
+
+	void visit(JSpecialization jSpecialization);
+
+	void visit(JTypeVariable jTypeVariable);
+
+	void visit(JMap jMap);
+
+	void visit(JUnionType jUnionType);
+
+	void visit(JNull jNull);
+
+	void visit(JWildcard jWildcard);
 }

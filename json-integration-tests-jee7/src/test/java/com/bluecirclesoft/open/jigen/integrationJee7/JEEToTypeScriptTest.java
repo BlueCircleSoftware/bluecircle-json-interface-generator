@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -43,13 +44,15 @@ import com.bluecirclesoft.open.jigen.typescript.Writer;
 
 /**
  * Test the Java EE -> TypeScript translation.
- * <p></p>
+ * <p>
  * Define some test services, deploy them in WildFly, and try to invoke them through the generated TypeScript.
  */
 @RunWith(Arquillian.class)
 public class JEEToTypeScriptTest {
 
 	private static final Logger log = LoggerFactory.getLogger(JEEToTypeScriptTest.class);
+
+	private static final Pattern LOOPBACK_IP = Pattern.compile("127.0.0.1", Pattern.LITERAL);
 
 	@Deployment(testable = false)
 	public static WebArchive createDeployment() {
@@ -72,7 +75,7 @@ public class JEEToTypeScriptTest {
 		// We've deployed our services to Arquillian at this point
 		// Generate the TypeScript, and run the Jasmine tests
 
-		String baseRestUrl = (baseUrl + "rest").replace("127.0.0.1", "localhost");
+		String baseRestUrl = LOOPBACK_IP.matcher((baseUrl + "rest")).replaceAll("localhost");
 		log.info("Using base REST url of {}", baseRestUrl);
 		doubleCheckServer(baseRestUrl);
 
@@ -109,7 +112,7 @@ public class JEEToTypeScriptTest {
 		TestHelper.system("../node_modules/.bin/karma start --baseUrl " + baseRestUrl);
 	}
 
-	private com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
+	private static com.bluecirclesoft.open.jigen.typescript.Options makeOutputOptions(String s) {
 		com.bluecirclesoft.open.jigen.typescript.Options options = new com.bluecirclesoft.open.jigen.typescript.Options();
 		options.setProduceImmutables(true);
 		options.setUseUnknown(true);
@@ -118,13 +121,13 @@ public class JEEToTypeScriptTest {
 		return options;
 	}
 
-	private Options makeInputOptions(String p) {
+	private static Options makeInputOptions(String p) {
 		Options options = new Options();
 		options.setPackages(Collections.singletonList(p));
 		return options;
 	}
 
-	private void doubleCheckServer(String baseRestUrl) {
+	private static void doubleCheckServer(String baseRestUrl) {
 		TestHelper.system("curl -v " + baseRestUrl + "/testServices/serviceCheck");
 	}
 

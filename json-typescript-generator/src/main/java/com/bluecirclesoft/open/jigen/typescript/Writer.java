@@ -28,7 +28,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +39,10 @@ import com.bluecirclesoft.open.jigen.model.JToplevelType;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.Model;
 import com.bluecirclesoft.open.jigen.model.Namespace;
+import com.bluecirclesoft.open.jigen.model.StripCommonNamespaces;
 import com.bluecirclesoft.open.jigen.model.ValidEndpointResponse;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Generate TypeScript from a REST model.
@@ -49,6 +51,10 @@ public class Writer implements CodeProducer<Options> {
 
 	private static final Logger log = LoggerFactory.getLogger(Writer.class);
 
+	private static final Pattern UNKNOWN = Pattern.compile("unknown", Pattern.LITERAL);
+
+	@Setter
+	@Getter
 	private boolean produceAccessorFunctionals = false;
 
 	private Options options;
@@ -57,7 +63,7 @@ public class Writer implements CodeProducer<Options> {
 
 	private TypeUsageProducer usageProducerNoSuffix;
 
-	private static void handleUrlParams(String template, JsStringBuilder url, List<EndpointParameter> urlParams) {
+	private static void handleUrlParams(String template, JsStringBuilder url, Iterable<? extends EndpointParameter> urlParams) {
 		SortedMap<Integer, EndpointParameter> starts = new TreeMap<>();
 		Map<Integer, Integer> ends = new HashMap<>();
 
@@ -94,16 +100,8 @@ public class Writer implements CodeProducer<Options> {
 		parameterList.append(type);
 	}
 
-	public boolean isProduceAccessorFunctionals() {
-		return produceAccessorFunctionals;
-	}
-
-	public void setProduceAccessorFunctionals(boolean produceAccessorFunctionals) {
-		this.produceAccessorFunctionals = produceAccessorFunctionals;
-	}
-
-	public boolean isStripCommonNamespaces() {
-		return options.isStripCommonPackages();
+	public StripCommonNamespaces isStripCommonNamespaces() {
+		return options.isStripCommonPackages() ? StripCommonNamespaces.STRIP : StripCommonNamespaces.LEAVE;
 	}
 
 	public boolean isProduceImmutables() {
@@ -120,10 +118,10 @@ public class Writer implements CodeProducer<Options> {
 	}
 
 	@Override
-	public void acceptOptions(Options options, List<String> errors) {
+	public void acceptOptions(Object options, List<? super String> errors) {
 		assert options != null : "options is null";
-		this.options = options;
-		if (options.getOutputFile() == null) {
+		this.options = (Options) options;
+		if (this.options.getOutputFile() == null) {
 			errors.add("Output file is required.");
 		}
 	}
@@ -162,7 +160,7 @@ public class Writer implements CodeProducer<Options> {
 
 		// create parameter list for function declaration
 		StringBuilder parameterList = new StringBuilder();
-		boolean needsComma[] = {false};
+		boolean[] needsComma = {false};
 		for (EndpointParameter parameter : endpoint.getParameters()) {
 			addParameter(parameterList, needsComma, parameter.getCodeName(),
 					parameter.getType().accept(usageProducerNoSuffix.getProducer(endpoint.getNamespace(), writer)));
@@ -179,12 +177,12 @@ public class Writer implements CodeProducer<Options> {
 		parameterList = new StringBuilder(savedParameterList);
 		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
 		addParameter(parameterList, needsComma, "options?", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
-		writer.line("export function " + name + "(" + parameterList.toString() + ") : Promise<" + returnType + ">;");
+		writer.line("export function " + name + "(" + parameterList + ") : Promise<" + returnType + ">;");
 		// real implementation
 		parameterList = new StringBuilder(savedParameterList);
 		needsComma = Arrays.copyOf(savedNeedsComma, savedNeedsComma.length);
 		addParameter(parameterList, needsComma, "options?", "jsonInterfaceGenerator" + ".JsonOptions<" + returnType + ">");
-		writer.line("export function " + name + "(" + parameterList.toString() + ") : Promise<" + returnType + "> {");
+		writer.line("export function " + name + "(" + parameterList + ") : Promise<" + returnType + "> {");
 		writer.indentIn();
 
 		// construct AJAX url, encoding any path params
@@ -213,7 +211,7 @@ public class Writer implements CodeProducer<Options> {
 		BodyType bodyType = BodyType.NONE;
 
 		List<EndpointParameter> jsonBody = sortedParams.get(EndpointParameter.NetworkType.JSON_BODY);
-		boolean isJsonBody = jsonBody != null && jsonBody.size() > 0;
+		boolean isJsonBody = jsonBody != null && !jsonBody.isEmpty();
 		switch (endpoint.getMethod()) {
 			case POST:
 			case PUT:
@@ -253,7 +251,7 @@ public class Writer implements CodeProducer<Options> {
 		writer.line("}");
 	}
 
-	private String removeExtensions(String headerFile) {
+	private static String removeExtensions(String headerFile) {
 		String[] extensions = new String[]{".js", ".ts"};
 		String out = headerFile;
 		for (String ext : extensions) {
@@ -265,7 +263,7 @@ public class Writer implements CodeProducer<Options> {
 		return out;
 	}
 
-	private void createSubmitDataBodyFromParams(List<EndpointParameter> params, TSFileWriter writer) {
+	private static void createSubmitDataBodyFromParams(List<? extends EndpointParameter> params, TSFileWriter writer) {
 		writer.line("const submitData = {");
 		writer.indentIn();
 		if (params != null) {
@@ -314,7 +312,7 @@ public class Writer implements CodeProducer<Options> {
 		}
 	}
 
-	private List<JToplevelType> toList(Iterable<? extends JToplevelType> declarations) {
+	private static List<JToplevelType> toList(Iterable<? extends JToplevelType> declarations) {
 		List<JToplevelType> result = new ArrayList<>();
 		for (JToplevelType i : declarations) {
 			result.add(i);
@@ -338,7 +336,7 @@ public class Writer implements CodeProducer<Options> {
 			Pattern pattern = Pattern.compile("^\\s*export type UnknownType = unknown");
 			writer.writeResource("/header.ts", (line) -> {
 				if (!options.isUseUnknown() && pattern.matcher(line).matches()) {
-					return line.replace("unknown", "any");
+					return UNKNOWN.matcher(line).replaceAll("any");
 				} else {
 					return line;
 				}

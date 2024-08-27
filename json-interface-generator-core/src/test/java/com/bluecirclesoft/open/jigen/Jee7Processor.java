@@ -19,9 +19,12 @@ package com.bluecirclesoft.open.jigen;
 
 import java.util.List;
 
+import lombok.Getter;
+
 /**
  * TODO document me
  */
+@Getter
 public class Jee7Processor implements ConfigurableProcessor<Jee7Options> {
 
 	Jee7Options options;
@@ -32,11 +35,8 @@ public class Jee7Processor implements ConfigurableProcessor<Jee7Options> {
 	}
 
 	@Override
-	public void acceptOptions(Jee7Options options, List<String> errors) {
-		this.options = options;
+	public void acceptOptions(Object options, List<? super String> errors) {
+		this.options = (Jee7Options) options;
 	}
 
-	public Jee7Options getOptions() {
-		return options;
-	}
 }

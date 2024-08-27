@@ -21,6 +21,7 @@ import com.bluecirclesoft.open.jigen.model.JType;
 /**
  * TODO document me
  */
+@FunctionalInterface
 interface TypeReadingVisitor<Type extends JType> {
 
 	Type getResult();

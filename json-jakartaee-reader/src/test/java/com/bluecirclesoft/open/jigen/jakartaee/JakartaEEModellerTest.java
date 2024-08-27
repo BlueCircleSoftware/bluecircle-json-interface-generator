@@ -63,7 +63,7 @@ public class JakartaEEModellerTest {
 		}
 	}
 
-	private int sizeof(Iterable<?> iterable) {
+	private static int sizeof(Iterable<?> iterable) {
 		if (iterable instanceof Collection) {
 			return ((Collection<?>) iterable).size();
 		} else {

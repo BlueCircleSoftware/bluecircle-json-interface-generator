@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -43,7 +42,7 @@ public class Model implements Serializable {
 	private final Map<String, Endpoint> endpoints = new TreeMap<>();
 
 	public Model() {
-		logger.info("New model: " + this);
+		logger.info("New model: {}", this);
 	}
 
 	public Collection<JType> getInterfaces() {
@@ -110,7 +109,7 @@ public class Model implements Serializable {
 				while (!parentQueue.isEmpty()) {
 					Class<?> subClass = parentQueue.poll();
 					// find superclass and all the interfaces we implement
-					Set<Class<?>> supers = new HashSet<>();
+					Collection<Class<?>> supers = new HashSet<>();
 					if (isInteresting(subClass.getSuperclass())) {
 						supers.add(subClass.getSuperclass());
 					}
@@ -143,7 +142,7 @@ public class Model implements Serializable {
 		}
 	}
 
-	private boolean isInteresting(Class<?> superclass) {
+	private static boolean isInteresting(Class<?> superclass) {
 		return superclass != null && superclass != Object.class;
 	}
 

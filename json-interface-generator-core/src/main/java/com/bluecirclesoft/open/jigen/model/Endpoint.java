@@ -18,7 +18,7 @@ package com.bluecirclesoft.open.jigen.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +66,7 @@ public class Endpoint implements Serializable {
 	 * @param type         the desired type
 	 * @return yes or no
 	 */
-	private static boolean hasType(Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams,
+	private static boolean hasType(Map<EndpointParameter.NetworkType, ? extends List<EndpointParameter>> sortedParams,
 	                               EndpointParameter.NetworkType type) {
 		List<EndpointParameter> endpointParameters = sortedParams.get(type);
 		return endpointParameters != null && !endpointParameters.isEmpty();
@@ -90,7 +90,7 @@ public class Endpoint implements Serializable {
 	 * @return a map of lists of parameters, by network type.
 	 */
 	public Map<EndpointParameter.NetworkType, List<EndpointParameter>> getSortedParameters() {
-		Map<EndpointParameter.NetworkType, List<EndpointParameter>> result = new HashMap<>();
+		Map<EndpointParameter.NetworkType, List<EndpointParameter>> result = new EnumMap<>(EndpointParameter.NetworkType.class);
 		for (EndpointParameter parameter : parameters) {
 			List<EndpointParameter> list = result.computeIfAbsent(parameter.getNetworkType(), k -> new ArrayList<>());
 			list.add(parameter);

@@ -31,7 +31,7 @@ import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
-import com.bluecirclesoft.open.jigen.model.JTypeVisitor;
+import com.bluecirclesoft.open.jigen.model.JTypeVisitorVoid;
 import com.bluecirclesoft.open.jigen.model.JUnionType;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
@@ -40,7 +40,7 @@ import com.bluecirclesoft.open.jigen.model.Namespace;
 /**
  * TODO document me
  */
-class AccessorProducer implements JTypeVisitor<Object> {
+class AccessorProducer implements JTypeVisitorVoid {
 
 	private static final Logger log = LoggerFactory.getLogger(AccessorProducer.class);
 
@@ -75,7 +75,7 @@ class AccessorProducer implements JTypeVisitor<Object> {
 		usageProducerWithSuffix = new TypeUsageProducer(options, TypeUsageProducer.UseImmutableSuffix.YES);
 	}
 
-	public String capitalize(String variableName) {
+	public static String capitalize(String variableName) {
 		return variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
 	}
 
@@ -154,22 +154,19 @@ class AccessorProducer implements JTypeVisitor<Object> {
 	}
 
 	@Override
-	public Object visit(JObject jObject) {
+	public void visit(JObject jObject) {
 		if (jObject.isConstructible()) {
 			objectAccessor(jObject.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)), "");
 		}
-		return null;
 	}
 
 	@Override
-	public Object visit(JAny jAny) {
+	public void visit(JAny jAny) {
 		primitiveAccessor(unknownProducer.getUnknown());
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JArray jArray) {
+	public void visit(JArray jArray) {
 		String interfaceName = jArray.getElementType().accept(usageProducerNoSuffix.getProducer(currentNamespace, writer));
 		if (jArray.getElementType().needsWrapping()) {
 			if (jArray.getElementType() instanceof JTypeVariable) {
@@ -181,101 +178,85 @@ class AccessorProducer implements JTypeVisitor<Object> {
 		} else {
 			primitiveArrayAccessor(interfaceName);
 		}
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JBoolean jBoolean) {
+	public void visit(JBoolean jBoolean) {
 		primitiveAccessor("boolean");
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JEnum jEnum) {
+	public void visit(JEnum jEnum) {
 		primitiveAccessor(jEnum.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JNumber jNumber) {
+	public void visit(JNumber jNumber) {
 		primitiveAccessor("number");
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JString jString) {
+	public void visit(JString jString) {
 		primitiveAccessor("string");
-		return null;
 	}
 
 	@Override
-	public Object visit(JVoid jVoid) {
-		return null;
+	public void visit(JVoid jVoid) {
 	}
 
 	@Override
-	public Object visit(JSpecialization jSpecialization) {
+	public void visit(JSpecialization jSpecialization) {
 		TypeUsageProducer tup = usageProducerSpecializedNoSuffix;
 		String type =
 				jSpecialization.getBase().accept(tup.getProducer(currentNamespace, writer)) + writeSpecializedTypes(jSpecialization, tup);
 		primitiveAccessor(type);
-		return null;
 	}
 
 	@Override
-	public Object visit(JTypeVariable jTypeVariable) {
+	public void visit(JTypeVariable jTypeVariable) {
 		primitiveAccessor(jTypeVariable.getName());
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JMap jMap) {
+	public void visit(JMap jMap) {
 		primitiveAccessor(
 				"{[name: string]:" + jMap.getValueType().accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)) + "}");
-		return null;
-
 	}
 
 	@Override
-	public Object visit(JUnionType jUnionType) {
+	public void visit(JUnionType jUnionType) {
 		JType stripped = jUnionType.getStripped();
 		if (stripped.needsWrapping()) {
 			if (stripped instanceof JArray) {
-				return visit((JArray) stripped);
+				visit((JArray) stripped);
+				return;
 			} else if (stripped instanceof JObject) {
 				if (stripped.hasTypeVariables()) {
 					String typeString = stripped.accept(usageProducerSpecializedNoSuffix.getProducer(currentNamespace, writer));
 					String variables = writeTypeVariables(stripped, usageProducerNoSuffix);
 					objectAccessor(typeString, variables);
-					return null;
+					return;
 				} else {
 					String typeString = stripped.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer));
 					objectAccessor(typeString, "");
-					return null;
+					return;
 				}
 			} else if (stripped instanceof JSpecialization) {
-				return visit((JSpecialization) stripped);
+				visit((JSpecialization) stripped);
+				return;
 			}
 		}
 		String typeString = jUnionType.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer));
 		primitiveAccessor(typeString);
-		return null;
 	}
 
 	@Override
-	public Object visit(JNull jNull) {
+	public void visit(JNull jNull) {
 		primitiveAccessor(jNull.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
-		return null;
 	}
 
 	@Override
-	public Object visit(JWildcard jWildcard) {
+	public void visit(JWildcard jWildcard) {
 		primitiveAccessor(jWildcard.accept(usageProducerNoSuffix.getProducer(currentNamespace, writer)));
-		return null;
 	}
 }

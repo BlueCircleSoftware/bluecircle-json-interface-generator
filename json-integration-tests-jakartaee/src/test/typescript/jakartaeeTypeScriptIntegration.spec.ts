@@ -398,12 +398,16 @@ describe("test TestAllCombosTwoParameters", () => {
     // });
 
     it("can execute testAllCombosTwoParametersGePaPa", async () => {
-        let result: object = await integrationJakartaee.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaPa("p0", "p1", simpleHandler);
+        let result: object = await integrationJakartaee.TestAllCombosTwoParameters.testAllCombosTwoParametersGePaPa("p0",
+            "p1",
+            simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
     it("can execute testAllCombosTwoParametersGeQuPa", async () => {
-        let result: object = await integrationJakartaee.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuPa("p0", "p1", simpleHandler);
+        let result: object = await integrationJakartaee.TestAllCombosTwoParameters.testAllCombosTwoParametersGeQuPa("p0",
+            "p1",
+            simpleHandler);
         expect(result).toEqual({a: "P0P1", b: "P0P1", c: "P0P1"});
     });
 
