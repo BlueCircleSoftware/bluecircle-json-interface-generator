@@ -23,6 +23,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-typescript-generator</artifactId>
+    <name>json-typescript-generator</name>
+    <description>bluecircle-json-interface-generator / TypeScript interface and endpoint function generator</description>
 
     <dependencies>
         <dependency>

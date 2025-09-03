@@ -23,6 +23,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-integration-tests-jee7</artifactId>
+    <name>json-integration-tests-jee7</name>
+    <description>bluecircle-json-interface-generator / Integration tests for Java EE 7</description>
 
     <dependencyManagement>
         <dependencies>

@@ -24,6 +24,7 @@
         <version>1.8-SNAPSHOT</version>
     </parent>
     <name>json-interface-generator-annotations</name>
+    <description>bluecircle-json-interface-generator / Annotations for Java readers</description>
 
     <build>
         <plugins>

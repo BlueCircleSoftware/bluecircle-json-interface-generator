@@ -15,6 +15,7 @@
         <module name="json-generator-allin1" />
         <module name="json-integration-tests-jakartaee" />
         <module name="json-interface-generator-annotations" />
+        <module name="json-spring-reader" />
         <module name="json-interface-generator-core" />
         <module name="json-integration-tests-jee7" />
         <module name="json-jee7-reader" />
@@ -22,7 +23,6 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="json-jee7-reader (1)" target="1.8" />
-      <module name="json-spring-reader" target="1.8" />
       <module name="json-spring6-reader" target="1.8" />
       <module name="jsoninterfacegeneratorannotations" target="1.8" />
     </bytecodeTargetLevel>

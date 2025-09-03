@@ -23,6 +23,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-jakartaee-reader</artifactId>
+    <name>json-jakartaee-reader</name>
+    <description>bluecircle-json-interface-generator / Jakarta EE JAX-RS endpoint reader</description>
 
     <dependencies>
         <dependency>

@@ -14,7 +14,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>json-interface-generator</artifactId>
         <groupId>com.bluecirclesoft.open</groupId>
@@ -23,6 +24,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-generator-allin1</artifactId>
+    <name>json-generator-allin1</name>
+    <description>bluecircle-json-interface-generator / All-in-1 JAR with all readers and generators</description>
 
     <dependencies>
         <dependency>

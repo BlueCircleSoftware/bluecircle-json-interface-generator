@@ -23,6 +23,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-integration-tests-jakartaee</artifactId>
+    <name>json-integration-tests-jakartaee</name>
+    <description>bluecircle-json-interface-generator / Integration tests for JakartaEE reader</description>
 
     <dependencyManagement>
         <dependencies>

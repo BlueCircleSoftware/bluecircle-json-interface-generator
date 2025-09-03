@@ -23,6 +23,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-spring-reader</artifactId>
+    <name>json-spring-reader</name>
+    <description>bluecircle-json-interface-generator / Spring 5 endpoint reader</description>
 
     <dependencies>
         <dependency>

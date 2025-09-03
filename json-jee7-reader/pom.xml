@@ -23,6 +23,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>json-jee7-reader</artifactId>
+    <name>json-jee7-reader</name>
+    <description>bluecircle-json-interface-generator / Java EE 7 JAX-RS endpoint reader</description>
 
     <dependencies>
         <dependency>
