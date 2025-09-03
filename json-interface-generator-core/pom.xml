@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.bluecirclesoft.open</groupId>
         <artifactId>json-interface-generator</artifactId>
-        <version>1.8</version>
+        <version>1.9-SNAPSHOT</version>
     </parent>
     <name>json-interface-generator-core</name>
     <description>bluecircle-json-interface-generator / Core endpoint model</description>
