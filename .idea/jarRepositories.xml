@@ -2,6 +2,11 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://artifacts.bluecirclesoft.com/repository/bluecircle-maven/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="bc-archiva" />
       <option name="name" value="Blue Circle Internal Repository" />
       <option name="url" value="https://mvnrepo.bluecirclesoft.com/repository/internal/" />
@@ -15,6 +20,16 @@
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://nexusrepo.assisted.com/repository/sales-client-connection/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="bc-nexus-snapshot" />
+      <option name="name" value="Blue Circle Internal Snapshot Repository" />
+      <option name="url" value="https://artifacts.bluecirclesoft.com/repository/bluecircle-maven/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="bc-nexus" />
+      <option name="name" value="Blue Circle Internal Repository" />
+      <option name="url" value="https://artifacts.bluecirclesoft.com/repository/bluecircle-maven/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="central" />
