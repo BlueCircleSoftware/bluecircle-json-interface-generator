@@ -29,7 +29,6 @@ import lombok.ToString;
  * TODO document me
  */
 @Data
-@AllArgsConstructor
 @ToString
 public class SourcedType {
 
@@ -38,6 +37,15 @@ public class SourcedType {
 	private String description;
 
 	private SourcedType parent;
+
+	public SourcedType(Type type, String description, SourcedType parent) {
+		if (description == null) {
+			throw new IllegalArgumentException("description cannot be null");
+		}
+		this.type = type;
+		this.description = description;
+		this.parent = parent;
+	}
 
 	public String fullDescription() {
 		Deque<String> descQueue = new ArrayDeque<>();

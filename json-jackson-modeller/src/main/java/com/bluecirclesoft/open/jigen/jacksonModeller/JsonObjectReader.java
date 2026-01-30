@@ -104,6 +104,10 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 			return null;
 		}
 		try {
+			if (clazz == Object.class) {
+				return "{}";
+			}
+
 			// sort for output stability
 			JsonMapper mapper = JsonMapper.builder().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true).build();
 			return mapper.writeValueAsString(newInstance);

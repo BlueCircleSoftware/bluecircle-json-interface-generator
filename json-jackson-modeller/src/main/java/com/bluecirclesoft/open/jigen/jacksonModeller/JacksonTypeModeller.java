@@ -244,6 +244,9 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	 * @param sourcedType
 	 */
 	void queueType(SourcedType sourcedType) {
+		if (sourcedType == null) {
+			throw new RuntimeException("Cannot queue null type");
+		}
 		typesToProcess.add(sourcedType);
 	}
 
@@ -258,7 +261,12 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 	public List<JType> readTypes(Model model, SourcedType... sourcedTypes) {
 
 		// enqueue start types
-		Collections.addAll(typesToProcess, sourcedTypes);
+		for (SourcedType sourcedType : sourcedTypes) {
+			if (sourcedType == null) {
+				throw new RuntimeException("Cannot queue null type");
+			}
+			typesToProcess.add(sourcedType);
+		}
 
 		// drain the queue
 		while (!typesToProcess.isEmpty()) {
@@ -290,7 +298,11 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		// find all the TS types created for the type parameters, and return them, in the same order (necessary for #readOneType)
 		List<JType> result = new ArrayList<>(sourcedTypes.length);
 		for (SourcedType sourcedType : sourcedTypes) {
-			result.add(model.getType(sourcedType.getType()));
+			JType type = model.getType(sourcedType.getType());
+			if (type == null) {
+				throw new RuntimeException("Type " + sourcedType.getType() + " was created, but it's not in the model");
+			}
+			result.add(type);
 		}
 		return result;
 	}
@@ -406,6 +418,13 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 				result.setIndexType(new JNumber());
 				addFixup(cl.getComponentType(), result::setElementType);
 				queueType(new SourcedType(cl.getComponentType(), "Array element type", sourcedType));
+				return result;
+			} else if (cl == Iterable.class) {
+				// array: A[] -> Array<A>
+				logger.debug("is naked iterable");
+				JArray result = new JArray();
+				result.setIndexType(new JNumber());
+				result.setElementType(new JAny());
 				return result;
 			} else {
 				if (classOverrides.containsKey(cl)) {
