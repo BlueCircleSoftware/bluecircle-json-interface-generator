@@ -505,3 +505,23 @@ export class PrimitiveArrayWrapper<T> {
         return this._delegate.setSub(index, newVal);
     }
 }
+
+export class ObjectArrayWrapper<T, W> {
+    private _delegate: ChangeWrapper<T[]>;
+    private readonly _wrap: (base: ChangeRoot<UnknownType>, path: SelectorList) => W;
+
+    public constructor(base: ChangeRoot<UnknownType>,
+                       path: SelectorList,
+                       wrap: (base: ChangeRoot<UnknownType>, path: SelectorList) => W) {
+        this._delegate = new ChangeWrapper<T[]>(base, path);
+        this._wrap = wrap;
+    }
+
+    public get(index: number): W {
+        return this._wrap(this._delegate.root, this._delegate.extend(index));
+    }
+
+    public set(index: number, newVal: T): void {
+        return this._delegate.setSub(index, newVal);
+    }
+}

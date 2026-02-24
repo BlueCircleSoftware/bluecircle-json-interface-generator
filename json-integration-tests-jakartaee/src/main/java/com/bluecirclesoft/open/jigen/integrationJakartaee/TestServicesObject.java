@@ -40,6 +40,14 @@ import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage4.TP4Super;
 import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage4.TP4Super2;
 import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage5.TP5Weird;
 import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage5.TP5Weird2;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.Regex$Special;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.RegexBase;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.RegexPlain;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.RegexReturnBase;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.RegexReturnMeta;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.RegexReturnPlain;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.WeirdNamesContainer;
+import com.bluecirclesoft.open.jigen.integrationJakartaee.testPackage6.WeirdNamesItem;
 import jakarta.ejb.Stateless;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.Consumes;
@@ -262,6 +270,60 @@ public class TestServicesObject {
 		result.setFixed("fixed");
 		result.putExtra("alpha", 1);
 		result.putExtra("beta", 2);
+		return result;
+	}
+
+	@GET
+	@Path("/getWeirdNamesContainer")
+	@Produces(MediaType.APPLICATION_JSON)
+	public WeirdNamesContainer getWeirdNamesContainer() {
+		setCORSHeaders();
+		WeirdNamesItem item = new WeirdNamesItem();
+		item.setWeirdName("w1");
+		item.setClazz("c1");
+		item.setZeroStart(7);
+		item.setQuote("q1");
+		List<WeirdNamesItem> items = new ArrayList<>();
+		items.add(item);
+
+		WeirdNamesContainer result = new WeirdNamesContainer();
+		result.setItemsList(items);
+		return result;
+	}
+
+	@GET
+	@Path("/getRegexList")
+	@Produces(MediaType.APPLICATION_JSON)
+	public GenericList<RegexBase> getRegexList() {
+		setCORSHeaders();
+		GenericList<RegexBase> result = new GenericList<>();
+		List<RegexBase> items = new ArrayList<>();
+		Regex$Special special = new Regex$Special();
+		special.setValue("special");
+		RegexPlain plain = new RegexPlain();
+		plain.setValue("plain");
+		items.add(special);
+		items.add(plain);
+		result.setList(items);
+		result.setMore(false);
+		return result;
+	}
+
+	@GET
+	@Path("/getRegexReturnList")
+	@Produces(MediaType.APPLICATION_JSON)
+	public GenericList<RegexReturnBase> getRegexReturnList() {
+		setCORSHeaders();
+		GenericList<RegexReturnBase> result = new GenericList<>();
+		List<RegexReturnBase> items = new ArrayList<>();
+		RegexReturnMeta meta = new RegexReturnMeta();
+		meta.setValue("meta");
+		RegexReturnPlain plain = new RegexReturnPlain();
+		plain.setValue("plain");
+		items.add(meta);
+		items.add(plain);
+		result.setList(items);
+		result.setMore(false);
 		return result;
 	}
 }

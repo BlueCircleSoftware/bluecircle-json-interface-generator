@@ -17,9 +17,15 @@
 
 package com.bluecirclesoft.open.jigen.typescript;
 
+import java.util.regex.Pattern;
+
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.Objects;
 
 public class NameSafety {
+
+	private static final Pattern SAFE_IDENTIFIER = Pattern.compile("[A-Za-z_$][A-Za-z0-9_$]*");
 
 	public static String saveObjectName(String name) {
 		if (Objects.equals(name, "Object")) {
@@ -28,4 +34,25 @@ public class NameSafety {
 		return name;
 	}
 
+	public static boolean isSafeIdentifier(String name) {
+		return name != null && SAFE_IDENTIFIER.matcher(name).matches();
+	}
+
+	public static String tsStringLiteral(String value) {
+		return "\"" + StringEscapeUtils.escapeEcmaScript(value) + "\"";
+	}
+
+	public static String safePropertyName(String name) {
+		if (isSafeIdentifier(name)) {
+			return name;
+		}
+		return tsStringLiteral(name);
+	}
+
+	public static String safeAccessorName(String name) {
+		if (isSafeIdentifier(name)) {
+			return name;
+		}
+		return "[" + tsStringLiteral(name) + "]";
+	}
 }

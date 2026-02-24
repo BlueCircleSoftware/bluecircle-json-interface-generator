@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -51,7 +49,7 @@ import com.bluecirclesoft.open.jigen.model.JWildcard;
  */
 class TypeDeclarationProducer implements JTypeVisitorVoid {
 
-	private static final Pattern DOT = Pattern.compile(".", Pattern.LITERAL);
+	private static final String REGEX_META_CHARS = "\\.^$|?*+()[]{}";
 
 	private final TSFileWriter writer;
 
@@ -211,6 +209,7 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 		for (Map.Entry<String, JObject.Field> prop : intf.getFieldEntries()) {
 			String makeOptional = "";
 			String typeString;
+			String propName = NameSafety.safePropertyName(prop.getKey());
 			if (Objects.equals(intf.getTypeDiscriminatorField(), prop.getKey())) {
 				// is type discriminator - type will be the values
 				subTypeValues = collectTypeValues(intf);
@@ -222,9 +221,7 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 					} else {
 						needsOr = true;
 					}
-					typeBuilder.append('"');
-					typeBuilder.append(value);
-					typeBuilder.append('"');
+					typeBuilder.append(NameSafety.tsStringLiteral(value));
 				}
 				typeString = typeBuilder.toString();
 			} else {
@@ -235,7 +232,7 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 				}
 				typeString = type.accept(typeUsageProducer.getProducer(intf.getContainingNamespace(), writer));
 			}
-			writer.line(prop.getKey() + makeOptional + ": " + typeString + ";");
+			writer.line(propName + makeOptional + ": " + typeString + ";");
 		}
 		writer.indentOut();
 		writer.line("}");
@@ -286,21 +283,25 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 		}
 
 		if (hasTypeDiscriminator) {
-			writer.line("export function getDiscriminator() : \"" + intf.getTypeDiscriminatorValue() + "\" {");
+			String discValueLiteral = NameSafety.tsStringLiteral(intf.getTypeDiscriminatorValue());
+			writer.line("export function getDiscriminator() : " + discValueLiteral + " {");
 			writer.indentIn();
-			writer.line("return \"" + intf.getTypeDiscriminatorValue() + "\";");
+			writer.line("return " + discValueLiteral + ";");
 			writer.indentOut();
 			writer.line("}");
 		}
 
 		if (hasNewObjectJson) {
 			if (hasTypeDiscriminator) {
-				writer.line("export function make" + makeTypeVars + "(initial?: Omit<" + interfaceLabel + typeVars + ", \"" +
-						intf.getTypeDiscriminatorField() + "\">) : " + interfaceLabel + typeVars + " {");
+				String discFieldLiteral = NameSafety.tsStringLiteral(intf.getTypeDiscriminatorField());
+				String discFieldKey = NameSafety.safePropertyName(intf.getTypeDiscriminatorField());
+				writer.line(
+						"export function make" + makeTypeVars + "(initial?: Omit<" + interfaceLabel + typeVars + ", " + discFieldLiteral +
+								">) : " + interfaceLabel + typeVars + " {");
 				writer.indentIn();
 				writer.line("if (initial) {");
 				writer.indentIn();
-				writer.line("return {" + intf.getTypeDiscriminatorField() + ": getDiscriminator(), ...initial};");
+				writer.line("return {" + discFieldKey + ": getDiscriminator(), ...initial};");
 				writer.indentOut();
 				writer.line("} else {");
 				writer.indentIn();
@@ -316,10 +317,13 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 			writer.line("}");
 		} else {
 			if (hasTypeDiscriminator) {
-				writer.line("export function make" + makeTypeVars + "(initial: Omit<" + interfaceLabel + typeVars + ", \"" +
-						intf.getTypeDiscriminatorField() + "\">) : " + interfaceLabel + typeVars + " {");
+				String discFieldLiteral = NameSafety.tsStringLiteral(intf.getTypeDiscriminatorField());
+				String discFieldKey = NameSafety.safePropertyName(intf.getTypeDiscriminatorField());
+				writer.line(
+						"export function make" + makeTypeVars + "(initial: Omit<" + interfaceLabel + typeVars + ", " + discFieldLiteral +
+								">) : " + interfaceLabel + typeVars + " {");
 				writer.indentIn();
-				writer.line("return {" + intf.getTypeDiscriminatorField() + ": getDiscriminator(), ...initial};");
+				writer.line("return {" + discFieldKey + ": getDiscriminator(), ...initial};");
 				writer.indentOut();
 				writer.line("}");
 
@@ -328,13 +332,13 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 
 		if (hasTypeDiscriminator && subTypeValues != null) {
 			writer.line("const TYPE_REGEX = new RegExp(\"" + createTypeRegex(subTypeValues) + "\");");
+			String discFieldLiteral = NameSafety.tsStringLiteral(intf.getTypeDiscriminatorField());
 			writer.line(
 					"export function isInstance(obj: " + unknownProducer.getUnknown() + "): obj is " + interfaceLabel + unknownTypeVars +
 							" {");
 			writer.indentIn();
-			writer.line("return typeof obj === \"object\" && !Array.isArray(obj) && !!(obj as {[k:string]:any})[\"" +
-					intf.getTypeDiscriminatorField() + "\"] && TYPE_REGEX.exec((obj as {[k:string]:any})[\"" +
-					intf.getTypeDiscriminatorField() + "\"]) !== null;");
+			writer.line("return typeof obj === \"object\" && !Array.isArray(obj) && !!(obj as {[k:string]:any})[" + discFieldLiteral +
+					"] && TYPE_REGEX.exec((obj as {[k:string]:any})[" + discFieldLiteral + "]) !== null;");
 			writer.indentOut();
 			writer.line("}");
 		}
@@ -427,10 +431,22 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 			} else {
 				needsBar = true;
 			}
-			result.append(DOT.matcher(string).replaceAll(Matcher.quoteReplacement("\\.")));
+			result.append(escapeRegexLiteral(string));
 		}
 		result.append(")$");
-		return result.toString();
+		return StringEscapeUtils.escapeEcmaScript(result.toString());
+	}
+
+	private static String escapeRegexLiteral(String value) {
+		StringBuilder escaped = new StringBuilder();
+		for (int i = 0; i < value.length(); i++) {
+			char c = value.charAt(i);
+			if (REGEX_META_CHARS.indexOf(c) >= 0) {
+				escaped.append('\\');
+			}
+			escaped.append(c);
+		}
+		return escaped.toString();
 	}
 
 	private static Set<String> collectTypeValues(JObject intf) {

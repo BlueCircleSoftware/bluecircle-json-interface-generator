@@ -112,43 +112,51 @@ class AccessorProducer implements JTypeVisitorVoid {
 	}
 
 	private void primitiveAccessor(String type) {
-		writer.line("public get " + name + "() : Readonly<" + type + "> {");
+		String accessorName = NameSafety.safeAccessorName(name);
+		String nameLiteral = NameSafety.tsStringLiteral(name);
+		writer.line("public get " + accessorName + "() : Readonly<" + type + "> {");
 		writer.indentIn();
-		writer.line("return this._delegate.getSub(\"" + name + "\") as Readonly<" + type + ">;");
+		writer.line("return this._delegate.getSub(" + nameLiteral + ") as Readonly<" + type + ">;");
 		writer.indentOut();
 		writer.line("}");
-		writer.line("public set " + name + "(v : Readonly<" + type + ">) {");
+		writer.line("public set " + accessorName + "(v : Readonly<" + type + ">) {");
 		writer.indentIn();
-		writer.line("this._delegate.setSub(\"" + name + "\", v);");
+		writer.line("this._delegate.setSub(" + nameLiteral + ", v);");
 		writer.indentOut();
 		writer.line("}");
 	}
 
 	private void objectAccessor(String type, String variables) {
-		writer.line("public get " + name + "() : " + type + immutableSuffix + variables + " {");
+		String accessorName = NameSafety.safeAccessorName(name);
+		String nameLiteral = NameSafety.tsStringLiteral(name);
+		writer.line("public get " + accessorName + "() : " + type + immutableSuffix + variables + " {");
 		writer.indentIn();
-		writer.line("return new " + type + immutableSuffix + variables + "(this._delegate.root, this._delegate.extend(\"" + name + "\"));");
+		writer.line(
+				"return new " + type + immutableSuffix + variables + "(this._delegate.root, this._delegate.extend(" + nameLiteral + "));");
 		writer.indentOut();
 		writer.line("}");
 	}
 
 	private void primitiveArrayAccessor(String type) {
+		String accessorName = NameSafety.safeAccessorName(name);
+		String nameLiteral = NameSafety.tsStringLiteral(name);
 		writer.addImport("jsonInterfaceGenerator", currentNamespace, writer.getJIGNamespace());
-		writer.line("public get " + name + "() : jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + "> {");
+		writer.line("public get " + accessorName + "() : jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + "> {");
 		writer.indentIn();
-		writer.line("return new jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + ">(this._delegate.root, this._delegate.extend(\"" +
-				name + "\"));");
+		writer.line("return new jsonInterfaceGenerator.PrimitiveArrayWrapper<" + type + ">(this._delegate.root, this._delegate.extend(" +
+				nameLiteral + "));");
 		writer.indentOut();
 		writer.line("}");
 	}
 
 	private void objectArrayAccessor(String intfType, String wrapperType) {
+		String accessorName = NameSafety.safeAccessorName(name);
+		String nameLiteral = NameSafety.tsStringLiteral(name);
 		writer.addImport("jsonInterfaceGenerator", currentNamespace, writer.getJIGNamespace());
-		writer.line("public get " + name + "(): jsonInterfaceGenerator.PrimitiveArrayWrapper<" + intfType + "> {");
+		writer.line("public get " + accessorName + "(): jsonInterfaceGenerator.ObjectArrayWrapper<" + intfType + ", " + wrapperType + "> {");
 		writer.indentIn();
-		writer.line(
-				"return new jsonInterfaceGenerator.PrimitiveArrayWrapper<" + intfType + ">(this._delegate.root, this._delegate.extend(\"" +
-						name + "\"));");
+		writer.line("return new jsonInterfaceGenerator.ObjectArrayWrapper<" + intfType + ", " + wrapperType + ">(this._delegate.root, " +
+				"this._delegate.extend(" + nameLiteral + "), (root, path) => new " + wrapperType + "(root, path));");
 		writer.indentOut();
 		writer.line("}");
 	}

@@ -81,7 +81,7 @@ public class Writer implements CodeProducer<Options> {
 		for (Map.Entry<Integer, EndpointParameter> entry : starts.entrySet()) {
 			int newPos = entry.getKey();
 			url.addLiteral(template.substring(curPos, newPos));
-			url.addCode("encodeURI(String(" + entry.getValue().getCodeName() + "))");
+			url.addCode("encodeURIComponent(String(" + entry.getValue().getCodeName() + "))");
 			curPos = ends.get(newPos);
 		}
 		if (curPos < template.length()) {
@@ -203,7 +203,7 @@ public class Writer implements CodeProducer<Options> {
 				}
 				url.addLiteral(param.getNetworkName());
 				url.addLiteral("=");
-				url.addCode("encodeURI(String(" + param.getCodeName() + "))");
+				url.addCode("encodeURIComponent(String(" + param.getCodeName() + "))");
 			}
 		}
 
@@ -270,7 +270,7 @@ public class Writer implements CodeProducer<Options> {
 			int numParams = params.size();
 			for (int i = 0; i < numParams; i++) {
 				EndpointParameter p = params.get(i);
-				writer.line("'" + p.getNetworkName() + "': " + p.getCodeName() + (i == numParams - 1 ? "" : ","));
+					writer.line(NameSafety.tsStringLiteral(p.getNetworkName()) + ": " + p.getCodeName() + (i == numParams - 1 ? "" : ","));
 			}
 		}
 		writer.indentOut();
@@ -296,7 +296,7 @@ public class Writer implements CodeProducer<Options> {
 			// sort namespaces for stability of output
 			List<? extends JToplevelType> declarations = toList(namespace.getDeclarations());
 			declarations.sort(Comparator.comparing(JToplevelType::getName));
-			for (JType type : namespace.getDeclarations()) {
+			for (JType type : declarations) {
 				type.accept(new TypeDeclarationProducer(writer, options));
 			}
 			outputEndpoints(namespace, writer);

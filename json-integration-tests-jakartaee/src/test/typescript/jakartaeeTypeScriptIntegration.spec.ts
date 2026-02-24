@@ -315,6 +315,41 @@ describe("test TestServicesObject", () => {
 
     });
 
+    it("handles weird property names and object array immutables", async () => {
+        const result = await integrationJakartaee.TestServicesObject.getWeirdNamesContainer(simpleHandler);
+        const list = (result as any)["items-list"];
+        expect(Array.isArray(list)).toBeTruthy();
+        const item = list[0];
+        expect(item["weird-name"]).toEqual("w1");
+        expect(item["class"]).toEqual("c1");
+        expect(item["0start"]).toEqual(7);
+        expect(item["quote'"]).toEqual("q1");
+
+        const root = new jsonInterfaceGenerator.ChangeRoot<integrationJakartaee.testPackage6.WeirdNamesContainer>(result);
+        const imm = new integrationJakartaee.testPackage6.WeirdNamesContainer$Imm(root);
+        const items = ck(imm["items-list"]);
+        const first = items.get(0);
+        expect(first["weird-name"]).toEqual("w1");
+        first["weird-name"] = "w2";
+        expect(first["weird-name"]).toEqual("w2");
+    });
+
+    it("handles discriminator values with regex chars", async () => {
+        const result = ck(await integrationJakartaee.TestServicesObject.getRegexList(simpleHandler));
+        const list = ck(result.list);
+        expect(integrationJakartaee.testPackage6.Regex$Special.isInstance(list[0])).toBeTruthy();
+        expect(integrationJakartaee.testPackage6.RegexPlain.isInstance(list[0])).toBeFalsy();
+        expect(integrationJakartaee.testPackage6.RegexPlain.isInstance(list[1])).toBeTruthy();
+    });
+
+    it("handles discriminator values with many regex metacharacters", async () => {
+        const result = ck(await integrationJakartaee.TestServicesObject.getRegexReturnList(simpleHandler));
+        const list = ck(result.list);
+        expect(integrationJakartaee.testPackage6.RegexReturnMeta.isInstance(list[0])).toBeTruthy();
+        expect(integrationJakartaee.testPackage6.RegexReturnPlain.isInstance(list[0])).toBeFalsy();
+        expect(integrationJakartaee.testPackage6.RegexReturnPlain.isInstance(list[1])).toBeTruthy();
+    });
+
     it("can handle subclasses", async () => {
 
         // These will be compilation errors if something's wrong
