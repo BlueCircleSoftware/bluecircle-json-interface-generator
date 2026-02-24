@@ -17,6 +17,11 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import lombok.Getter;
@@ -50,6 +55,27 @@ public class JSpecialization extends JType {
 
 	@Override
 	public boolean needsWrapping() {
-		return base.needsWrapping();
+		return base != null && base.needsWrapping();
+	}
+
+	@Override
+	public boolean hasTypeVariables() {
+		return !getTypeVariables().isEmpty();
+	}
+
+	@Override
+	public List<JTypeVariable> getTypeVariables() {
+		Set<JTypeVariable> result = new LinkedHashSet<>();
+		if (base != null) {
+			result.addAll(base.getTypeVariables());
+		}
+		if (parameters != null) {
+			for (JType param : parameters) {
+				if (param != null) {
+					result.addAll(param.getTypeVariables());
+				}
+			}
+		}
+		return new ArrayList<>(result);
 	}
 }

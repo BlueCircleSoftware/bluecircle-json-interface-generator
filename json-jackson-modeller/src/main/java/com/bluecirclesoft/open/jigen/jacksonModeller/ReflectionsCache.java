@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
@@ -41,19 +42,18 @@ class ReflectionsCache {
 
 	private static final Logger logger = LoggerFactory.getLogger(ReflectionsCache.class);
 
-	private final Map<Set<String>, Reflections> cache = new HashMap<>();
+	private final Map<Set<String>, Reflections> cache = new ConcurrentHashMap<>();
 
 	Reflections getReflections(String[] packagesToScan) {
 		Set<String> packages = new HashSet<>();
 		Collections.addAll(packages, packagesToScan);
-		if (cache.containsKey(packages)) {
-			return cache.get(packages);
-		} else {
-			logger.info("Creating new Reflections scanner for package set {}", packages);
+		Set<String> cacheKey = Collections.unmodifiableSet(packages);
+		return cache.computeIfAbsent(cacheKey, key -> {
+			logger.info("Creating new Reflections scanner for package set {}", key);
 
 			// doing this map rigmarole to avoid using URL.equals()
 			Map<URI, URL> urls = new HashMap<>();
-			for (String p : packagesToScan) {
+			for (String p : key) {
 				Collection<URL> urlsIn = ClasspathHelper.forPackage(p);
 				for (URL urlIn : urlsIn) {
 					try {
@@ -63,9 +63,7 @@ class ReflectionsCache {
 					}
 				}
 			}
-			Reflections subclassFinder = new Reflections(new ConfigurationBuilder().setUrls(urls.values()).setScanners(Scanners.SubTypes));
-			cache.put(packages, subclassFinder);
-			return subclassFinder;
-		}
+			return new Reflections(new ConfigurationBuilder().setUrls(urls.values()).setScanners(Scanners.SubTypes));
+		});
 	}
 }

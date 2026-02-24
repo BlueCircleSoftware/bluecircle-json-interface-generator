@@ -36,7 +36,13 @@ class ConfigurationReader {
 	private Map<String, Object> config;
 
 	void read(File file) throws IOException {
-		read(file == null ? null : Files.newInputStream(file.toPath()));
+		if (file == null) {
+			read((InputStream) null);
+			return;
+		}
+		try (InputStream configFile = Files.newInputStream(file.toPath())) {
+			read(configFile);
+		}
 	}
 
 	void read(InputStream configFile) throws IOException {

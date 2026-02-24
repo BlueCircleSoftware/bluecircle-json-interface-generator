@@ -103,6 +103,10 @@ public class Model implements Serializable {
 		for (Map.Entry<Type, JType> entry : interfaces.entrySet()) {
 			// if it's an object
 			if (entry.getValue() instanceof JObject) {
+				if (!(entry.getKey() instanceof Class<?>)) {
+					logger.debug("Skipping non-Class type key in model cleanup: {}", entry.getKey());
+					continue;
+				}
 				// do a breadth-first search of all the ancestors
 				ArrayDeque<Class<?>> parentQueue = new ArrayDeque<>();
 				parentQueue.add((Class<?>) entry.getKey());

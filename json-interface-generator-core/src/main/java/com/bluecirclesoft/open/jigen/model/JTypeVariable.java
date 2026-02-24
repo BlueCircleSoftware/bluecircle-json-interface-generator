@@ -61,6 +61,21 @@ public class JTypeVariable extends JType {
 	}
 
 	@Override
+	public boolean hasTypeVariables() {
+		return true;
+	}
+
+	@Override
+	public List<JTypeVariable> getTypeVariables() {
+		List<JTypeVariable> result = new ArrayList<>();
+		result.add(this);
+		for (JType bound : intersectionBounds) {
+			result.addAll(bound.getTypeVariables());
+		}
+		return result;
+	}
+
+	@Override
 	public boolean isSpecializable() {
 		return false;
 	}

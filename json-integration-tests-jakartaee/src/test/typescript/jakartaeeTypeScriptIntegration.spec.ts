@@ -221,6 +221,16 @@ describe("test TestServicesObject", () => {
         let result = await integrationJakartaee.TestServicesObject.getClassB(simpleHandler);
     });
 
+    it("can execute getAnyGetterDto", async () => {
+        console.log("URL: " + jsonInterfaceGenerator.getPrefix() + "/testServicesObject/getAnyGetterDto");
+
+        const result = await integrationJakartaee.TestServicesObject.getAnyGetterDto(simpleHandler);
+        const anyResult = result as any;
+        expect(anyResult.fixed).toEqual("fixed");
+        expect(anyResult.alpha).toEqual(1);
+        expect(anyResult.beta).toEqual(2);
+    });
+
     it("can use immutables", async () => {
         const base: integrationJakartaee.NestedOuter = {
             a: {a: "ab", b: "cd", c: 1, d: 2, e: [1, 2, 3]},

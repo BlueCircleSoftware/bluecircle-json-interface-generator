@@ -49,6 +49,7 @@ import com.bluecirclesoft.open.jigen.model.JSpecialization;
 import com.bluecirclesoft.open.jigen.model.JString;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
+import com.bluecirclesoft.open.jigen.model.JNull;
 import com.bluecirclesoft.open.jigen.model.JVoid;
 import com.bluecirclesoft.open.jigen.model.JWildcard;
 import com.bluecirclesoft.open.jigen.model.Model;
@@ -548,21 +549,7 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 		@Override
 		public JsonNumberFormatVisitor expectNumberFormat(JavaType type) {
 			reader = JNumber::new;
-			return new JsonNumberFormatVisitor() {
-				@Override
-				public void numberType(JsonParser.NumberType type) {
-					throw new RuntimeException("not implemented");
-				}
-
-				@Override
-				public void format(JsonValueFormat format) {
-					throw new RuntimeException("not implemented");
-				}
-
-				@Override
-				public void enumTypes(Set<String> enums) {
-					throw new RuntimeException("not implemented");
-				}
+			return new JsonNumberFormatVisitor.Base() {
 			};
 		}
 
@@ -575,14 +562,14 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 
 		@Override
 		public JsonBooleanFormatVisitor expectBooleanFormat(JavaType type) {
-			reader = JNumber::new;
+			reader = JBoolean::new;
 			return new JsonBooleanFormatVisitor.Base() {
 			};
 		}
 
 		@Override
 		public JsonNullFormatVisitor expectNullFormat(JavaType type) {
-			reader = JNumber::new;
+			reader = JNull::new;
 			return new JsonNullFormatVisitor.Base() {
 			};
 		}
@@ -641,8 +628,8 @@ public class JacksonTypeModeller implements PropertyEnumerator {
 							"- keeping first definition only", enumConstant, enumConstantValue, usedValues.get(enumConstantValue));
 				} else {
 					usedValues.put(enumConstantValue, enumConstant);
+					entries.add(new JEnum.EnumDeclaration(enumConstant.name(), enumConstant.ordinal(), enumConstantValue));
 				}
-				entries.add(new JEnum.EnumDeclaration(enumConstant.name(), enumConstant.ordinal(), enumConstantValue));
 			} catch (JsonProcessingException e) {
 				logger.warn("Could not serialize {}, skipping", enumConstant);
 			}

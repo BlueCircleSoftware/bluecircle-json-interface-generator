@@ -252,4 +252,16 @@ public class TestServicesObject {
 	public TP5Weird2<TP4Super2> getTP5Weird2() {
 		return new TP5Weird2<>();
 	}
+
+	@GET
+	@Path("/getAnyGetterDto")
+	@Produces(MediaType.APPLICATION_JSON)
+	public AnyGetterDto getAnyGetterDto() {
+		setCORSHeaders();
+		AnyGetterDto result = new AnyGetterDto();
+		result.setFixed("fixed");
+		result.putExtra("alpha", 1);
+		result.putExtra("beta", 2);
+		return result;
+	}
 }

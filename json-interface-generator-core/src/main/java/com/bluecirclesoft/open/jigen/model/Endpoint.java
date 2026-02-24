@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -73,8 +74,7 @@ public class Endpoint implements Serializable {
 	}
 
 	public void setMethod(HttpMethod method) {
-		assert method != null;
-		this.method = method;
+		this.method = Objects.requireNonNull(method, "method");
 	}
 
 	@Override
@@ -104,6 +104,9 @@ public class Endpoint implements Serializable {
 	 * @return yes or no, along with an explanation if no
 	 */
 	public ValidEndpointResponse isValid() {
+		if (method == null) {
+			return new ValidEndpointResponse(false, "No HTTP method specified");
+		}
 		Map<EndpointParameter.NetworkType, List<EndpointParameter>> sortedParams = getSortedParameters();
 		List<EndpointParameter> bodyParams = sortedParams.get(EndpointParameter.NetworkType.JSON_BODY);
 		boolean isBodyParam = bodyParams != null && !bodyParams.isEmpty();

@@ -54,13 +54,22 @@ public final class Main {
 
 		if (args.length > 0) {
 			String argSpecifier = args[0];
-			if (Objects.equals(argSpecifier, "--config")) {
-				configFile = new File(args[1]);
-			} else {
+			if (!Objects.equals(argSpecifier, "--config")) {
 				System.err.println("Unknown argument: " + argSpecifier);
 				usage();
 				System.exit(1);
 			}
+			if (args.length < 2) {
+				System.err.println("Missing value for --config");
+				usage();
+				System.exit(1);
+			}
+			if (args.length > 2) {
+				System.err.println("Too many arguments");
+				usage();
+				System.exit(1);
+			}
+			configFile = new File(args[1]);
 		}
 
 		// if user didn't specify a config file, check for default (or just go without config)

@@ -22,9 +22,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ import com.bluecirclesoft.open.jigen.model.JObject;
 import com.bluecirclesoft.open.jigen.model.JType;
 import com.bluecirclesoft.open.jigen.model.JTypeVariable;
 import com.bluecirclesoft.open.jigen.model.SourcedType;
+import com.bluecirclesoft.open.jigen.model.JAny;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.BeanProperty;
@@ -231,6 +235,82 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 		jacksonTypeModeller.queueType(new SourcedType(type, "type of property " + beanProperty.getFullName(), parent));
 	}
 
+	private void handleNonPojoProperty(String name, JavaType propertyTypeHint, boolean required) {
+		logger.debug("Handling non-POJO property {}.{} with hint {}", jObject.getName(), name, propertyTypeHint);
+		jObject.declareProperty(name);
+		if (propertyTypeHint == null) {
+			logger.warn("No type hint for property {}.{}; defaulting to any", jObject.getName(), name);
+			jObject.makeProperty(name, new JAny(), required);
+			return;
+		}
+		Type type = javaTypeToType(propertyTypeHint);
+		jacksonTypeModeller.addFixup(type, jType -> jObject.makeProperty(name, jType, required));
+		jacksonTypeModeller.queueType(new SourcedType(type, "type of property " + name, parent));
+	}
+
+	private static Type javaTypeToType(JavaType javaType) {
+		if (javaType == null) {
+			return Object.class;
+		}
+		int paramCount = javaType.containedTypeCount();
+		if (paramCount <= 0) {
+			return javaType.getRawClass();
+		}
+		Type[] params = new Type[paramCount];
+		for (int i = 0; i < paramCount; i++) {
+			JavaType contained = javaType.containedType(i);
+			params[i] = contained == null ? Object.class : javaTypeToType(contained);
+		}
+		return new SimpleParameterizedType(javaType.getRawClass(), params, javaType.getRawClass().getDeclaringClass());
+	}
+
+	private static final class SimpleParameterizedType implements ParameterizedType {
+
+		private final Type rawType;
+		private final Type[] typeArgs;
+		private final Type ownerType;
+
+		private SimpleParameterizedType(Type rawType, Type[] typeArgs, Type ownerType) {
+			this.rawType = rawType;
+			this.typeArgs = typeArgs.clone();
+			this.ownerType = ownerType;
+		}
+
+		@Override
+		public Type[] getActualTypeArguments() {
+			return typeArgs.clone();
+		}
+
+		@Override
+		public Type getRawType() {
+			return rawType;
+		}
+
+		@Override
+		public Type getOwnerType() {
+			return ownerType;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof ParameterizedType)) {
+				return false;
+			}
+			ParameterizedType that = (ParameterizedType) other;
+			return Objects.equals(rawType, that.getRawType())
+					&& Objects.equals(ownerType, that.getOwnerType())
+					&& Arrays.equals(typeArgs, that.getActualTypeArguments());
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(rawType, ownerType, Arrays.hashCode(typeArgs));
+		}
+	}
+
 	/**
 	 * Jackson event - property encountered
 	 *
@@ -251,7 +331,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	@Override
 	public void property(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
 		logger.debug("Callback property(name, handler, propertyTypeHint) {}", name);
-		throw new RuntimeException("not implemented");
+		handleNonPojoProperty(name, propertyTypeHint, true);
 	}
 
 	/**
@@ -274,7 +354,7 @@ class JsonObjectReader extends JsonObjectFormatVisitor.Base implements TypeReadi
 	@Override
 	public void optionalProperty(String name, JsonFormatVisitable handler, JavaType propertyTypeHint) {
 		logger.debug("Callback optionalProperty(name, handler, propertyTypeHint) {}", name);
-		throw new RuntimeException("not implemented");
+		handleNonPojoProperty(name, propertyTypeHint, false);
 	}
 
 	@Override

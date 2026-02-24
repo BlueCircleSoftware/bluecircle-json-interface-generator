@@ -16,6 +16,7 @@
 
 package com.bluecirclesoft.open.jigen.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -59,11 +60,14 @@ public class JArray extends JType {
 
 	@Override
 	public boolean hasTypeVariables() {
-		return elementType.hasTypeVariables();
+		return elementType != null && elementType.hasTypeVariables();
 	}
 
 	@Override
 	public List<JTypeVariable> getTypeVariables() {
+		if (elementType == null) {
+			return new ArrayList<>();
+		}
 		return elementType.getTypeVariables();
 	}
 }

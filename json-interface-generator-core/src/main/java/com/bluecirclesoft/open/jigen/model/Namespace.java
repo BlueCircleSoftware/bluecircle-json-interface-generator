@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -195,18 +196,15 @@ public class Namespace implements Serializable {
 
 		Namespace namespace = (Namespace) o;
 
-		if (!getName().equals(namespace.getName())) {
+		if (!Objects.equals(getName(), namespace.getName())) {
 			return false;
 		}
-		return getContainingNamespace() != null ? getContainingNamespace().equals(namespace.getContainingNamespace()) :
-				namespace.getContainingNamespace() == null;
+		return Objects.equals(getContainingNamespace(), namespace.getContainingNamespace());
 	}
 
 	@Override
 	public int hashCode() {
-		int result = getName().hashCode();
-		result = 31 * result + (getContainingNamespace() != null ? getContainingNamespace().hashCode() : 0);
-		return result;
+		return Objects.hash(getName(), getContainingNamespace());
 	}
 
 	public String conjoin(CharSequence separator) {
