@@ -81,7 +81,7 @@ let ajaxUrlPrefix: string | null = null;
  * @returns {string} the prefix
  */
 export function getPrefix(): string {
-    if (!ajaxUrlPrefix) {
+    if (ajaxUrlPrefix === null) {
         throw new Error("The URL prefix has not been set, so no AJAX calls can be made. Set the URL prefix by calling" +
             " jsonInterfaceGenerator.init()");
     }
@@ -108,15 +108,121 @@ export type BodyType = "json" | "form" | "none";
  */
 type AjaxInvoker<T> = (url: string, method: string, data: UnknownType, bodyType: BodyType, consumes: string | null) => Promise<T>;
 
+let callCounter = 0;
+
 /**
  * The ajax caller used by generated code.
  */
-let callAjaxFn: AjaxInvoker<UnknownType>;
+export async function defaultCallAjax(url: string,
+                                      method: string,
+                                      data: UnknownType,
+                                      bodyType: BodyType,
+                                      consumes: string | null): Promise<UnknownType> {
+    const myCallCounter = callCounter++;
+    const headers: Record<string, string> = {};
+    const init: RequestInit = {
+        method,
+        headers,
+    };
+    let queryString: string | undefined;
 
-export function setCallAjax(newCallAjax: AjaxInvoker<UnknownType>): void {
-    callAjaxFn = newCallAjax;
+    switch (bodyType) {
+        case "json":
+            if (consumes !== null) {
+                headers["Content-Type"] = consumes;
+            } else {
+                headers["Content-Type"] = "application/json";
+            }
+            if (typeof data === "string") {
+                init.body = data;
+            } else {
+                init.body = JSON.stringify(data);
+            }
+            break;
+        case "form":
+            let formBody: string | undefined;
+            if (typeof data === "string") {
+                formBody = data.length > 0 ? data : undefined;
+            } else if (data instanceof URLSearchParams) {
+                const qs = data.toString();
+                formBody = qs.length > 0 ? qs : undefined;
+            } else if (data && typeof data === "object") {
+                const params = new URLSearchParams();
+                for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+                    if (value !== undefined && value !== null) {
+                        params.append(key, String(value));
+                    }
+                }
+                const qs = params.toString();
+                formBody = qs.length > 0 ? qs : undefined;
+            }
+            if (formBody !== undefined) {
+                headers["Content-Type"] = "application/x-www-form-urlencoded";
+                init.body = formBody;
+            }
+            break;
+        case "none":
+            if (typeof data === "string") {
+                queryString = data.length > 0 ? data : undefined;
+            } else if (data instanceof URLSearchParams) {
+                const qs = data.toString();
+                queryString = qs.length > 0 ? qs : undefined;
+            } else if (data && typeof data === "object") {
+                const params = new URLSearchParams();
+                for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+                    if (value !== undefined && value !== null) {
+                        params.append(key, String(value));
+                    }
+                }
+                const qs = params.toString();
+                queryString = qs.length > 0 ? qs : undefined;
+            }
+            break;
+        default:
+            throw new Error("unhandled body type " + bodyType);
+    }
+
+    let actualUrl = applyPrefix(url);
+    if (queryString) {
+        actualUrl = actualUrl + (actualUrl.indexOf("?") === -1 ? "?" : "&") + queryString;
+    }
+    const response = await fetch(actualUrl, init);
+    if (!response.ok) {
+        throw new Error("HTTP " + response.status + " " + response.statusText);
+    }
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        return response.json();
+    }
+    const text = await response.text();
+    return text.length === 0 ? undefined : text;
 }
 
+let callAjaxFn: AjaxInvoker<UnknownType> = defaultCallAjax;
+
+/**
+ * Updates the internal function used for AJAX calls.
+ *
+ * @param {AjaxInvoker<UnknownType>} newCallAjax - The new AJAX invoker function to set.
+ * @return {AjaxInvoker<UnknownType>} The previous AJAX invoker function.
+ */
+export function setCallAjax(newCallAjax: AjaxInvoker<UnknownType>): AjaxInvoker<UnknownType> {
+    const old = callAjaxFn;
+    callAjaxFn = newCallAjax;
+    return old;
+}
+
+/**
+ * Makes an asynchronous AJAX call to a specified URL with the given parameters.
+ *
+ * @param {string} url The target URL for the AJAX request.
+ * @param {string} method The HTTP method (e.g., GET, POST, PUT, DELETE) to be used for the request.
+ * @param {S} data The data to be sent with the request. The type of the data is generic and depends on the method implementation.
+ * @param {BodyType} bodyType Specifies the format of the request body (e.g., JSON, FORM).
+ * @param {string | null} consumes The content type that the server expects in the request (e.g., "application/json"), or null if none isneeded.
+ * @param {JsonOptions<R>} [options] Optional configuration containing callbacks for success, error, and completion handling. The generic type determines the type of the response.
+ * @return {Promise<R>} A promise that resolves to the response of type R if the request succeeds, or rejects with an error if the request fails.
+ */
 export async function callAjax<S, R>(url: string,
                                      method: string,
                                      data: S,

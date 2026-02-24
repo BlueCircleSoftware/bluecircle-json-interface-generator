@@ -179,7 +179,7 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 
 
 	private void makeInterfaceDeclaration(JObject intf) {
-		String interfaceLabel = intf.getName();
+		String interfaceLabel = NameSafety.saveObjectName(intf.getName());
 
 		String definterfaceType = intf.accept(
 				new TypeVariableProducer(UsageLocation.DEFINITION, null, unknownProducer, intf.getContainingNamespace(), writer));
@@ -439,15 +439,17 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 		Set<String> result = new LinkedHashSet<>();
 		while (!queue.isEmpty()) {
 			JObject obj = queue.pollFirst();
+			String intfName = NameSafety.saveObjectName(intf.getName());
 			if (obj == null) {
-				throw new RuntimeException("Internal error: null subclass in subtree of" + intf.getName());
+				throw new RuntimeException("Internal error: null subclass in subtree of" + intfName);
 			}
 			String type = obj.getTypeDiscriminatorValue();
 			if (StringUtils.isBlank(type)) {
-				throw new RuntimeException("Type discriminator value is null in " + obj.getName() + " while processing " + intf.getName());
+				String objName = NameSafety.saveObjectName(obj.getName());
+				throw new RuntimeException("Type discriminator value is null in " + objName + " while processing " + intfName);
 			}
 			if (result.contains(type)) {
-				throw new RuntimeException("Duplicate type discriminator in subtree of " + intf.getName());
+				throw new RuntimeException("Duplicate type discriminator in subtree of " + intfName);
 			}
 			result.add(type);
 			queue.addAll(obj.getSubclasses().values());

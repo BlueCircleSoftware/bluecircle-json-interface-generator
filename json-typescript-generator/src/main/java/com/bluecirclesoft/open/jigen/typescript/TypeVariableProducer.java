@@ -62,13 +62,14 @@ public class TypeVariableProducer implements JTypeVisitor<String> {
 	@Override
 	public String visit(JObject jObject) {
 		String name;
+		String jObjectName = NameSafety.saveObjectName(jObject.getName());
 		switch (this.location) {
 			case DEFINITION:
-				name = jObject.getName();
+				name = jObjectName;
 				break;
 			case USAGE:
 				String prefix = writer.getReferencePrefix(locationNamespace, jObject.getContainingNamespace());
-				name = prefix + jObject.getName();
+				name = prefix + jObjectName;
 				break;
 			default:
 				throw new RuntimeException("Unhandled location: " + this.location);

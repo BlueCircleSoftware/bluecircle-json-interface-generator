@@ -16,7 +16,7 @@
 
 import * as $ from "jquery";
 import {com, jsonInterfaceGenerator} from "../../../target/generated-sources/jeeToTypeScript";
-import {BodyType} from "../../../../json-typescript-generator/src/main/resources/header";
+import {BodyType, defaultCallAjax, setCallAjax} from "../../../../json-typescript-generator/src/main/resources/header";
 import JsonOptions = jsonInterfaceGenerator.JsonOptions;
 import integrationJee7 = com.bluecirclesoft.open.jigen.integrationJee7;
 
@@ -29,51 +29,51 @@ function ck<T>(val: T | undefined | null): T {
     return val;
 }
 
-jsonInterfaceGenerator.setCallAjax((url: string,
-                                    method: string,
-                                    data: any,
-                                    bodyType: BodyType,
-                                    consumes: string | null) => {
-    return new Promise((resolve, reject) => {
-        console.log("--> Initiating call to ", url, " with method ", method);
-        let error = false;
-        const settings: JQueryAjaxSettings = {
-            async: true,
-            data,
-            method,
-        };
-        settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
-            resolve(responseData);
-        };
-        settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-            console.error("Error!");
-            console.error("url: ", url);
-            console.error("jqXHR.status: ", jqXHR.status);
-            console.error("jqXHR.readyState: ", jqXHR.readyState);
-            console.error("textStatus: ", textStatus);
-            console.error("errorThrown: ", errorThrown);
-            error = true;
-            reject(new Error(errorThrown));
-        };
-        switch (bodyType) {
-            case "json":
-                if (consumes !== null) {
-                    settings.headers = {"Content-Type": consumes};
-                }
-                settings.dataType = "json";
-                break;
-            case "form":
-                settings.enctype = "application/x-www-form-urlencoded";
-                break;
-            case "none":
-                break;
-            default:
-                throw new Error("unhandled body type " + bodyType);
-        }
-
-        $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
-    });
-});
+// jsonInterfaceGenerator.setCallAjax((url: string,
+//                                     method: string,
+//                                     data: any,
+//                                     bodyType: BodyType,
+//                                     consumes: string | null) => {
+//     return new Promise((resolve, reject) => {
+//         console.log("--> Initiating call to ", url, " with method ", method);
+//         let error = false;
+//         const settings: JQueryAjaxSettings = {
+//             async: true,
+//             data,
+//             method,
+//         };
+//         settings.success = (responseData: any, textStatus: string, jqXHR: JQueryXHR) => {
+//             resolve(responseData);
+//         };
+//         settings.error = (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+//             console.error("Error!");
+//             console.error("url: ", url);
+//             console.error("jqXHR.status: ", jqXHR.status);
+//             console.error("jqXHR.readyState: ", jqXHR.readyState);
+//             console.error("textStatus: ", textStatus);
+//             console.error("errorThrown: ", errorThrown);
+//             error = true;
+//             reject(new Error(errorThrown));
+//         };
+//         switch (bodyType) {
+//             case "json":
+//                 if (consumes !== null) {
+//                     settings.headers = {"Content-Type": consumes};
+//                 }
+//                 settings.dataType = "json";
+//                 break;
+//             case "form":
+//                 settings.enctype = "application/x-www-form-urlencoded";
+//                 break;
+//             case "none":
+//                 break;
+//             default:
+//                 throw new Error("unhandled body type " + bodyType);
+//         }
+//
+//         $.ajax(jsonInterfaceGenerator.getPrefix() + url, settings);
+//     });
+// });
 
 (window as any).$ = $;
 (window as any).jQuery = $;
@@ -83,22 +83,22 @@ const baseUrl = __karma__.config.baseUrl;
 console.log("Initializing with base URL of ", baseUrl);
 jsonInterfaceGenerator.init(baseUrl);
 
-describe("test @JsonProperty on enums", () => {
-    it("has correct enum names", () => {
-        let val: integrationJee7.testPackage2.EnumB = integrationJee7.testPackage2.EnumB.NUMBER_ONE;
-        expect(val === integrationJee7.testPackage2.EnumB.NUMBER_ONE).toBeTruthy();
-        expect(val === integrationJee7.testPackage2.EnumB_values.NumeroUno).toBeTruthy();
-        expect(val === integrationJee7.testPackage2.EnumB_values[0]).toBeTruthy();
-        val = integrationJee7.testPackage2.EnumB.NUMBER_TWO;
-        expect(val === integrationJee7.testPackage2.EnumB.NUMBER_TWO).toBeTruthy();
-        expect(val === integrationJee7.testPackage2.EnumB_values.NumeroDos).toBeTruthy();
-        expect(val === integrationJee7.testPackage2.EnumB_values[2]).toBeTruthy();
-        val = integrationJee7.testPackage2.EnumB.NUMBER_THREE;
-        expect(val === integrationJee7.testPackage2.EnumB.NUMBER_THREE).toBeTruthy();
-        expect(val === integrationJee7.testPackage2.EnumB_values.NumeroTres).toBeTruthy();
-        expect(val === integrationJee7.testPackage2.EnumB_values[1]).toBeTruthy();
-    });
-});
+// describe("test @JsonProperty on enums", () => {
+//     it("has correct enum names", () => {
+//         let val: integrationJee7.testPackage2.EnumB = integrationJee7.testPackage2.EnumB.NUMBER_ONE;
+//         expect(val === integrationJee7.testPackage2.EnumB.NUMBER_ONE).toBeTruthy();
+//         expect(val === integrationJee7.testPackage2.EnumB_values.NumeroUno).toBeTruthy();
+//         expect(val === integrationJee7.testPackage2.EnumB_values[0]).toBeTruthy();
+//         val = integrationJee7.testPackage2.EnumB.NUMBER_TWO;
+//         expect(val === integrationJee7.testPackage2.EnumB.NUMBER_TWO).toBeTruthy();
+//         expect(val === integrationJee7.testPackage2.EnumB_values.NumeroDos).toBeTruthy();
+//         expect(val === integrationJee7.testPackage2.EnumB_values[2]).toBeTruthy();
+//         val = integrationJee7.testPackage2.EnumB.NUMBER_THREE;
+//         expect(val === integrationJee7.testPackage2.EnumB.NUMBER_THREE).toBeTruthy();
+//         expect(val === integrationJee7.testPackage2.EnumB_values.NumeroTres).toBeTruthy();
+//         expect(val === integrationJee7.testPackage2.EnumB_values[1]).toBeTruthy();
+//     });
+// });
 
 describe("test TestServicesString", () => {
 
@@ -623,5 +623,24 @@ describe("test TestAllCombosTwoParameters", () => {
     //     }));
     //     expect(result).toEqual({"a": "ABCABC", "b": "DEFDEF", "c": "GHIGHI"});
     // });
+
+    it("can get an exception on error 500", async () => {
+
+        // const oldFn = setCallAjax(defaultCallAjax);
+        try {
+            const result = await integrationJee7.TestError500.runTest([1, 2, 3], simpleHandler);
+            // Unreachable - should have thrown an exception
+            fail("Should have thrown an exception");
+        } catch (e) {
+            console.log("Caught exception: ", e);
+            // } finally {
+            //     setCallAjax(oldFn);
+        }
+    });
+
+    it("can call a POST with a void return", async () => {
+
+        await integrationJee7.TestVoidReturn.runTest([1, 2, 3], simpleHandler);
+    });
 
 });

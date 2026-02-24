@@ -83,7 +83,8 @@ class TypeUsageProducer {
 			@Override
 			public String visit(JObject jObject) {
 				String prefix = writer.getReferencePrefix(referenceLocation, jObject.getContainingNamespace());
-				String refStr = prefix + jObject.getName() + (immutableSuffix != null ? immutableSuffix : "");
+				String jObjectName = NameSafety.saveObjectName(jObject.getName());
+				String refStr = prefix + jObjectName + (immutableSuffix != null ? immutableSuffix : "");
 				if (isSpecializing == WillBeSpecialized.YES) {
 					// produced as part of a JSpecialization, which will output its own type parameters
 					return refStr;
