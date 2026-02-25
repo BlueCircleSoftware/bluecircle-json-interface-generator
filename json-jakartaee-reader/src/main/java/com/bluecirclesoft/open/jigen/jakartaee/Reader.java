@@ -21,12 +21,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -61,6 +63,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HEAD;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.MatrixParam;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -78,12 +81,20 @@ public class Reader implements ModelCreator<Options> {
 	private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
 	private static final Map<Class<? extends Annotation>, HttpMethod> annotationHttpMethodMap = new HashMap<>();
+	private static final Comparator<Method> METHOD_COMPARATOR = Comparator
+			.comparing((Method m) -> m.getDeclaringClass().getName())
+			.thenComparing(Method::getName)
+			.thenComparing(Reader::methodSignature);
 
 	private static class MethodInfo {
 
 		String consumes;
 
 		String produces;
+
+		boolean overloadedName;
+
+		String parameterSignature;
 
 		final Method method;
 
@@ -96,8 +107,111 @@ public class Reader implements ModelCreator<Options> {
 		annotationHttpMethodMap.put(DELETE.class, HttpMethod.DELETE);
 		annotationHttpMethodMap.put(GET.class, HttpMethod.GET);
 		annotationHttpMethodMap.put(HEAD.class, HttpMethod.HEAD);
+		annotationHttpMethodMap.put(OPTIONS.class, HttpMethod.OPTIONS);
 		annotationHttpMethodMap.put(POST.class, HttpMethod.POST);
 		annotationHttpMethodMap.put(PUT.class, HttpMethod.PUT);
+		addHttpMethodAnnotation("jakarta.ws.rs.PATCH", HttpMethod.PATCH);
+	}
+
+	private static void addHttpMethodAnnotation(String className, HttpMethod method) {
+		try {
+			Class<?> annotationClass = Class.forName(className);
+			if (Annotation.class.isAssignableFrom(annotationClass)) {
+				@SuppressWarnings("unchecked")
+				Class<? extends Annotation> typedAnnotation = (Class<? extends Annotation>) annotationClass;
+				annotationHttpMethodMap.put(typedAnnotation, method);
+			}
+		} catch (ClassNotFoundException ignored) {
+			// optional dependency
+		}
+	}
+
+	private static String methodSignature(Method method) {
+		return method.toGenericString();
+	}
+
+	private static String buildParameterSignature(Method method) {
+		Type[] types = method.getGenericParameterTypes();
+		if (types.length == 0) {
+			return "noArgs";
+		}
+		StringBuilder signature = new StringBuilder();
+		for (Type type : types) {
+			if (signature.length() > 0) {
+				signature.append('_');
+			}
+			signature.append(sanitizeTypeName(type.getTypeName()));
+		}
+		return signature.toString();
+	}
+
+	private static String sanitizeTypeName(String typeName) {
+		StringBuilder cleaned = new StringBuilder(typeName.length());
+		for (int i = 0; i < typeName.length(); i++) {
+			char ch = typeName.charAt(i);
+			if (Character.isLetterOrDigit(ch)) {
+				cleaned.append(ch);
+			} else {
+				cleaned.append('_');
+			}
+		}
+		return cleaned.toString();
+	}
+
+	private static List<String> splitMediaTypes(String[] values) {
+		List<String> result = new ArrayList<>();
+		for (String value : values) {
+			for (String elem : value.split(",")) {
+				String trimmed = elem.trim();
+				if (!trimmed.isEmpty()) {
+					result.add(trimmed);
+				}
+			}
+		}
+		return result;
+	}
+
+	private static String chooseJsonMediaType(List<String> mediaTypes) {
+		String applicationJsonValue = null;
+		String fallback = null;
+		for (String mediaType : mediaTypes) {
+			String base = stripParameters(mediaType);
+			if (MediaType.APPLICATION_JSON.equalsIgnoreCase(base)) {
+				if (applicationJsonValue == null || MediaType.APPLICATION_JSON.equalsIgnoreCase(mediaType)) {
+					applicationJsonValue = mediaType;
+				}
+			} else if (fallback == null) {
+				fallback = mediaType;
+			}
+		}
+		return applicationJsonValue != null ? applicationJsonValue : fallback;
+	}
+
+	private static boolean isJsonLike(String mediaType) {
+		String base = stripParameters(mediaType).toLowerCase(Locale.ROOT);
+		if (MediaType.APPLICATION_JSON.equals(base)) {
+			return true;
+		}
+		int slash = base.indexOf('/');
+		if (slash == -1) {
+			return false;
+		}
+		String type = base.substring(0, slash);
+		String subtype = base.substring(slash + 1);
+		return "application".equals(type) && (subtype.equals("json") || subtype.endsWith("+json"));
+	}
+
+	private static boolean isFormUrlEncoded(String mediaType) {
+		String base = stripParameters(mediaType);
+		return MediaType.APPLICATION_FORM_URLENCODED.equalsIgnoreCase(base);
+	}
+
+	private static String stripParameters(String mediaType) {
+		int semicolonIndex = mediaType.indexOf(';');
+		if (semicolonIndex == -1) {
+			return mediaType.trim();
+		}
+		return mediaType.substring(0, semicolonIndex).trim();
 	}
 
 	private final ClassOverrideHandler classOverrideHandler = new ClassOverrideHandler();
@@ -117,10 +231,16 @@ public class Reader implements ModelCreator<Options> {
 	 * @return a set of all appropriate methods
 	 */
 	private static Set<Method> findJaxRsMethods(Reflections reflections) {
-		Set<Method> resultSet =
-				new TreeSet<>(Comparator.comparing((Method m) -> m.getDeclaringClass().getName()).thenComparing(Method::getName));
+		Set<Method> resultSet = new TreeSet<>(METHOD_COMPARATOR);
 		for (Class<? extends Annotation> annotation : annotationHttpMethodMap.keySet()) {
 			resultSet.addAll(reflections.getMethodsAnnotatedWith(annotation));
+		}
+		for (Class<?> annotationType : reflections.getTypesAnnotatedWith(jakarta.ws.rs.HttpMethod.class)) {
+			if (Annotation.class.isAssignableFrom(annotationType)) {
+				@SuppressWarnings("unchecked")
+				Class<? extends Annotation> typedAnnotation = (Class<? extends Annotation>) annotationType;
+				resultSet.addAll(reflections.getMethodsAnnotatedWith(typedAnnotation));
+			}
 		}
 		return resultSet;
 	}
@@ -135,73 +255,75 @@ public class Reader implements ModelCreator<Options> {
 		return reflections.getTypesAnnotatedWith(Generate.class);
 	}
 
-	private static boolean isProducer(Method method) {
+	private static String getProducerString(Method method) {
 		Produces produces = method.getAnnotation(Produces.class);
-		if (isJsonProducer(produces)) {
-			return true;
-		} else if (method.getGenericReturnType() == Void.TYPE) {
-			return true;
-		} else {
-			produces = method.getDeclaringClass().getAnnotation(Produces.class);
-			return isJsonProducer(produces);
+		if (produces != null) {
+			return getProducerString(produces);
 		}
+		produces = method.getDeclaringClass().getAnnotation(Produces.class);
+		return getProducerString(produces);
 	}
 
 	/**
 	 * Does this method return JSON and only JSON?
 	 *
 	 * @param produces
-	 * @return
+	 * @return a JSON media type string if appropriate, otherwise null
 	 */
-	private static boolean isJsonProducer(Produces produces) {
-		if (produces != null) {
-			for (String val : produces.value()) {
-				for (String elem : val.split(",")) {
-					if (!MediaType.APPLICATION_JSON.equals(elem.trim())) {
-						return false;
-					}
-				}
+	private static String getProducerString(Produces produces) {
+		if (produces == null) {
+			return null;
+		}
+		List<String> mediaTypes = splitMediaTypes(produces.value());
+		if (mediaTypes.isEmpty()) {
+			return null;
+		}
+		for (String mediaType : mediaTypes) {
+			if (!isJsonLike(mediaType)) {
+				return null;
 			}
 		}
-		return true;
+		return chooseJsonMediaType(mediaTypes);
 	}
 
 	private static String isConsumer(Method method) {
 		Consumes consumes = method.getAnnotation(Consumes.class);
-		String found = getConsumerString(consumes);
-		if (found != null) {
-			return found;
-		} else {
-			consumes = method.getDeclaringClass().getAnnotation(Consumes.class);
+		if (consumes != null) {
 			return getConsumerString(consumes);
 		}
+		consumes = method.getDeclaringClass().getAnnotation(Consumes.class);
+		return getConsumerString(consumes);
 	}
 
 	private static String getConsumerString(Consumes consumes) {
-		String found = null;
-		if (consumes != null) {
-			for (String val : consumes.value()) {
-				for (String elem : val.split(",")) {
-					String trimmedElem = elem.trim();
-					if (MediaType.APPLICATION_JSON.equals(trimmedElem)) {
-						if (found == null || found.equals(MediaType.APPLICATION_JSON)) {
-							found = MediaType.APPLICATION_JSON;
-						} else {
-							return null;
-						}
-					} else if (MediaType.APPLICATION_FORM_URLENCODED.equals(trimmedElem)) {
-						if (found == null || found.equals(MediaType.APPLICATION_FORM_URLENCODED)) {
-							found = MediaType.APPLICATION_FORM_URLENCODED;
-						} else {
-							return null;
-						}
-					} else {
-						return null;
-					}
-				}
+		if (consumes == null) {
+			return null;
+		}
+		List<String> mediaTypes = splitMediaTypes(consumes.value());
+		if (mediaTypes.isEmpty()) {
+			return null;
+		}
+		boolean hasForm = false;
+		List<String> jsonTypes = new ArrayList<>();
+		for (String mediaType : mediaTypes) {
+			if (isFormUrlEncoded(mediaType)) {
+				hasForm = true;
+			} else if (isJsonLike(mediaType)) {
+				jsonTypes.add(mediaType);
+			} else {
+				return null;
 			}
 		}
-		return found;
+		if (hasForm && !jsonTypes.isEmpty()) {
+			return null;
+		}
+		if (hasForm) {
+			return MediaType.APPLICATION_FORM_URLENCODED;
+		}
+		if (jsonTypes.isEmpty()) {
+			return null;
+		}
+		return chooseJsonMediaType(jsonTypes);
 	}
 
 	private static String joinPaths(String... pathElements) {
@@ -246,6 +368,17 @@ public class Reader implements ModelCreator<Options> {
 				result.add(entry.getValue());
 			}
 		}
+		for (Annotation annotation : method.getAnnotations()) {
+			jakarta.ws.rs.HttpMethod httpMethod = annotation.annotationType().getAnnotation(jakarta.ws.rs.HttpMethod.class);
+			if (httpMethod != null) {
+				String methodName = httpMethod.value().toUpperCase(Locale.ROOT);
+				try {
+					result.add(HttpMethod.valueOf(methodName));
+				} catch (IllegalArgumentException e) {
+					logger.warn("Unknown HTTP method annotation value {}", methodName);
+				}
+			}
+		}
 		return result;
 	}
 
@@ -258,14 +391,14 @@ public class Reader implements ModelCreator<Options> {
 
 			for (Method method : findJaxRsMethods(reflections)) {
 				logger.info("Reading method {}", method);
-				boolean producer = isProducer(method);
-				if (producer) {
-					annotatedMethods.computeIfAbsent(method, MethodInfo::new).produces = MediaType.APPLICATION_JSON;
-				}
-				String consumes = isConsumer(method);
-				if (consumes != null) {
-					annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumes = consumes;
-				}
+			String produces = getProducerString(method);
+			if (produces != null) {
+				annotatedMethods.computeIfAbsent(method, MethodInfo::new).produces = produces;
+			}
+			String consumes = isConsumer(method);
+			if (consumes != null) {
+				annotatedMethods.computeIfAbsent(method, MethodInfo::new).consumes = consumes;
+			}
 			}
 
 			SourcedType generatedSource = new SourcedType(null, "@Generate annotation search", null);
@@ -274,7 +407,17 @@ public class Reader implements ModelCreator<Options> {
 			}
 		}
 
+		Map<String, Integer> methodNameCounts = new HashMap<>();
+		for (Method method : annotatedMethods.keySet()) {
+			String key = method.getDeclaringClass().getName() + "#" + method.getName();
+			methodNameCounts.put(key, methodNameCounts.getOrDefault(key, 0) + 1);
+		}
 		for (MethodInfo method : annotatedMethods.values()) {
+			String key = method.method.getDeclaringClass().getName() + "#" + method.method.getName();
+			method.overloadedName = methodNameCounts.getOrDefault(key, 0) > 1;
+			if (method.overloadedName) {
+				method.parameterSignature = buildParameterSignature(method.method);
+			}
 			try {
 				readMethod(method);
 			} catch (Exception e) {
@@ -352,7 +495,11 @@ public class Reader implements ModelCreator<Options> {
 			} else {
 				suffix = "";
 			}
-			String endpointName = method.getDeclaringClass().getName() + "." + method.getName() + suffix;
+			String endpointName = method.getDeclaringClass().getName() + "." + method.getName();
+			if (methodInfo.overloadedName && methodInfo.parameterSignature != null) {
+				endpointName = endpointName + "__" + methodInfo.parameterSignature;
+			}
+			endpointName = endpointName + suffix;
 
 			Endpoint endpoint = model.createEndpoint(endpointName);
 			endpoint.setResponseBody(outType);

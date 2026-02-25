@@ -673,4 +673,20 @@ describe("test TestAllCombosTwoParameters", () => {
     //     expect(result).toEqual({"a": "ABCABC", "b": "DEFDEF", "c": "GHIGHI"});
     // });
 
+    it("can get an exception on error 500", async () => {
+
+        try {
+            const result = await integrationJakartaee.TestError500.runTest([1, 2, 3], simpleHandler);
+            // Unreachable - should have thrown an exception
+            fail("Should have thrown an exception");
+        } catch (e) {
+            console.log("Caught exception: ", e);
+        }
+    });
+
+    it("can call a POST with a void return", async () => {
+
+        await integrationJakartaee.TestVoidReturn.runTest([1, 2, 3], simpleHandler);
+    });
+
 });

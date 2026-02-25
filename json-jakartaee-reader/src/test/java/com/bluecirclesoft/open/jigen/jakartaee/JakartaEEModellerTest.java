@@ -28,6 +28,9 @@ import org.junit.Test;
 
 import com.bluecirclesoft.open.jigen.model.Endpoint;
 import com.bluecirclesoft.open.jigen.model.Model;
+import com.bluecirclesoft.open.jigen.model.HttpMethod;
+
+import jakarta.ws.rs.core.MediaType;
 
 /**
  * TODO document me
@@ -53,7 +56,7 @@ public class JakartaEEModellerTest {
 		modeller.model(model);
 		model.doGlobalCleanups();
 
-		Assert.assertEquals(5, sizeof(model.getEndpoints()));
+		Assert.assertEquals(15, sizeof(model.getEndpoints()));
 
 		// test complex endpoints
 		{
@@ -61,6 +64,30 @@ public class JakartaEEModellerTest {
 			Assert.assertEquals(0, endpoint.getParameters().size());
 			Assert.assertEquals("JMap[valueType=JString[]]", endpoint.getResponseBody().toString());
 		}
+
+		Endpoint defaultJson = model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.ClassLevelJsonService.defaultJson");
+		Assert.assertEquals(MediaType.APPLICATION_JSON, defaultJson.getProduces());
+		Assert.assertTrue(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.ClassLevelJsonService.jsonWithParams"));
+		Assert.assertTrue(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.ClassLevelJsonService.vendorJson"));
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.ClassLevelJsonService.textOverride"));
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.ClassLevelTextService.defaultText"));
+		Assert.assertTrue(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.ClassLevelTextService.jsonOverride"));
+
+		Endpoint jsonParamConsume = model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.ConsumesService.consumeJsonParam");
+		Assert.assertEquals("application/json; charset=UTF-8", jsonParamConsume.getConsumes());
+		Endpoint jsonMultiConsume = model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.ConsumesService.consumeJsonMulti");
+		Assert.assertEquals(MediaType.APPLICATION_JSON, jsonMultiConsume.getConsumes());
+
+		Assert.assertTrue(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.OverloadedService.find__int"));
+		Assert.assertTrue(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.OverloadedService.find__java_lang_String"));
+
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.BeanParamService.skip"));
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.InvalidService.invalid"));
+
+		Endpoint patchy = model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.CustomHttpMethodService.patchy");
+		Assert.assertEquals(HttpMethod.PATCH, patchy.getMethod());
+		Endpoint optionsEndpoint = model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.CustomHttpMethodService.options");
+		Assert.assertEquals(HttpMethod.OPTIONS, optionsEndpoint.getMethod());
 	}
 
 	private static int sizeof(Iterable<?> iterable) {
@@ -73,5 +100,14 @@ public class JakartaEEModellerTest {
 			}
 			return i;
 		}
+	}
+
+	private static boolean hasEndpoint(Model model, String name) {
+		for (Endpoint endpoint : model.getEndpoints()) {
+			if (name.equals(endpoint.getId())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

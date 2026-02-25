@@ -83,22 +83,22 @@ const baseUrl = __karma__.config.baseUrl;
 console.log("Initializing with base URL of ", baseUrl);
 jsonInterfaceGenerator.init(baseUrl);
 
-// describe("test @JsonProperty on enums", () => {
-//     it("has correct enum names", () => {
-//         let val: integrationJee7.testPackage2.EnumB = integrationJee7.testPackage2.EnumB.NUMBER_ONE;
-//         expect(val === integrationJee7.testPackage2.EnumB.NUMBER_ONE).toBeTruthy();
-//         expect(val === integrationJee7.testPackage2.EnumB_values.NumeroUno).toBeTruthy();
-//         expect(val === integrationJee7.testPackage2.EnumB_values[0]).toBeTruthy();
-//         val = integrationJee7.testPackage2.EnumB.NUMBER_TWO;
-//         expect(val === integrationJee7.testPackage2.EnumB.NUMBER_TWO).toBeTruthy();
-//         expect(val === integrationJee7.testPackage2.EnumB_values.NumeroDos).toBeTruthy();
-//         expect(val === integrationJee7.testPackage2.EnumB_values[2]).toBeTruthy();
-//         val = integrationJee7.testPackage2.EnumB.NUMBER_THREE;
-//         expect(val === integrationJee7.testPackage2.EnumB.NUMBER_THREE).toBeTruthy();
-//         expect(val === integrationJee7.testPackage2.EnumB_values.NumeroTres).toBeTruthy();
-//         expect(val === integrationJee7.testPackage2.EnumB_values[1]).toBeTruthy();
-//     });
-// });
+describe("test @JsonProperty on enums", () => {
+    it("has correct enum names", () => {
+        let val: integrationJee7.testPackage2.EnumB = integrationJee7.testPackage2.EnumB.NUMBER_ONE;
+        expect(val === integrationJee7.testPackage2.EnumB.NUMBER_ONE).toBeTruthy();
+        expect(val === integrationJee7.testPackage2.EnumB_values.NumeroUno).toBeTruthy();
+        expect(val === integrationJee7.testPackage2.EnumB_values[0]).toBeTruthy();
+        val = integrationJee7.testPackage2.EnumB.NUMBER_TWO;
+        expect(val === integrationJee7.testPackage2.EnumB.NUMBER_TWO).toBeTruthy();
+        expect(val === integrationJee7.testPackage2.EnumB_values.NumeroDos).toBeTruthy();
+        expect(val === integrationJee7.testPackage2.EnumB_values[2]).toBeTruthy();
+        val = integrationJee7.testPackage2.EnumB.NUMBER_THREE;
+        expect(val === integrationJee7.testPackage2.EnumB.NUMBER_THREE).toBeTruthy();
+        expect(val === integrationJee7.testPackage2.EnumB_values.NumeroTres).toBeTruthy();
+        expect(val === integrationJee7.testPackage2.EnumB_values[1]).toBeTruthy();
+    });
+});
 
 describe("test TestServicesString", () => {
 
