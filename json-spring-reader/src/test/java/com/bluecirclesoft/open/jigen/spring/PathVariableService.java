@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Blue Circle Software, LLC
+ * Copyright 2024 Blue Circle Software, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,31 +12,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bluecirclesoft.open.jigen.spring;
 
-import java.lang.reflect.Type;
-
-import com.bluecirclesoft.open.jigen.model.EndpointParameter;
-import lombok.Getter;
-import lombok.Setter;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * Holds relevant information about a web service method parameter.
+ * Service with implicit @PathVariable names.
  */
-@Setter
-@Getter
-public class MethodParameter {
+@RequestMapping(path = "/pv")
+public class PathVariableService {
 
-	private String codeName;
-
-	private String networkName;
-
-	private Type type;
-
-	private EndpointParameter.NetworkType networkType;
-
-	private boolean unresolvedPathVariable;
-
+	@GetMapping(path = "/{id}/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public Person get(@PathVariable int id, @PathVariable String name) {
+		return null;
+	}
 }

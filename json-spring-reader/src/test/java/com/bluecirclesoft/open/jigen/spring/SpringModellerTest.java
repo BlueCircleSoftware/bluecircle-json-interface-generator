@@ -26,6 +26,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.bluecirclesoft.open.jigen.model.Endpoint;
+import com.bluecirclesoft.open.jigen.model.EndpointParameter;
+import com.bluecirclesoft.open.jigen.model.HttpMethod;
 import com.bluecirclesoft.open.jigen.model.Model;
 
 /**
@@ -52,7 +54,7 @@ public class SpringModellerTest {
 		modeller.model(model);
 		model.doGlobalCleanups();
 
-		Assert.assertEquals(5, sizeof(model.getEndpoints()));
+		Assert.assertEquals(20, sizeof(model.getEndpoints()));
 
 		// test complex endpoints
 		{
@@ -60,6 +62,47 @@ public class SpringModellerTest {
 			Assert.assertEquals(0, endpoint.getParameters().size());
 			Assert.assertEquals("JMap[valueType=JString[]]", endpoint.getResponseBody().toString());
 		}
+
+		// overloaded methods should both be present
+		Assert.assertNotNull(findEndpoint(model, "/overload/one", HttpMethod.GET));
+		Assert.assertNotNull(findEndpoint(model, "/overload/two", HttpMethod.GET));
+
+		// no explicit method should default to all jsonnable methods
+		Assert.assertNotNull(findEndpoint(model, "/any/ping", HttpMethod.GET));
+		Assert.assertNotNull(findEndpoint(model, "/any/ping", HttpMethod.POST));
+		Endpoint pingEndpoint = findEndpoint(model, "/any/ping", HttpMethod.GET);
+		Assert.assertNull(pingEndpoint.getProduces());
+
+		// multiple path variants should create multiple endpoints
+		Assert.assertNotNull(findEndpoint(model, "/multiA/one", HttpMethod.GET));
+		Assert.assertNotNull(findEndpoint(model, "/multiA/two", HttpMethod.GET));
+		Assert.assertNotNull(findEndpoint(model, "/multiB/one", HttpMethod.GET));
+		Assert.assertNotNull(findEndpoint(model, "/multiB/two", HttpMethod.GET));
+
+		// media type parsing should allow json variants
+		Endpoint charsetEndpoint = findEndpoint(model, "/media/jsonCharset", HttpMethod.GET);
+		Assert.assertEquals("application/json", charsetEndpoint.getProduces());
+		Endpoint vendorEndpoint = findEndpoint(model, "/media/vendor", HttpMethod.POST);
+		Assert.assertEquals("application/vnd.test+json", vendorEndpoint.getConsumes());
+
+		// implicit @PathVariable names should be inferred from the path template
+		Endpoint pathVarEndpoint = findEndpoint(model, "/pv/{id}/{name}", HttpMethod.GET);
+		List<String> pathParamNames = new ArrayList<>();
+		for (EndpointParameter param : pathVarEndpoint.getParameters()) {
+			if (param.getNetworkType() == EndpointParameter.NetworkType.PATH) {
+				pathParamNames.add(param.getNetworkName());
+			}
+		}
+		Assert.assertEquals(2, pathParamNames.size());
+		Assert.assertTrue(pathParamNames.contains("id"));
+		Assert.assertTrue(pathParamNames.contains("name"));
+
+		// unannotated parameters should not be dropped
+		Endpoint unannotEndpoint = findEndpoint(model, "/unannot/submit", HttpMethod.POST);
+		Assert.assertEquals(1, unannotEndpoint.getParameters().size());
+		EndpointParameter param = unannotEndpoint.getParameters().get(0);
+		Assert.assertEquals(EndpointParameter.NetworkType.FORM, param.getNetworkType());
+		Assert.assertTrue(param.getNetworkName() != null && !param.getNetworkName().isEmpty());
 	}
 
 	private static int sizeof(Iterable<?> iterable) {
@@ -72,5 +115,14 @@ public class SpringModellerTest {
 			}
 			return i;
 		}
+	}
+
+	private static Endpoint findEndpoint(Model model, String pathTemplate, HttpMethod method) {
+		for (Endpoint endpoint : model.getEndpoints()) {
+			if (pathTemplate.equals(endpoint.getPathTemplate()) && method == endpoint.getMethod()) {
+				return endpoint;
+			}
+		}
+		return null;
 	}
 }

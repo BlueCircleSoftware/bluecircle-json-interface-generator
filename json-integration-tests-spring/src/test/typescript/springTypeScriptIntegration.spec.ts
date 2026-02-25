@@ -309,6 +309,41 @@ describe("test TestServicesObject", () => {
     });
 });
 
+describe("test ReaderEdgeService", () => {
+
+    const simpleHandler: JsonOptions<unknown> = {
+        complete: (success: boolean) => {
+            console.log("complete: success ", success);
+        },
+        error: (errorThrown: string) => {
+            console.log("errorThrown=", errorThrown);
+        },
+        success: (s: unknown) => {
+            console.log("success: result ", s);
+        },
+    };
+
+    it("can execute defaultMethod_GET on both path variants", async () => {
+        let result0 = getElemZero((await integration.ReaderEdgeService.defaultMethod_GET_p0(simpleHandler)).list, "");
+        expect(result0).toEqual("default");
+        let result1 = getElemZero((await integration.ReaderEdgeService.defaultMethod_GET_p1(simpleHandler)).list, "");
+        expect(result1).toEqual("default");
+    });
+
+    it("can execute multiPaths on first and last path variants", async () => {
+        let result0 = getElemZero((await integration.ReaderEdgeService.multiPaths_p0(simpleHandler)).list, "");
+        expect(result0).toEqual("multi");
+        let result3 = getElemZero((await integration.ReaderEdgeService.multiPaths_p3(simpleHandler)).list, "");
+        expect(result3).toEqual("multi");
+    });
+
+    it("can execute vendorJson with +json media type", async () => {
+        const arg0: integration.JsonRequest = {a: "one", b: "two"};
+        let result = await integration.ReaderEdgeService.vendorJson_p0(arg0, simpleHandler);
+        expect(result).toEqual({doubleA: "oneone", doubleB: "twotwo", doubleBoth: "onetwoonetwo"});
+    });
+});
+
 describe("test TestAllCombosTwoParameters", () => {
 
     // Standard handler

@@ -18,6 +18,7 @@ package com.bluecirclesoft.open.jigen.spring;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,11 @@ import com.bluecirclesoft.open.jigen.model.HttpMethod;
  * TODO document me
  */
 public class MethodCollisionDetector {
+
+	private static final Comparator<Method> METHOD_COMPARATOR = Comparator
+			.comparing((Method m) -> m.getDeclaringClass().getName())
+			.thenComparing(Method::getName)
+			.thenComparing(Method::toGenericString);
 
 	private final Map<String, Map<HttpMethod, List<Method>>> map = new LinkedHashMap<>();
 
@@ -54,7 +60,9 @@ public class MethodCollisionDetector {
 		if (methods == null || methods.size() < 2) {
 			return new SuffixInfo(multiHttpMethod, null);
 		} else {
-			return new SuffixInfo(multiHttpMethod, methods.indexOf(method));
+			List<Method> sorted = new ArrayList<>(methods);
+			sorted.sort(METHOD_COMPARATOR);
+			return new SuffixInfo(multiHttpMethod, sorted.indexOf(method));
 		}
 	}
 
