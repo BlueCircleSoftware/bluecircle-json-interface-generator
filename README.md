@@ -1,5 +1,9 @@
 # bluecircle-json-interface-generator
 
+[![Release](https://img.shields.io/badge/release-1.1-blue)](https://github.com/mrami4/bluecircle-json-interface-generator/releases)
+[![Maven Central](https://img.shields.io/maven-central/v/com.bluecirclesoft.open/json-interface-generator?label=Maven%20Central)](https://central.sonatype.com/artifact/com.bluecirclesoft.open/json-interface-generator)
+[![License](https://img.shields.io/github/license/mrami4/bluecircle-json-interface-generator)](LICENSE)
+
 BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript interfaces and AJAX calls to use those interfaces.
 
 *THIS IS A WORK IN PROGRESS* - So far, this has only been used internally. Bugs, comments, suggestions? Please tell us!
