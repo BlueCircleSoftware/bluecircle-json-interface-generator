@@ -6,14 +6,9 @@ set -euo pipefail
 # Parameter 1: path to project root
 
 root="${1:?Usage: $0 /path/to/project-root}"
-release_props="${root}/release.properties"
 readme="${root}/README.md"
 pom="${root}/pom.xml"
 
-if [[ ! -f "${release_props}" ]]; then
-  echo "release.properties not found at ${release_props}" >&2
-  exit 1
-fi
 if [[ ! -f "${readme}" ]]; then
   echo "README.md not found at ${readme}" >&2
   exit 1
@@ -27,20 +22,29 @@ artifact_id="$(grep -m1 -E "<artifactId>" "${pom}" | sed -E "s/.*<artifactId>([^
 group_id="$(grep -m1 -E "<groupId>" "${pom}" | sed -E "s/.*<groupId>([^<]+).*/\\1/")"
 
 version=""
-prop_key="project.rel.${group_id}:${artifact_id}"
-if line="$(grep -F "${prop_key}=" "${release_props}" | head -n1)"; then
-  version="${line#*=}"
-elif line="$(grep -E "^scm.tag=" "${release_props}" | head -n1)"; then
-  tag="${line#scm.tag=}"
-  if [[ "${tag}" == "${artifact_id}-"* ]]; then
-    version="${tag#${artifact_id}-}"
-  else
-    version="${tag}"
+release_props="${root}/release.properties"
+if [[ -f "${release_props}" ]]; then
+  prop_key="project.rel.${group_id}:${artifact_id}"
+  if line="$(grep -F "${prop_key}=" "${release_props}" | head -n1)"; then
+    version="${line#*=}"
+  elif line="$(grep -E "^scm.tag=" "${release_props}" | head -n1)"; then
+    tag="${line#scm.tag=}"
+    if [[ "${tag}" == "${artifact_id}-"* ]]; then
+      version="${tag#${artifact_id}-}"
+    else
+      version="${tag}"
+    fi
   fi
 fi
 
 if [[ -z "${version}" ]]; then
-  echo "Could not determine release version from ${release_props}" >&2
+  # release:perform runs in target/checkout without release.properties
+  version="$(grep -m1 -E "<version>" "${pom}" | sed -E "s/.*<version>([^<]+).*/\\1/")"
+  version="${version%-SNAPSHOT}"
+fi
+
+if [[ -z "${version}" ]]; then
+  echo "Could not determine release version from ${release_props} or ${pom}" >&2
   exit 1
 fi
 
