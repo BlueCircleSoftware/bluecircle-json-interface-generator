@@ -17,13 +17,29 @@
 #
 #
 
-set -ex
+set -euo pipefail
+set -x
 
-./mvnw release:prepare -Prelease-prepare
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Working tree is dirty. Commit or stash changes before releasing." >&2
+  exit 1
+fi
 
+version="$(grep -m1 -E "<version>" pom.xml | sed -E "s/.*<version>([^<]+).*/\\1/")"
+if [[ -z "${version}" ]]; then
+  echo "Unable to determine version from pom.xml" >&2
+  exit 1
+fi
+
+release_version="${version%-SNAPSHOT}"
+
+scripts/update-readme-version.sh "$(pwd)"
+
+if [[ -n "$(git status --porcelain README.md)" ]]; then
+  git add README.md
+  git commit -m "Update README for release ${release_version}"
+fi
+
+./mvnw release:prepare
 ./mvnw release:perform
-
-git add README.md
-git commit -m "Update project versions in README"
-git push
-git push --tags
+./mvnw release:clean
