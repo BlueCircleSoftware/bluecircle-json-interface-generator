@@ -22,3 +22,8 @@ set -ex
 ./mvnw release:prepare -Prelease-prepare
 
 ./mvnw release:perform
+
+git add README.md
+git commit -m "Update project versions in README"
+git push
+git push --tags
