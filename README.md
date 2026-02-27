@@ -4,7 +4,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.bluecirclesoft.open/json-interface-generator?label=Maven%20Central)](https://central.sonatype.com/artifact/com.bluecirclesoft.open/json-interface-generator)
 [![License](https://img.shields.io/github/license/mrami4/bluecircle-json-interface-generator)](LICENSE)
 
-BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript interfaces and AJAX calls to use those interfaces.
+BC-JIG is a utility to read your Java JAX-RS (Java EE / Jakarta EE) or Spring MVC endpoints, and generate TypeScript interfaces and AJAX
+calls to use those interfaces.
 
 *THIS IS A WORK IN PROGRESS* - So far, this has only been used internally. Bugs, comments, suggestions? Please tell us!
 
@@ -17,6 +18,8 @@ BC-JIG is a utility to read your Java JAX-RS methods, and generate TypeScript in
 		<version>1.10</version> <!-- latest version -->
 	</dependency>
 ```
+
+For released versions, refer to the Maven Central badge at the top of this README.
 
 ## What is BC-JIG for? What's the intended use case?
 
@@ -132,6 +135,9 @@ Using the Maven plugin:
                             <includeSubclasses>true</includeSubclasses>
                         </jeeReader>
                     </jeeReaders>
+                    <jakartaeeReaders>
+                        <!-- Optional: Jakarta EE reader configurations -->
+                    </jakartaeeReaders>
                     <typescriptWriters>
                         <typescriptWriter>
                             <outputFile>${project.build.directory}/generated-typescript</outputFile>
@@ -149,7 +155,7 @@ Using the Maven plugin:
 
 The Maven plugin works as follows:
 
-1. You specify a number of Java EE and/or Spring reader instances, and a number of TypeScript writer instances.
+1. You specify a number of Java EE, Jakarta EE, and/or Spring reader instances, and a number of TypeScript writer instances.
 2. These reader instances introspect the Java code finding endpoints and classes, and put all these together into one common "model"
    (see [Model.java](json-interface-generator-core/src/main/java/com/bluecirclesoft/open/jigen/model/Model.java)).
 3. The plugin will then output the entire model using each writer instance.
@@ -164,7 +170,7 @@ To use the Maven plugin, invoke the plugin as usual in your `build/plugins` sect
     <plugin>
         <groupId>com.bluecirclesoft.open</groupId>
         <artifactId>json-generator-maven-plugin</artifactId>
-        <version>1.10</version> <!-- latest version -->
+        <version>1.11-SNAPSHOT</version> <!-- current repo version -->
         <executions>
             <execution>
                 <goals>
@@ -174,6 +180,9 @@ To use the Maven plugin, invoke the plugin as usual in your `build/plugins` sect
                     <jeeReaders>
                          <!-- JEE reader configurations, one <jeeReader/> per config -->
                     </jeeReaders>
+                    <jakartaeeReaders>
+                        <!-- Jakarta EE reader configurations, one <jakartaeeReader/> per config -->
+                    </jakartaeeReaders>
                     <springReaders>
                         <!-- Spring reader configurations, one <springReader/> per config -->
                     </springReaders>
@@ -198,6 +207,20 @@ See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/j
 | classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
+| urlPrefix          | String                   | Prefix to prepend to the generated URL (i.e., for the context path)                                    |
+
+### Jakarta EE Reader:
+
+See [Jakarta EE Options.java](json-jakartaee-reader/src/main/java/com/bluecirclesoft/open/jigen/jakartaee/Options.java) for the
+implementation class.
+
+| Option             | Type                     | Description                                                                                                                          |
+|--------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| packages           | List\<String>            | (required) Array of packages to recursively scan for JAX-RS annotations.                                                             |
+| classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model. |
+| defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
+| includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
+| urlPrefix          | String                   | Prefix to prepend to the generated URL (i.e., for the context path)                                                                  |
 
 ### Spring Reader:
 
@@ -205,11 +228,12 @@ See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/op
 
 | Option             | Type                     | Description                                                                                            |
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
-| packages           | List\<String>            | (required) List of packages to recursively scan for JAX-RS annotations.                                |
+| packages           | List\<String>            | (required) List of packages to recursively scan for Spring MVC annotations.                           |
 | classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
 | defaultContentType | String                   | Content type to assume for endpoints if a content type isn't specified                                 |
+| urlPrefix          | String                   | Prefix to prepend to the generated URL (i.e., for the context path)                                    |
 
 ### TypeScript Generator:
 
@@ -228,7 +252,7 @@ implementation class.
 | immutableSuffix     | String  | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')                                                                                                                                                                                                                                                                                                                                                                          |
 | nullIsUndefined     | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)                                                                                                                                                                                                                                                                                                                                                           |
 | useUnknown          | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)                                                                                                                                                                                                                                                                                                                                                                                        |
-| generateHeader      | String  | Don't generate the "jsonInterfaceGenerator.ts" header (useful for a project with a bunch in independent WARS) (default: true, unless 'headerLocation' specified)                                                                                                                                                                                                                                                                                                     |
+| generateHeader      | boolean | Generate the "jsonInterfaceGenerator.ts" header (default: true, unless 'headerLocation' is specified)                                                                                                                                                                                                                                                                                                                          |
 | headerLocation      | String  | If specified, use the supplied header file instead of the generated one                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### Command-line + YAML
@@ -243,7 +267,8 @@ java -cp ... com.bluecirclesoft.open.jigen.Main \
 Specifies a config file with a number of "input" processors to read and create a JSON model, and "output" processors to create output from
 the resulting model.
 
-If the config file is not specified, the file defaults to ```./jig-config.yaml```
+If the config file is not specified, the file defaults to ```./jig-config.yaml```. The file must exist and be readable, or the process
+exits with an error.
 
 The "input" processors are all run first, followed by the "output" processors.
 
@@ -258,11 +283,11 @@ can be overridden by the --config option. The file has the format:
 
 ```yaml
 readers:
-  procesorClass1:
+  processorClass1:
     ...options...
   ...
 writers:
-  procesorClass2:
+  processorClass2:
     ...options...
   ...
 ```
@@ -313,7 +338,7 @@ See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/op
 
 | Option             | Type                     | Description                                                                                            |
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
-| packages           | List\<String>            | (required) List of packages to recursively scan for JAX-RS annotations.                                |
+| packages           | List\<String>            | (required) List of packages to recursively scan for Spring MVC annotations.                           |
 | classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
@@ -337,7 +362,7 @@ implementation class.
 | immutableSuffix     | String  | If producing immutables, this is the suffix to add to the wrapper classes (default: '$Imm')                                                                                                                                                                                                                                                                                                                                                                          |
 | nullIsUndefined     | boolean | Treat nullable fields as also undefined, and mark them optional in interface definitions. (default: false)                                                                                                                                                                                                                                                                                                                                                           |
 | useUnknown          | boolean | Use the new 'unknown' type in TypeScript 3.0 instead of 'any' (default: true)                                                                                                                                                                                                                                                                                                                                                                                        |
-| generateHeader      | String  | Don't generate the "jsonInterfaceGenerator.ts" header (useful for a project with a bunch in independent WARS) (default: true, unless 'headerLocation' specified)                                                                                                                                                                                                                                                                                                     |
+| generateHeader      | boolean | Generate the "jsonInterfaceGenerator.ts" header (default: true, unless 'headerLocation' is specified)                                                                                                                                                                                                                                                                                                                    |
 | headerLocation      | String  | If specified, use the supplied header file instead of the generated one                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ## Making AJAX calls
@@ -422,5 +447,5 @@ If you put `consumes = MediaType.APPLICATION_JSON_VALUE` on a GET endpoint, newe
 `consumes` on the server, and the `Content-Type` header on the request, since the header is optional, and conveys no functional meaning in
 this situation.
 
-The spring-reader package will read When you write your AJAX handler, be sure to use the provided "consumes" parameter to set your
-Content-Type header when appropriate.
+The spring-reader package will read the endpoint's declared content type. When you write your AJAX handler, be sure to use the provided
+"consumes" parameter to set your Content-Type header when appropriate.
