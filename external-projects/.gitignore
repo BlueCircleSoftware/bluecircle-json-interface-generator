@@ -1,0 +1,4 @@
+*
+!/.gitignore
+!/clone-external-projects.sh
+!/repositories.list
