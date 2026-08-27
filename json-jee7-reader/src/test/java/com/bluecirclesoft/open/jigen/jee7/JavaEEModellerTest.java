@@ -55,7 +55,7 @@ public class JavaEEModellerTest {
 		modeller.model(model);
 		model.doGlobalCleanups();
 
-		Assert.assertEquals(15, sizeof(model.getEndpoints()));
+		Assert.assertEquals(17, sizeof(model.getEndpoints()));
 
 		// test complex endpoints
 		{
@@ -87,6 +87,45 @@ public class JavaEEModellerTest {
 		Assert.assertEquals(HttpMethod.PATCH, patchy.getMethod());
 		Endpoint optionsEndpoint = model.getEndpoint("com.bluecirclesoft.open.jigen.jee7.CustomHttpMethodService.options");
 		Assert.assertEquals(HttpMethod.OPTIONS, optionsEndpoint.getMethod());
+	}
+
+	@Test
+	public void testConfiguredPackageExcludesSiblingEndpoints() {
+		Reader modeller = new Reader();
+
+		Options options = new Options();
+		options.setPackages(List.of("com.bluecirclesoft.open.jigen.jee7.included"));
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
+
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
+
+		Assert.assertEquals(1, sizeof(model.getEndpoints()));
+		Assert.assertNotNull(model.getEndpoint("com.bluecirclesoft.open.jigen.jee7.included.IncludedService.value"));
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jee7.excluded.ExcludedService.value"));
+	}
+
+	@Test
+	public void testExplicitlyExcludedClassIsNotAnEndpoint() {
+		Reader modeller = new Reader();
+
+		Options options = new Options();
+		options.setPackages(List.of("com.bluecirclesoft.open.jigen.jee7"));
+		options.setExcludedClasses(List.of("com.bluecirclesoft.open.jigen.jee7.excluded.ExcludedService"));
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
+
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
+
+		Assert.assertEquals(16, sizeof(model.getEndpoints()));
+		Assert.assertNotNull(model.getEndpoint("com.bluecirclesoft.open.jigen.jee7.included.IncludedService.value"));
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jee7.excluded.ExcludedService.value"));
 	}
 
 	private static int sizeof(Iterable<?> iterable) {

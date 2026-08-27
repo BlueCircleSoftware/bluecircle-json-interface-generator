@@ -78,6 +78,29 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 
 	}
 
+	/**
+	 * Supplies explicit null defaults for nullable properties that Jackson omits from an empty-object serialization.
+	 */
+	private String createFactoryExpression(JObject intf) {
+		StringBuilder nullDefaults = new StringBuilder("{");
+		boolean needsComma = false;
+		for (Map.Entry<String, JObject.Field> fieldEntry : intf.getFieldEntries()) {
+			JObject.Field field = fieldEntry.getValue();
+			if (!treatNullAsUndefined && field.getType().canBeNull()) {
+				if (needsComma) {
+					nullDefaults.append(',');
+				}
+				nullDefaults.append('"').append(StringEscapeUtils.escapeEcmaScript(field.getName())).append("\":null");
+				needsComma = true;
+			}
+		}
+		if (!needsComma) {
+			return intf.getNewObjectJson();
+		}
+		nullDefaults.append('}');
+		return "{..." + nullDefaults + ", ..." + intf.getNewObjectJson() + "}";
+	}
+
 	@Override
 	public void visit(JAny jAny) {
 
@@ -265,6 +288,7 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 
 		boolean hasNewObjectJson = StringUtils.isNotBlank(intf.getNewObjectJson());
 		boolean hasTypeDiscriminator = intf.getTypeDiscriminatorField() != null;
+		String factoryExpression = hasNewObjectJson ? createFactoryExpression(intf) : null;
 
 		boolean needsNamespace = hasNewObjectJson || hasTypeDiscriminator;
 		if (needsNamespace) {
@@ -305,13 +329,13 @@ class TypeDeclarationProducer implements JTypeVisitorVoid {
 				writer.indentOut();
 				writer.line("} else {");
 				writer.indentIn();
-				writer.line("return " + intf.getNewObjectJson() + ";");
+				writer.line("return " + factoryExpression + ";");
 				writer.indentOut();
 				writer.line("}");
 			} else {
 				writer.line("export function make" + makeTypeVars + "() : " + interfaceLabel + typeVars + " {");
 				writer.indentIn();
-				writer.line("return " + intf.getNewObjectJson() + ";");
+				writer.line("return " + factoryExpression + ";");
 			}
 			writer.indentOut();
 			writer.line("}");

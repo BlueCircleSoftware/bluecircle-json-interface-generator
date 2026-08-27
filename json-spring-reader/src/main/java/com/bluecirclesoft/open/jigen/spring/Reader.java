@@ -200,6 +200,21 @@ public class Reader implements ModelCreator<Options> {
 		return reflections.getTypesAnnotatedWith(Generate.class);
 	}
 
+	/**
+	 * Keeps a broad classpath URL scan from turning annotations in sibling packages into public API.
+	 */
+	private static boolean isInConfiguredPackage(Class<?> type, String packageName) {
+		String typePackage = type.getPackageName();
+		return typePackage.equals(packageName) || typePackage.startsWith(packageName + ".");
+	}
+
+	/**
+	 * Removes explicitly internal Spring MVC classes that share a package with public REST resources.
+	 */
+	private boolean isExcludedClass(Class<?> type) {
+		return options.getExcludedClasses().contains(type.getName());
+	}
+
 	private void createModel(String... packageNames) {
 
 		assert packageNames != null;
@@ -214,6 +229,9 @@ public class Reader implements ModelCreator<Options> {
 
 			Set<Method> allMethods = findRequestMappingMethods(reflections);
 			for (Method method : allMethods) {
+				if (!isInConfiguredPackage(method.getDeclaringClass(), packageName) || isExcludedClass(method.getDeclaringClass())) {
+					continue;
+				}
 				SpringRequestInfo springInfo = getMethodInfo(method);
 				if (springInfo.methods == null || springInfo.methods.isEmpty()) {
 					// method had no interesting HTTP methods
@@ -244,6 +262,9 @@ public class Reader implements ModelCreator<Options> {
 
 			SourcedType generatedSource = new SourcedType(null, "@Generate annotation search", null);
 			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
+				if (!isInConfiguredPackage(generatedClass, packageName) || isExcludedClass(generatedClass)) {
+					continue;
+				}
 				PropertyEnumerator modeller = new JacksonTypeModeller(classOverrideHandler, defaultEnumType,
 						options.isIncludeSubclasses() ? IncludeSubclasses.INCLUDE : IncludeSubclasses.EXCLUDE, packageNames);
 				modeller.readOneType(model, new SourcedType(generatedClass, String.valueOf(generatedClass), generatedSource));

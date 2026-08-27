@@ -204,6 +204,7 @@ See [JEE7 Options.java](json-jee7-reader/src/main/java/com/bluecirclesoft/open/j
 | Option             | Type                     | Description                                                                                            |
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
 | packages           | List\<String>            | (required) List of packages to recursively scan for JAX-RS annotations.                                |
+| excludedClasses    | List\<String>            | Fully qualified JAX-RS classes to omit from endpoint and type discovery.                               |
 | classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |
@@ -217,6 +218,7 @@ implementation class.
 | Option             | Type                     | Description                                                                                                                          |
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | packages           | List\<String>            | (required) Array of packages to recursively scan for JAX-RS annotations.                                                             |
+| excludedClasses    | List\<String>            | Fully qualified JAX-RS classes to omit from endpoint and type discovery.                                                             |
 | classSubstitutions | List\<ClassSubstitution> | Array of '{ ifSeen: \<class>, replaceWith: \<class>}' When encountering 'ifSeen', substitute 'replaceWith' while building the model. |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false)                               |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                                                    |
@@ -228,7 +230,8 @@ See [Spring Options.java](json-spring-reader/src/main/java/com/bluecirclesoft/op
 
 | Option             | Type                     | Description                                                                                            |
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------------------|
-| packages           | List\<String>            | (required) List of packages to recursively scan for Spring MVC annotations.                           |
+| packages           | List\<String>            | (required) List of packages to recursively scan for Spring MVC annotations.                            |
+| excludedClasses    | List\<String>            | Fully qualified Spring MVC classes to omit from endpoint and type discovery.                           |
 | classSubstitutions | List\<ClassSubstitution> | List of substitutions. When encountering 'ifSeen', substitute 'replaceWith' while building the model.  |
 | defaultStringEnums | boolean                  | Unless otherwise specified, treat enums as 'string' enums, instead of integer-valued. (default: false) |
 | includeSubclasses  | boolean                  | When modelling a class, also model its subclasses (default: true)                                      |

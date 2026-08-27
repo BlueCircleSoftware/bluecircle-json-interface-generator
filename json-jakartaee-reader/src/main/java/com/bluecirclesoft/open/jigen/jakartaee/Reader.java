@@ -255,6 +255,21 @@ public class Reader implements ModelCreator<Options> {
 		return reflections.getTypesAnnotatedWith(Generate.class);
 	}
 
+	/**
+	 * Keeps a broad classpath URL scan from turning annotations in sibling packages into public API.
+	 */
+	private static boolean isInConfiguredPackage(Class<?> type, String packageName) {
+		String typePackage = type.getPackageName();
+		return typePackage.equals(packageName) || typePackage.startsWith(packageName + ".");
+	}
+
+	/**
+	 * Removes explicitly internal JAX-RS clients that share a package with public REST resources.
+	 */
+	private boolean isExcludedClass(Class<?> type) {
+		return options.getExcludedClasses().contains(type.getName());
+	}
+
 	private static String getProducerString(Method method) {
 		Produces produces = method.getAnnotation(Produces.class);
 		if (produces != null) {
@@ -390,6 +405,9 @@ public class Reader implements ModelCreator<Options> {
 					.setScanners(Scanners.MethodsAnnotated, Scanners.TypesAnnotated, Scanners.SubTypes));
 
 			for (Method method : findJaxRsMethods(reflections)) {
+				if (!isInConfiguredPackage(method.getDeclaringClass(), packageName) || isExcludedClass(method.getDeclaringClass())) {
+					continue;
+				}
 				logger.info("Reading method {}", method);
 			String produces = getProducerString(method);
 			if (produces != null) {
@@ -403,6 +421,9 @@ public class Reader implements ModelCreator<Options> {
 
 			SourcedType generatedSource = new SourcedType(null, "@Generate annotation search", null);
 			for (Class<?> generatedClass : findClassesTaggedGenerate(reflections)) {
+				if (!isInConfiguredPackage(generatedClass, packageName) || isExcludedClass(generatedClass)) {
+					continue;
+				}
 				modeller.readOneType(model, new SourcedType(generatedClass, String.valueOf(generatedClass), generatedSource));
 			}
 		}

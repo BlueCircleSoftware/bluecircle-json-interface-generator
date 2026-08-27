@@ -56,7 +56,7 @@ public class JakartaEEModellerTest {
 		modeller.model(model);
 		model.doGlobalCleanups();
 
-		Assert.assertEquals(15, sizeof(model.getEndpoints()));
+		Assert.assertEquals(17, sizeof(model.getEndpoints()));
 
 		// test complex endpoints
 		{
@@ -88,6 +88,47 @@ public class JakartaEEModellerTest {
 		Assert.assertEquals(HttpMethod.PATCH, patchy.getMethod());
 		Endpoint optionsEndpoint = model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.CustomHttpMethodService.options");
 		Assert.assertEquals(HttpMethod.OPTIONS, optionsEndpoint.getMethod());
+	}
+
+	@Test
+	public void testConfiguredPackageExcludesSiblingEndpoints() {
+		Reader modeller = new Reader();
+
+		Options options = new Options();
+		options.setPackages(List.of("com.bluecirclesoft.open.jigen.jakartaee.included"));
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
+
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
+
+		Assert.assertEquals(1, sizeof(model.getEndpoints()));
+		Assert.assertNotNull(model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.included.IncludedService.value"));
+		for (Endpoint endpoint : model.getEndpoints()) {
+			Assert.assertNotEquals("com.bluecirclesoft.open.jigen.jakartaee.excluded.ExcludedService.value", endpoint.getId());
+		}
+	}
+
+	@Test
+	public void testExplicitlyExcludedClassIsNotAnEndpoint() {
+		Reader modeller = new Reader();
+
+		Options options = new Options();
+		options.setPackages(List.of("com.bluecirclesoft.open.jigen.jakartaee"));
+		options.setExcludedClasses(List.of("com.bluecirclesoft.open.jigen.jakartaee.excluded.ExcludedService"));
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
+
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
+
+		Assert.assertEquals(16, sizeof(model.getEndpoints()));
+		Assert.assertNotNull(model.getEndpoint("com.bluecirclesoft.open.jigen.jakartaee.included.IncludedService.value"));
+		Assert.assertFalse(hasEndpoint(model, "com.bluecirclesoft.open.jigen.jakartaee.excluded.ExcludedService.value"));
 	}
 
 	private static int sizeof(Iterable<?> iterable) {

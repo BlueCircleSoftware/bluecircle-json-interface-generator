@@ -33,6 +33,9 @@ public class Options {
 
 	private List<String> packages = new ArrayList<>();
 
+	/** Fully qualified Spring MVC classes to omit from endpoint and type discovery. */
+	private List<String> excludedClasses = new ArrayList<>();
+
 	private boolean defaultStringEnums = false;
 
 	private List<ClassSubstitution> classSubstitutions = new ArrayList<>();

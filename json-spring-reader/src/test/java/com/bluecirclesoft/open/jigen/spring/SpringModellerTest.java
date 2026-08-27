@@ -54,7 +54,7 @@ public class SpringModellerTest {
 		modeller.model(model);
 		model.doGlobalCleanups();
 
-		Assert.assertEquals(20, sizeof(model.getEndpoints()));
+		Assert.assertEquals(22, sizeof(model.getEndpoints()));
 
 		// test complex endpoints
 		{
@@ -103,6 +103,45 @@ public class SpringModellerTest {
 		EndpointParameter param = unannotEndpoint.getParameters().get(0);
 		Assert.assertEquals(EndpointParameter.NetworkType.FORM, param.getNetworkType());
 		Assert.assertTrue(param.getNetworkName() != null && !param.getNetworkName().isEmpty());
+	}
+
+	@Test
+	public void testConfiguredPackageExcludesSiblingEndpoints() {
+		Reader modeller = new Reader();
+
+		Options options = new Options();
+		options.setPackages(List.of("com.bluecirclesoft.open.jigen.spring.included"));
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
+
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
+
+		Assert.assertEquals(1, sizeof(model.getEndpoints()));
+		Assert.assertNotNull(findEndpoint(model, "/included", HttpMethod.GET));
+		Assert.assertNull(findEndpoint(model, "/excluded", HttpMethod.GET));
+	}
+
+	@Test
+	public void testExplicitlyExcludedClassIsNotAnEndpoint() {
+		Reader modeller = new Reader();
+
+		Options options = new Options();
+		options.setPackages(List.of("com.bluecirclesoft.open.jigen.spring"));
+		options.setExcludedClasses(List.of("com.bluecirclesoft.open.jigen.spring.excluded.ExcludedService"));
+		List<String> errors = new ArrayList<>();
+		modeller.acceptOptions(options, errors);
+		Assert.assertEquals(0, errors.size());
+
+		Model model = new Model();
+		modeller.model(model);
+		model.doGlobalCleanups();
+
+		Assert.assertEquals(21, sizeof(model.getEndpoints()));
+		Assert.assertNotNull(findEndpoint(model, "/included", HttpMethod.GET));
+		Assert.assertNull(findEndpoint(model, "/excluded", HttpMethod.GET));
 	}
 
 	private static int sizeof(Iterable<?> iterable) {
