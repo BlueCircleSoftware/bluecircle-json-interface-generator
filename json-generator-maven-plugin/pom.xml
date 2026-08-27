@@ -17,7 +17,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.6.4</version>
+                <version>3.15.2</version>
                 <configuration>
                     <mojoDependencies>
                         <param>com.bluecirclesoft.open:json-generator-maven-plugin</param>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>4.0.0-rc-5</version>
+            <version>4.0.0-rc-6</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
-            <version>4.0.0-rc-5</version>
+            <version>4.0.0-rc-6</version>
             <scope>provided</scope>
         </dependency>
 
@@ -79,7 +79,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.2</version>
         </dependency>
     </dependencies>
 </project>
